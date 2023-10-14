@@ -15,7 +15,6 @@ public class ServoTesting extends LinearOpMode {
         // Get servos
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
-        Servo DroneServo = hardwareMap.get(Servo.class, "DS");
         Servo WristServo = hardwareMap.get(Servo.class, "WS");
 
         // Reverse if opposite directions are seen
@@ -26,7 +25,6 @@ public class ServoTesting extends LinearOpMode {
         List<Servo> servos = new ArrayList<Servo>();
         servos.add(ClawServoRight);
         servos.add(ClawServoLeft);
-        servos.add(DroneServo);
         servos.add(WristServo);
 
         waitForStart();
@@ -61,10 +59,10 @@ public class ServoTesting extends LinearOpMode {
                 position = position - 1;
             }
 
-            if (position > 3) {
+            if (position > 2) {
                 position = 0;
             } else if (position < 0) {
-                position = 3;
+                position = 2;
             }
 
             currentServo.setPosition(location);
@@ -77,8 +75,6 @@ public class ServoTesting extends LinearOpMode {
                 CSL_pos = location;
                 // Open: 0.69
                 // Closed: Closed 0.39
-            } else if (currentServo == DroneServo) {
-                DS_pos = location;
             } else if (currentServo == WristServo) {
                 WS_pos = location;
             }
