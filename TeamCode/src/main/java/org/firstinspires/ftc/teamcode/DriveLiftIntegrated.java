@@ -106,6 +106,8 @@ public class DriveLiftIntegrated extends LinearOpMode {
         ClawServoRight.setDirection(Servo.Direction.REVERSE);
         ClawServoLeft.setDirection(Servo.Direction.FORWARD);
 
+        DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
+
         if (isStopRequested()) return;
 
         matchTime.reset();
@@ -113,8 +115,8 @@ public class DriveLiftIntegrated extends LinearOpMode {
         CSL.reset();
 
         while (opModeIsActive()) {
-            jointMotor.setPower(setJointPower(jointMotor, gamepad1));
-            armMotor.setPower(setArmPower(armMotor, gamepad1));
+            jointMotor.setPower(setJointPower(jointMotor, gamepad2));
+            armMotor.setPower(setArmPower(armMotor, gamepad2));
 
             setRollerPowerRight(FrontRollerServoRight, gamepad2);
             setRollerPowerLeft(FrontRollerServoLeft, gamepad2);
@@ -268,7 +270,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
     }
     private void activateDroneLauncher(CRServo DroneServo, Gamepad gamepad, double launch_speed) {
         double power = 0;
-        if(gamepad.a && matchTime.seconds() > 120)  {
+        if(gamepad.a && matchTime.seconds() > 0)  {
             power = launch_speed;
         }
 
