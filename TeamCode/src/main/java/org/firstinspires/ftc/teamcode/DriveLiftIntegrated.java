@@ -11,8 +11,10 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "All Lift - Claw & Joint")
-public class AllLift extends LinearOpMode {
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+@TeleOp(name = "Drive and Lift")
+public class DriveLiftIntegrated extends LinearOpMode {
     ElapsedTime CSR = new ElapsedTime();
     ElapsedTime CSL = new ElapsedTime();
     ElapsedTime matchTime = new ElapsedTime();
@@ -122,6 +124,72 @@ public class AllLift extends LinearOpMode {
             setWristServoPower(WristServo, gamepad2);
 
             activateDroneLauncher(DroneServo, gamepad2, 1);
+
+            double y_raw = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
+            double x_raw = gamepad1.left_stick_x;
+            double rx_raw = gamepad1.right_stick_x;
+
+            // Deadband to address controller drift
+            double deadband = 0.1;
+            if (Math.abs(y_raw) < deadband) {
+                y_raw = 0;
+            }
+            if (Math.abs(x_raw) < deadband) {
+                x_raw = 0;
+            }
+            if (Math.abs(rx_raw) < deadband) {
+                rx_raw = 0;
+            }
+
+            // Reset yaw to 0
+            if (gamepad1.x) {
+                imu.resetYaw();
+            }
+
+            // Toggle exponential drive
+            if (gamepad1.y) {
+                exponential_drive = !exponential_drive;
+            }
+
+            // Toggle slowdown
+            if (gamepad1.a) {
+                //slowdown = !slowdown;
+            }
+
+            // Exponential Drive
+            double exponent = 2.0;
+            double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
+            double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
+            double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
+
+            // Slowdown
+            if (slowdown) {
+                y *= 0.75;
+                x *= 0.75;
+                rx *= 0.75;
+            }
+
+            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+            // Rotate the movement direction counter to the bot's rotation
+            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+            rotX = rotX * 1.1;  // Counteract imperfect strafing
+
+            // Denominator is the largest motor power (absolute value) or 1
+            // This ensures all the powers maintain the same ratio,
+            // but only if at least one is out of the range [-1, 1]
+            double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+            double frontLeftPower = (rotY + rotX + rx) / denominator;
+            double backLeftPower = (rotY - rotX + rx) / denominator;
+            double frontRightPower = (rotY - rotX - rx) / denominator;
+            double backRightPower = (rotY + rotX - rx) / denominator;
+
+            motorFL.setPower(frontLeftPower);
+            motorBL.setPower(backLeftPower);
+            motorFR.setPower(frontRightPower);
+            motorBR.setPower(backRightPower);
 
             checkGamepadParameters(gamepad1, "Driver");
             checkGamepadParameters(gamepad2, "Operator");
@@ -239,7 +307,7 @@ public class AllLift extends LinearOpMode {
     }
     private double setArmPower(DcMotor armMotor, Gamepad gamepad) {
         double power;
-        double mult = 0.5;
+        double mult = 0.025;
         double input = -gamepad.right_stick_y;
         power = input*mult;
 

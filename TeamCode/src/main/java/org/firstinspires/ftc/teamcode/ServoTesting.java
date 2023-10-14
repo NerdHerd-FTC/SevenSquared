@@ -61,18 +61,29 @@ public class ServoTesting extends LinearOpMode {
                 position = position - 1;
             }
 
+            if (position > 3) {
+                position = 0;
+            } else if (position < 0) {
+                position = 3;
+            }
+
             currentServo.setPosition(location);
 
             if (currentServo == ClawServoRight) {
                 CSR_pos = location;
+                // Open: 0.11
+                //Closed: -O.15
             } else if (currentServo == ClawServoLeft) {
                 CSL_pos = location;
+                // Open: 0.69
+                // Closed: Closed 0.39
             } else if (currentServo == DroneServo) {
                 DS_pos = location;
             } else if (currentServo == WristServo) {
                 WS_pos = location;
             }
 
+            telemetry.addData("Position", position);
             telemetry.addData("Current Servo", currentServo);
             telemetry.addData("Current Location", location);
             telemetry.addLine("\n\n");
@@ -83,6 +94,7 @@ public class ServoTesting extends LinearOpMode {
             telemetry.addData("WS Last Position", WS_pos);
 
             telemetry.update();
+            sleep(200);
         }
     }
 }
