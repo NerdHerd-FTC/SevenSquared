@@ -1,79 +1,44 @@
-//Written By Derrick FTC 49
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "FreightFenzy_REDAuton1 (Java)")
+@Autonomous(name="AutoCode")
 public class Auto2 extends LinearOpMode {
+    // Define motor variables
+    private final DcMotor flMotor = hardwareMap.dcMotor.get("frontLeft");
+    private final DcMotor frMotor = hardwareMap.dcMotor.get("frontRight");
+    private final DcMotor blMotor = hardwareMap.dcMotor.get("backLeft");
+    private final DcMotor brMotor = hardwareMap.dcMotor.get("backRight");
 
-    private DcMotor RightDrive;
-    private DcMotor LeftDrive;
-
-
-    //Convert from the counts per revolution of the encoder to counts per inch
-    static final double HD_COUNTS_PER_REV = 28;
-    static final double DRIVE_GEAR_REDUCTION = 20;
-    static final double WHEEL_CIRCUMFERENCE_MM = 96 * Math.PI;
-    static final double DRIVE_COUNTS_PER_MM = (HD_COUNTS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_MM;
-    static final double DRIVE_COUNTS_PER_IN = DRIVE_COUNTS_PER_MM * 25.4;
-
-    //Create elapsed time variable and an instance of elapsed time
-    private ElapsedTime runtime = new ElapsedTime();
-
-    // Drive function with 3 parameters
-    private void drive(double power, double leftInches, double rightInches) {
-        int rightTarget;
-        int leftTarget;
-
-        if (opModeIsActive()) {
-            // Create target positions
-            rightTarget = RightDrive.getCurrentPosition() + (int) (rightInches * DRIVE_COUNTS_PER_IN);
-            leftTarget = LeftDrive.getCurrentPosition() + (int) (leftInches * DRIVE_COUNTS_PER_IN);
-
-            // set target position
-            LeftDrive.setTargetPosition(leftTarget);
-            RightDrive.setTargetPosition(rightTarget);
-
-            //switch to run to position mode
-            LeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            RightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            //run to position at the desiginated power
-            LeftDrive.setPower(power);
-            RightDrive.setPower(power);
-
-            // wait until both motors are no longer busy running to position
-            while (opModeIsActive() && (LeftDrive.isBusy() || RightDrive.isBusy())) {
-            }
-
-            // set motor power back to 0
-            LeftDrive.setPower(0);
-            RightDrive.setPower(0);
-        }
-    }
-
+    // Define the duration of movement
+    private final double movementDuration = 2.5; // 2.5 seconds
 
     @Override
     public void runOpMode() {
-
-        RightDrive = hardwareMap.get(DcMotor.class, "frontRight");
-        LeftDrive = hardwareMap.get(DcMotor.class, "frontLeft");
-
-
-
-
+        // Set motor directions
+        flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        blMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        brMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         waitForStart();
-        if (opModeIsActive()) {
 
-            while (opModeIsActive() && runtime.seconds() <= 2) {
-
-                drive(1, 12, 0);
-            }
+        // Run the motors for the specified duration
+        double startTime = getRuntime();
+        while (opModeIsActive() && (getRuntime() - startTime) < movementDuration) {
+            flMotor.setPower(-1.0); // Backward
+            frMotor.setPower(1.0);  // Forward
+            blMotor.setPower(1.0);  // Forward
+            brMotor.setPower(-1.0); // Backward
         }
+
+        // Stop the motors
+        flMotor.setPower(0);
+        frMotor.setPower(0);
+        blMotor.setPower(0);
+        brMotor.setPower(0);
     }
 }
