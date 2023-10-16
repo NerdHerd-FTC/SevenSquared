@@ -65,21 +65,15 @@ public class DriveLiftIntegrated extends LinearOpMode {
         // Without this, data retrieving from the IMU throws an exception
         imu.initialize(imuParams);
 
-        /*
         jointMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         jointMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         jointMotor.setDirection(DcMotor.Direction.FORWARD);
         jointMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-         */
-
-        /*
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armMotor.setDirection(DcMotor.Direction.FORWARD);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-         */
 
         CRServo FrontRollerServoRight = hardwareMap.get(CRServo.class, "FRSR");
         CRServo FrontRollerServoLeft= hardwareMap.get(CRServo.class, "FRSL");
@@ -366,7 +360,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
     private void motorTelemetry(DcMotor motor, String name) {
         telemetry.addLine("--- " + name + " ---");
         telemetry.addData(name + " Power", motor.getPower());
-        //telemetry.addData(name + " Position", motor.getCurrentPosition());
+        telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
@@ -382,6 +376,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
         telemetry.addData("CSL Timer", CSL.seconds());
         telemetry.addData("Wrist", wrist.getPosition());
     }
+
     //-621, 0
     // -600
 }
