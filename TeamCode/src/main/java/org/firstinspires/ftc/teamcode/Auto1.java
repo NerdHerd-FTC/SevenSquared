@@ -1,5 +1,5 @@
-// Written By Derrick
-// Blue Alliance Auto
+//Written By Derrick
+//Red Alliance Auto
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name="AutoCode")
-public class Auto2 extends LinearOpMode {
+public class Auto1 extends LinearOpMode {
     // Define motor variables
     private final DcMotor flMotor = hardwareMap.dcMotor.get("frontLeft");
     private final DcMotor frMotor = hardwareMap.dcMotor.get("frontRight");
@@ -31,10 +31,10 @@ public class Auto2 extends LinearOpMode {
         // Run the motors for the specified duration
         double startTime = getRuntime();
         while (opModeIsActive() && (getRuntime() - startTime) < movementDuration) {
-            flMotor.setPower(-1.0); // Backward
-            frMotor.setPower(1.0);  // Forward
-            blMotor.setPower(1.0);  // Forward
-            brMotor.setPower(-1.0); // Backward
+            flMotor.setPower(1.0); // Backward
+            frMotor.setPower(-1.0);  // Forward
+            blMotor.setPower(-1.0);  // Forward
+            brMotor.setPower(1.0); // Backward
         }
 
         // Stop the motors
