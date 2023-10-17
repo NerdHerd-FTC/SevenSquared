@@ -19,14 +19,14 @@ import java.util.List;
 public class AprilTagSafety extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        int navigateTo = 8; //set the tag number to navigate towards
+        int navigateTo = 2; //set the tag number to navigate towards
 
         //create objects for motors
         // f=front, b=back, l=left, r=right
-        DcMotor flMotor = hardwareMap.dcMotor.get("motorFL");
-        DcMotor frMotor = hardwareMap.dcMotor.get("motorFR");
-        DcMotor blMotor = hardwareMap.dcMotor.get("motorBL");
-        DcMotor brMotor = hardwareMap.dcMotor.get("motorBR");
+        DcMotor flMotor = hardwareMap.dcMotor.get("frontLeft");
+        DcMotor frMotor = hardwareMap.dcMotor.get("frontRight");
+        DcMotor blMotor = hardwareMap.dcMotor.get("backLeft");
+        DcMotor brMotor = hardwareMap.dcMotor.get("backRight");
 
 
         // Create apriltag processor
@@ -57,6 +57,35 @@ public class AprilTagSafety extends LinearOpMode {
 
         List<AprilTagDetection> allTagDetections;  /* create list of all detected apriltags
         List will be used to store any detected apriltags */
+        double startTime = getRuntime();
+
+        while (opModeIsActive() && (getRuntime() - startTime) < 1.5) {
+            flMotor.setPower(1.0); // Backward
+            frMotor.setPower(1.0);  // Forward
+            blMotor.setPower(1.0);  // Forward
+            brMotor.setPower(1.0); // Backward
+        }
+        while (opModeIsActive() && (getRuntime() - startTime) < 0.3) {
+            flMotor.setPower(0.0); // Backward
+            frMotor.setPower(1.0);  // Forward
+            blMotor.setPower(0.0);  // Forward
+            brMotor.setPower(1.0); // Backward
+        }
+        while (opModeIsActive() && (getRuntime() - startTime) < 1.5) {
+            flMotor.setPower(1.0); // Backward
+            frMotor.setPower(1.0);  // Forward
+            blMotor.setPower(1.0);  // Forward
+            brMotor.setPower(1.0); // Backward
+        }
+
+
+
+        // Stop the motors
+        flMotor.setPower(0);
+        frMotor.setPower(0);
+        blMotor.setPower(0);
+        brMotor.setPower(0);
+
 
         int tagIdCode; // to store current apriltag id
 
