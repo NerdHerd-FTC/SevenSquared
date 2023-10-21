@@ -167,7 +167,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
                 rx *= 0.75;
             }
 
-            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS); 
 
             // Rotate the movement direction counter to the bot's rotation
             double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
@@ -188,6 +188,8 @@ public class DriveLiftIntegrated extends LinearOpMode {
             motorBL.setPower(backLeftPower);
             motorFR.setPower(frontRightPower);
             motorBR.setPower(backRightPower);
+
+            telemetry.addData("Yaw", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 
             checkGamepadParameters(gamepad1, "Driver");
             checkGamepadParameters(gamepad2, "Operator");
