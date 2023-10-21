@@ -19,14 +19,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @TeleOp(name = "Drive and Lift")
 public class DriveLiftIntegrated extends LinearOpMode {
     ElapsedTime CSR = new ElapsedTime();
-    ElapsedTime CSL = new ElapsedTime();
+    //ElapsedTime CSL = new ElapsedTime();
     ElapsedTime matchTime = new ElapsedTime();
 
     // Servo info
     boolean fr_closed = false;
-    boolean fl_closed = false;
-    boolean csr_on = false;
-    boolean csl_on = false;
+    //boolean fl_closed = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -83,20 +81,14 @@ public class DriveLiftIntegrated extends LinearOpMode {
         imu.initialize(imuParams);
 
         // Get servos
-        CRServo FrontRollerServoRight = hardwareMap.get(CRServo.class, "FRSR");
-        CRServo FrontRollerServoLeft= hardwareMap.get(CRServo.class, "FRSL");
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
-        Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        //Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
         Servo WristServo = hardwareMap.get(Servo.class, "WS");
 
         // Reverse if opposite directions are seen
-        FrontRollerServoRight.setDirection(CRServo.Direction.FORWARD);
-        FrontRollerServoLeft.setDirection(CRServo.Direction.FORWARD);
-
-        // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
-        ClawServoLeft.setDirection(Servo.Direction.FORWARD);
+        //ClawServoLeft.setDirection(Servo.Direction.FORWARD);
 
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -108,7 +100,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
 
         matchTime.reset();
         CSR.reset();
-        CSL.reset();
+        //CSL.reset();
 
         while (opModeIsActive()) {
             // Drive
@@ -118,12 +110,8 @@ public class DriveLiftIntegrated extends LinearOpMode {
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
-            // Servos
-            setRollerPowerRight(FrontRollerServoRight, gamepad2);
-            setRollerPowerLeft(FrontRollerServoLeft, gamepad2);
-
-            setClawServoLeft(ClawServoLeft, gamepad2, 0.5, 0.7);
-            setClawServoRight(ClawServoRight, gamepad2, 0.39, 0.69);
+            //setClawServoLeft(ClawServoLeft, gamepad2, 0.5, 0.7);
+            setClawServoRight(ClawServoRight, gamepad2, 0.35, 0.0);
             setWristServoPower(WristServo, gamepad2);
 
             activateDroneLauncher(DroneServo, gamepad2);
@@ -150,7 +138,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
             telemetry.addLine("\n");
 
             // Servo Telemetry
-            servoTelemetry(WristServo, ClawServoRight, ClawServoLeft);
+            servoTelemetry(WristServo, ClawServoRight);
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
@@ -234,30 +222,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
     }
 
     // SERVO METHODS
-    private void setRollerPowerRight(CRServo FrontRollerServoRight, Gamepad gamepad) {
-        double power = 0;
-
-        if(gamepad.right_trigger != 0 )  {
-            power = 0.75;
-            csr_on = true;
-        } else {
-            csr_on = false;
-        }
-
-        FrontRollerServoRight.setPower(power);
-    }
-    private void setRollerPowerLeft(CRServo FrontRollerServoLeft, Gamepad gamepad) {
-        double power = 0;
-
-        if(gamepad.left_trigger != 0 )  {
-            power = -0.75;
-            csl_on = true;
-        } else {
-            csl_on = false;
-        }
-
-        FrontRollerServoLeft.setPower(power);
-    }
     private void setClawServoRight(Servo ClawServoRight, Gamepad gamepad, double closed_position, double open_position) {
         double position = ClawServoRight.getPosition();
 
@@ -274,23 +238,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
         }
 
         ClawServoRight.setPosition(position);
-    }
-    private void setClawServoLeft(Servo ClawServoLeft, Gamepad gamepad, double closed_position, double open_position) {
-        double position = ClawServoLeft.getPosition();
-
-        if(gamepad.left_bumper && CSL.seconds() > 0.5)  {
-            if (fl_closed) {
-                position = open_position;
-                fl_closed = false;
-            }
-            else {
-                position = closed_position;
-                fl_closed = true;
-            }
-            CSL.reset();
-        }
-
-        ClawServoLeft.setPosition(position);
     }
     private void activateDroneLauncher(CRServo DroneServo, Gamepad gamepad) {
         double power = 0;
@@ -392,16 +339,14 @@ public class DriveLiftIntegrated extends LinearOpMode {
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    private void servoTelemetry(Servo wrist, Servo FrontRight, Servo FrontLeft) {
+    private void servoTelemetry(Servo wrist, Servo FrontRight) {
         telemetry.addLine("--- Servo ---");
-        telemetry.addData("FrontRollerRight Closed", fr_closed);
+        telemetry.addData("FrontRight Closed", fr_closed);
         telemetry.addData("Front Right Location", FrontRight.getPosition());
-        telemetry.addData("FrontRollerLeft Closed", fl_closed);
-        telemetry.addData("Front Left Location", FrontLeft.getPosition());
-        telemetry.addData("CSR On", csr_on);
+        //telemetry.addData("FrontLeft Closed", fl_closed);
+        //telemetry.addData("Front Left Location", FrontLeft.getPosition());
         telemetry.addData("CSR Timer", CSR.seconds());
-        telemetry.addData("CSL On", csl_on);
-        telemetry.addData("CSL Timer", CSL.seconds());
+        //telemetry.addData("CSL Timer", CSL.seconds());
         telemetry.addData("Wrist", wrist.getPosition());
     }
 

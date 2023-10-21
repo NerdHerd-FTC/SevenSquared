@@ -3,6 +3,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,8 @@ public class ServoTesting extends LinearOpMode {
         servos.add(ClawServoRight);
         servos.add(ClawServoLeft);
         servos.add(WristServo);
+
+        ElapsedTime timer = new ElapsedTime();
 
         waitForStart();
 
@@ -53,10 +56,12 @@ public class ServoTesting extends LinearOpMode {
                 location = location - 0.01;
             }
 
-            if (gamepad1.dpad_up) {
+            if (gamepad1.dpad_up && timer.seconds() > 0.5) {
                 position = position + 1;
-            } else if (gamepad1.dpad_down) {
+                timer.reset();
+            } else if (gamepad1.dpad_down && timer.seconds() > 0.5) {
                 position = position - 1;
+                timer.reset();
             }
 
             if (position > 2) {
