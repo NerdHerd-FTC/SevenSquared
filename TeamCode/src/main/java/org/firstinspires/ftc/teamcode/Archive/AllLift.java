@@ -1,6 +1,7 @@
 // Code Created By Derrick, Owen, Shash
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Archive;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "All Lift - Claw & Joint")
+@Disabled
 public class AllLift extends LinearOpMode {
     ElapsedTime CSR = new ElapsedTime();
     ElapsedTime CSL = new ElapsedTime();
