@@ -34,12 +34,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
 
         jointMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         jointMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        jointMotor.setDirection(DcMotor.Direction.FORWARD);
+        jointMotor.setDirection(DcMotor.Direction.REVERSE);
         jointMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armMotor.setDirection(DcMotor.Direction.FORWARD);
+        armMotor.setDirection(DcMotor.Direction.REVERSE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Drive control variables
@@ -117,10 +117,9 @@ public class DriveLiftIntegrated extends LinearOpMode {
             activateDroneLauncher(DroneServo, gamepad2);
 
             // Reset yaw to 0
-            /* if (gamepad1.x) {
+            if (gamepad1.x) {
                 imu.resetYaw();
             }
-             */
 
             // Gyro Telemetry
             gyroTelemetry(imu);
@@ -188,14 +187,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
         }
 
         // get heading from IMU
-        double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         double botHeading;
 
         // restrict range to [-180, 180]
-        if (rawHeading > 180) {
-            botHeading = rawHeading - 360;
-        } else if (rawHeading < -180) {
-            botHeading = rawHeading + 360;
+        if (rawHeading <= 0) {
+            botHeading = rawHeading + 2 * Math.PI;
         } else {
             botHeading = rawHeading;
         }
@@ -280,7 +277,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
     }
     private double setArmPower(DcMotor armMotor, Gamepad gamepad) {
         double power;
-        double mult = 0.4;
+        double mult = 0.5;
         double input = -gamepad.right_stick_y;
         power = input*mult;
 
