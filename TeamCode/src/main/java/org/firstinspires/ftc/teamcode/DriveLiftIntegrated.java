@@ -95,8 +95,11 @@ public class DriveLiftIntegrated extends LinearOpMode {
         CSR.reset();
 
         while (opModeIsActive()) {
+            // Get yaw
+            double yaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            
             // Drive
-            fieldOrientedDrive(imu, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
+            fieldOrientedDrive(yaw, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
 
             // Articulation
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
@@ -114,7 +117,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
             }
 
             // Gyro Telemetry
-            gyroTelemetry(imu);
+            gyroTelemetry(yaw);
             telemetry.addLine("\n");
 
             // Gamepad Telemetry
@@ -138,7 +141,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
         }
     }
 
-    private void fieldOrientedDrive(IMU imu, Gamepad gamepad, boolean exponential_drive, boolean slowdown, DcMotor motorFL, DcMotor motorBL, DcMotor motorFR, DcMotor motorBR) {
+    private void fieldOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, DcMotor motorFL, DcMotor motorBL, DcMotor motorFR, DcMotor motorBR) {
         double y_raw = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad1.left_stick_x;
         double rx_raw = gamepad1.right_stick_x;
@@ -179,14 +182,13 @@ public class DriveLiftIntegrated extends LinearOpMode {
         }
 
         // get heading from IMU
-        double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         double botHeading;
 
         // restrict range to [0, 360]
-        if (rawHeading <= 0) {
-            botHeading = rawHeading + 2 * Math.PI;
+        if (heading <= 0) {
+            botHeading = heading + 2 * Math.PI;
         } else {
-            botHeading = rawHeading;
+            botHeading = heading;
         }
 
         // Rotate the movement direction counter to the bot's rotation
@@ -344,13 +346,13 @@ public class DriveLiftIntegrated extends LinearOpMode {
         telemetry.addData("Wrist", wrist.getPosition());
     }
 
-    private void gyroTelemetry(IMU imu) {
+    private void gyroTelemetry(double heading) {
         telemetry.addLine("--- Gyro ---");
-        if (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) == Double.doubleToLongBits(-0.0)) {
+        if (heading == Double.doubleToLongBits(-0.0)) {
             telemetry.addLine("!!! Heading: -0.0 !!!");
             telemetry.addLine("\n\n\n\n\n\n\n\n\n\n");
         }
-        telemetry.addData("Heading", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("Heading", heading);
     }
 
     // still in progress
