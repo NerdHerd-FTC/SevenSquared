@@ -13,39 +13,21 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "Archer Drive")
-public class DriveLiftIntegrated extends LinearOpMode {
-    ElapsedTime CSR = new ElapsedTime();
+@TeleOp(name = "Drive Only")
+public class DriveTesting extends LinearOpMode {
     ElapsedTime matchTime = new ElapsedTime();
-
-    // Servo info
-    boolean fr_closed = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // Get motors
-        DcMotor jointMotor = hardwareMap.dcMotor.get("joint");
-        DcMotor armMotor = hardwareMap.dcMotor.get("arm");
-
-        jointMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        jointMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        jointMotor.setDirection(DcMotor.Direction.REVERSE);
-        jointMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armMotor.setDirection(DcMotor.Direction.REVERSE);
-        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         // Drive control variables
         boolean exponential_drive = true;
         boolean slowdown = false;
 
         // Declare motors (F=front, B=back, R=right, L=left)
-        DcMotor motorFL = hardwareMap.dcMotor.get("frontLeft");
-        DcMotor motorBL = hardwareMap.dcMotor.get("backLeft");
-        DcMotor motorFR = hardwareMap.dcMotor.get("frontRight");
-        DcMotor motorBR = hardwareMap.dcMotor.get("backRight");
+        DcMotor motorFL = hardwareMap.dcMotor.get("motorFL");
+        DcMotor motorBL = hardwareMap.dcMotor.get("motorBL");
+        DcMotor motorFR = hardwareMap.dcMotor.get("motorFR");
+        DcMotor motorBR = hardwareMap.dcMotor.get("motorBR");
 
         // Unlock full speed of drive motors
         motorFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -67,23 +49,13 @@ public class DriveLiftIntegrated extends LinearOpMode {
 
         imuParams = new IMU.Parameters(
                 new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
+                        RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                        RevHubOrientationOnRobot.UsbFacingDirection.UP
                 )
         );
         // Technically this is the default, however specifying it is clearer
         // Without this, data retrieving from the IMU throws an exception
         imu.initialize(imuParams);
-
-        // Get servos
-        Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
-        CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
-        Servo WristServo = hardwareMap.get(Servo.class, "WS");
-
-        // Reverse if opposite directions are seen
-        ClawServoRight.setDirection(Servo.Direction.FORWARD);
-
-        DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         waitForStart();
 
@@ -92,20 +64,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
         if (isStopRequested()) return;
 
         matchTime.reset();
-        CSR.reset();
 
         while (opModeIsActive()) {
+            double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
             // Drive
-            fieldOrientedDrive(imu, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
-
-            // Articulation
-            jointMotor.setPower(setJointPower(jointMotor, gamepad2));
-            armMotor.setPower(setArmPower(armMotor, gamepad2));
-
-            setClawServoRight(ClawServoRight, gamepad2, -1, 0.6);
-            setWristServoPower(WristServo, gamepad2);
-
-            activateDroneLauncher(DroneServo, gamepad2);
+            fieldOrientedDrive(heading, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
 
             // Reset yaw to 0 7
             if (gamepad1.x) {
@@ -114,22 +78,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
             }
 
             // Gyro Telemetry
-            gyroTelemetry(imu);
+            gyroTelemetry(heading);
             telemetry.addLine("\n");
 
             // Gamepad Telemetry
             checkGamepadParameters(gamepad1, "Driver");
-            checkGamepadParameters(gamepad2, "Operator");
             telemetry.addLine("\n");
-
-            // Motor Telemetry
-            motorTelemetry(jointMotor, "Joint");
-            telemetry.addLine("\n");
-            motorTelemetry(armMotor, "Arm");
-            telemetry.addLine("\n");
-
-            // Servo Telemetry
-            servoTelemetry(WristServo, ClawServoRight);
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
@@ -138,7 +92,7 @@ public class DriveLiftIntegrated extends LinearOpMode {
         }
     }
 
-    private void fieldOrientedDrive(IMU imu, Gamepad gamepad, boolean exponential_drive, boolean slowdown, DcMotor motorFL, DcMotor motorBL, DcMotor motorFR, DcMotor motorBR) {
+    private void fieldOrientedDrive(double rawHeading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, DcMotor motorFL, DcMotor motorBL, DcMotor motorFR, DcMotor motorBR) {
         double y_raw = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad1.left_stick_x;
         double rx_raw = gamepad1.right_stick_x;
@@ -178,8 +132,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
             rx *= 0.75;
         }
 
-        // get heading from IMU
-        double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         double botHeading;
 
         // restrict range to [0, 360]
@@ -208,86 +160,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
         motorBL.setPower(backLeftPower);
         motorFR.setPower(frontRightPower);
         motorBR.setPower(backRightPower);
-    }
-
-    // SERVO METHODS
-    private void setClawServoRight(Servo ClawServoRight, Gamepad gamepad, double closed_position, double open_position) {
-        double position;
-        if (fr_closed) {
-            position = closed_position;
-        } else {
-            position = open_position;
-        }
-
-        if(gamepad.right_bumper && CSR.seconds() > 0.5)  {
-            if (fr_closed){
-                position = open_position;
-                fr_closed = false;
-            }
-            else {
-                position = closed_position;
-                fr_closed = true;
-            }
-            CSR.reset();
-        }
-
-        ClawServoRight.setPosition(position);
-    }
-    private void activateDroneLauncher(CRServo DroneServo, Gamepad gamepad) {
-        double power = 0;
-        if(gamepad.a && matchTime.seconds() > 0)  {
-            power = 1;
-        }
-
-        DroneServo.setPower(power);
-    }
-    private void setWristServoPower(Servo WristServo, Gamepad gamepad){
-        double position = WristServo.getPosition();
-
-        if(gamepad.dpad_up){
-            position += 0.05;
-        }
-        else if(gamepad.dpad_down){
-            position -= -0.05;
-        }
-
-        WristServo.setPosition(position);
-    }
-
-    // ARM AND JOINT MOTOR METHODS
-    private double setJointPower(DcMotor jointMotor, Gamepad gamepad) {
-        double power;
-        double mult = 1;
-        double input = -gamepad.left_stick_y;
-
-        power = input*mult;
-
-        /*
-        if (jointMotor.getCurrentPosition() <= 0 && input < 0) {
-            power = 0;
-        } else {
-            power = input*mult;
-        }
-         */
-
-        return power;
-    }
-    private double setArmPower(DcMotor armMotor, Gamepad gamepad) {
-        double power;
-        double mult = 0.5;
-        double input = -gamepad.right_stick_y;
-        power = input*mult;
-
-        /*
-        if (jointMotor.getCurrentPosition() <= 0 && input < 0) {
-            power = 0;
-        } else {
-            power = input*mult;
-        }
-
-         */
-
-        return power;
     }
 
     // TELEMETRY METHODS
@@ -333,41 +205,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    private void servoTelemetry(Servo wrist, Servo FrontRight) {
-        telemetry.addLine("--- Servo ---");
-        telemetry.addData("FrontRight Closed", fr_closed);
-        telemetry.addData("Front Right Location", FrontRight.getPosition());
-        //telemetry.addData("FrontLeft Closed", fl_closed);
-        //telemetry.addData("Front Left Location", FrontLeft.getPosition());
-        telemetry.addData("CSR Timer", CSR.seconds());
-        //telemetry.addData("CSL Timer", CSL.seconds());
-        telemetry.addData("Wrist", wrist.getPosition());
-    }
-
-    private void gyroTelemetry(IMU imu) {
+    private void gyroTelemetry(double heading) {
         telemetry.addLine("--- Gyro ---");
-        if (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) == Double.doubleToLongBits(-0.0)) {
+        if (heading == Double.doubleToLongBits(-0.0)) {
             telemetry.addLine("!!! Heading: -0.0 !!!");
             telemetry.addLine("\n\n\n\n\n\n\n\n\n\n");
         }
-        telemetry.addData("Heading", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-    }
-
-    // still in progress
-    private void turnToHeading(double targetHeading, double currentHeading, double max_power, double sleepTime) {
-        double error = targetHeading - currentHeading;
-
-        // PID
-        double p = error * 0.01;
-        double i = 0;
-        double d = 0;
-
-        double power = p + i + d;
-
-        if (power > max_power) {
-            power = max_power;
-        } else if (power < -max_power) {
-            power = -max_power;
-        }
+        telemetry.addData("Heading", heading);
     }
 }
