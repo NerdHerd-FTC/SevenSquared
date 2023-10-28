@@ -111,12 +111,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
             //setClawServoLeft(ClawServoLeft, gamepad2, 0.5, 0.7);
-            setClawServoRight(ClawServoRight, gamepad2, 0.35, 0.0);
+            setClawServoRight(ClawServoRight, gamepad2, -1, 0.6);
             setWristServoPower(WristServo, gamepad2);
 
             activateDroneLauncher(DroneServo, gamepad2);
 
-            // Reset yaw to 0
+            // Reset yaw to 0 7
             if (gamepad1.x) {
                 imu.resetYaw();
             }
@@ -220,7 +220,12 @@ public class DriveLiftIntegrated extends LinearOpMode {
 
     // SERVO METHODS
     private void setClawServoRight(Servo ClawServoRight, Gamepad gamepad, double closed_position, double open_position) {
-        double position = ClawServoRight.getPosition();
+        double position;
+        if (fr_closed) {
+            position = closed_position;
+        } else {
+            position = open_position;
+        }
 
         if(gamepad.right_bumper && CSR.seconds() > 0.5)  {
             if (fr_closed){
@@ -248,10 +253,10 @@ public class DriveLiftIntegrated extends LinearOpMode {
         double position = WristServo.getPosition();
 
         if(gamepad.dpad_up){
-            position += 0.05;
+            position += 0.10;
         }
         else if(gamepad.dpad_down){
-            position -= 0.05;
+            position -= -0.10;
         }
 
         WristServo.setPosition(position);

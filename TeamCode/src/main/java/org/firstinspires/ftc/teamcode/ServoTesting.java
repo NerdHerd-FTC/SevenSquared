@@ -55,7 +55,6 @@ public class ServoTesting extends LinearOpMode {
             } else if (gamepad1.b) {
                 location = location - 0.01;
             }
-
             if (gamepad1.dpad_up && timer.seconds() > 0.5) {
                 position = position + 1;
                 timer.reset();
