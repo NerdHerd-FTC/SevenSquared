@@ -16,15 +16,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "Drive and Lift")
+@TeleOp(name = "Archer Drive")
 public class DriveLiftIntegrated extends LinearOpMode {
     ElapsedTime CSR = new ElapsedTime();
-    //ElapsedTime CSL = new ElapsedTime();
     ElapsedTime matchTime = new ElapsedTime();
 
     // Servo info
     boolean fr_closed = false;
-    //boolean fl_closed = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -82,13 +80,11 @@ public class DriveLiftIntegrated extends LinearOpMode {
 
         // Get servos
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
-        //Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
         Servo WristServo = hardwareMap.get(Servo.class, "WS");
 
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
-        //ClawServoLeft.setDirection(Servo.Direction.FORWARD);
 
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -100,7 +96,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
 
         matchTime.reset();
         CSR.reset();
-        //CSL.reset();
 
         while (opModeIsActive()) {
             // Drive
@@ -110,7 +105,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
-            //setClawServoLeft(ClawServoLeft, gamepad2, 0.5, 0.7);
             setClawServoRight(ClawServoRight, gamepad2, -1, 0.6);
             setWristServoPower(WristServo, gamepad2);
 
@@ -253,10 +247,10 @@ public class DriveLiftIntegrated extends LinearOpMode {
         double position = WristServo.getPosition();
 
         if(gamepad.dpad_up){
-            position += 0.10;
+            position += 0.05;
         }
         else if(gamepad.dpad_down){
-            position -= -0.10;
+            position -= -0.05;
         }
 
         WristServo.setPosition(position);
