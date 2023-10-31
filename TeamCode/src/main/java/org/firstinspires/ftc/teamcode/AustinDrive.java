@@ -87,7 +87,7 @@ public class AustinDrive extends LinearOpMode {
 
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
-        ClawServoLeft.setDirection(Servo.Direction.FORWARD);
+        ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         waitForStart();
@@ -112,8 +112,8 @@ public class AustinDrive extends LinearOpMode {
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
-            setClawServoRight(ClawServoRight, gamepad2, 0.4, 0.5);
-            setClawServoLeft(ClawServoLeft, gamepad2, -0.4,-0.6);
+            setClawServoRight(ClawServoRight, gamepad2, 0.4, 0.6);
+            setClawServoLeft(ClawServoLeft, gamepad2, 0.4,0.6);
 
             setWristServoPower(WristServo, gamepad2);
 
