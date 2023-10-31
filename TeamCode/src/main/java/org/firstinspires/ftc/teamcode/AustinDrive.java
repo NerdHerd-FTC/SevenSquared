@@ -20,8 +20,8 @@ public class AustinDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
     // Servo info
-    boolean fr_closed = false;
-    boolean fl_closed = false;
+    boolean fr_closed = true;
+    boolean fl_closed = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -112,8 +112,8 @@ public class AustinDrive extends LinearOpMode {
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
-            setClawServoRight(ClawServoRight, gamepad2, 0.4, 0.6);
-            setClawServoLeft(ClawServoLeft, gamepad2, 0.4,0.6);
+            setClawServoRight(ClawServoRight, gamepad2, 0.6, 0.4);
+            setClawServoLeft(ClawServoLeft, gamepad2,0,0.6);
 
             setWristServoPower(WristServo, gamepad2);
 
