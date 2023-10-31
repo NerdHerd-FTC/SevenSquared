@@ -110,8 +110,8 @@ public class DriveLiftIntegrated extends LinearOpMode {
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
-            setClawServoRight(ClawServoRight, gamepad2, -1, 0.6);
-            setClawServoLeft(ClawServoLeft, gamepad2, -1,0.6);
+            setClawServoRight(ClawServoRight, gamepad2, -1, 0.45);
+            setClawServoLeft(ClawServoLeft, gamepad2, -1,0.45);
 
             setWristServoPower(WristServo, gamepad2);
 
