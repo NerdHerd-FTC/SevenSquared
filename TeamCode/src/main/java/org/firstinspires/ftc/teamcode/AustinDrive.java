@@ -23,6 +23,12 @@ public class AustinDrive extends LinearOpMode {
     boolean fr_closed = true;
     boolean fl_closed = true;
 
+    boolean arm_macro = false;
+    double arm_target;
+
+    boolean joint_macro = false;
+    double joint_target;
+
     @Override
     public void runOpMode() throws InterruptedException {
         // Get motors
@@ -86,7 +92,7 @@ public class AustinDrive extends LinearOpMode {
 
 
         // Reverse if opposite directions are seen
-        ClawServoRight.setDirection(Servo.Direction.FORWARD);
+        ClawServoRight.setDirection(Servo.Direction.REVERSE);
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -99,6 +105,7 @@ public class AustinDrive extends LinearOpMode {
         matchTime.reset();
         CSR.reset();
         CSL.reset();
+        WristServo.setPosition(0);
 
 
         while (opModeIsActive()) {
@@ -112,8 +119,8 @@ public class AustinDrive extends LinearOpMode {
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
             armMotor.setPower(setArmPower(armMotor, gamepad2));
 
-            setClawServoRight(ClawServoRight, gamepad2, 0.6, 0.4);
-            setClawServoLeft(ClawServoLeft, gamepad2,0,0.6);
+            setClawServoRight(ClawServoRight, gamepad2, 0,1);
+            setClawServoLeft(ClawServoLeft, gamepad2,0.6,0);
 
             setWristServoPower(WristServo, gamepad2);
 
@@ -168,9 +175,11 @@ public class AustinDrive extends LinearOpMode {
         }
 
         // Toggle exponential drive
+        /*
         if (gamepad1.y) {
             exponential_drive = !exponential_drive;
         }
+         */
 
         // Toggle slowdown
         if (gamepad1.a) {
@@ -285,7 +294,7 @@ public class AustinDrive extends LinearOpMode {
             position += 0.05;
         }
         else if(gamepad.dpad_down){
-            position -= -0.05;
+            position -= 0.05;
         }
 
         WristServo.setPosition(position);
