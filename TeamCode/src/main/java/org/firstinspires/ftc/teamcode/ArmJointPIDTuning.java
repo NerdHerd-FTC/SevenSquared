@@ -1,5 +1,5 @@
-// Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @TeleOp(name = "Arm Joint PID Tuning")
 public class ArmJointPIDTuning extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
+    private ElapsedTime debounceTime = new ElapsedTime();
 
     boolean arm_macro = false;
     double arm_target = 0;
@@ -54,7 +55,6 @@ public class ArmJointPIDTuning extends LinearOpMode {
         armMotor.setDirection(DcMotor.Direction.REVERSE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Drive control variables
         // Drive control variables
         boolean exponential_drive = true;
         boolean slowdown = false;
@@ -97,8 +97,6 @@ public class ArmJointPIDTuning extends LinearOpMode {
 
         imu.resetYaw();
 
-        if (isStopRequested()) return;
-
         matchTime.reset();
 
         while (opModeIsActive()) {
@@ -118,14 +116,17 @@ public class ArmJointPIDTuning extends LinearOpMode {
                 telemetry.addLine("IMU reset");
             }
 
-            if (gamepad2.dpad_up) {
-                jointKp += 0.01;
-            } else if (gamepad2.dpad_down) {
-                jointKp -= 0.01;
-            } else if (gamepad2.dpad_right) {
-                armKp += 0.01;
-            } else if (gamepad2.dpad_left) {
-                armKp -= 0.01;
+            if (debounceTime.seconds() > 0.5) {
+                if (gamepad2.dpad_up) {
+                    jointKp += 0.01;
+                } else if (gamepad2.dpad_down) {
+                    jointKp -= 0.01;
+                } else if (gamepad2.dpad_right) {
+                    armKp += 0.01;
+                } else if (gamepad2.dpad_left) {
+                    armKp -= 0.01;
+                }
+                debounceTime.reset();
             }
 
             // Gyro Telemetry
@@ -243,7 +244,7 @@ public class ArmJointPIDTuning extends LinearOpMode {
         if (joint_macro) {
             double currentError = targetLocation - currentLocation;
             double p = Kp * currentError;
-            jointIntegral += Ki * currentError * DELTA_T;
+            jointIntegral += Ki * currentError * DELTA_T * 0.001;
 
             if (jointIntegral > 1) {
                 jointIntegral = 1;
@@ -274,16 +275,16 @@ public class ArmJointPIDTuning extends LinearOpMode {
         if (arm_macro) {
             double currentError = targetLocation - currentLocation;
             double p = Kp * currentError;
-            jointIntegral += Ki * currentError * DELTA_T;
+            armIntegral += Ki * currentError * DELTA_T * 0.001;
 
-            if (jointIntegral > 1) {
-                jointIntegral = 1;
-            } else if (jointIntegral < -1) {
-                jointIntegral = -1;
+            if (armIntegral > 1) {
+                armIntegral = 1;
+            } else if (armIntegral < -1) {
+                armIntegral = -1;
             }
 
             double d = Kd * (currentError - prevJointError) / DELTA_T;
-            power = p + jointIntegral + d;
+            power = p + armIntegral + d;
         }
 
         return power;
