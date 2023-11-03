@@ -195,7 +195,10 @@ public class PixelDropoffBlue extends LinearOpMode {
 
     private void waitForMotors() {
         while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-            // Optionally add telemetry updates here
+            motorTelemetry(frontLeft, "frontLeft");
+            motorTelemetry(frontRight, "frontRight");
+            motorTelemetry(backLeft, "backLeft");
+            motorTelemetry(backRight, "backRight");
             idle();
         }
     }
@@ -206,4 +209,12 @@ public class PixelDropoffBlue extends LinearOpMode {
         backLeft.setPower(0);
         backRight.setPower(0);
     }
+
+    private void motorTelemetry(DcMotor motor, String name) {
+        telemetry.addLine("--- " + name + " ---");
+        telemetry.addData(name + " Power", motor.getPower());
+        telemetry.addData(name + " Position", motor.getCurrentPosition());
+        telemetry.addData(name + " Target Position", motor.getTargetPosition());
+    }
+
 }

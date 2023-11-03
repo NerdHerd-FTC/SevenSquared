@@ -15,7 +15,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="Dropoff - Blue")
+@Autonomous(name="Dropoff - Blue SIM")
 @Disabled
 public class AutoForSim extends LinearOpMode {
 
