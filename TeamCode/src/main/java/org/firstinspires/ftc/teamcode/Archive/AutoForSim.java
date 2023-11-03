@@ -1,9 +1,10 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Archive;
 
 import android.util.Size;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -15,6 +16,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name="Dropoff - Blue")
+@Disabled
 public class AutoForSim extends LinearOpMode {
 
     // Define motors
