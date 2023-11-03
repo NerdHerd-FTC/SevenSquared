@@ -182,9 +182,10 @@ public class AustinDrive extends LinearOpMode {
          */
 
         // Toggle slowdown
-        if (gamepad1.a) {
+        /*if (gamepad1.a) {
             slowdown = !slowdown;
         }
+         */
 
         // Exponential Drive
         double exponent = 2.0;
@@ -302,36 +303,55 @@ public class AustinDrive extends LinearOpMode {
 
     // ARM AND JOINT MOTOR METHODS
     private double setJointPower(DcMotor jointMotor, Gamepad gamepad) {
-        double power;
+        double power = 0;
         double mult = 1;
-        double input = -gamepad.left_stick_y;
 
-        power = input*mult;
+        if (!joint_macro && gamepad.b) {
+            joint_macro = true;
 
-        /*
-        if (jointMotor.getCurrentPosition() <= 0 && input < 0) {
-            power = 0;
-        } else {
+            jointMotor.setTargetPosition(-1000); // TUNE THE HECK OUT OF THIS POR FAVOR
+            jointMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
+            joint_macro = false;
+            jointMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            double input = -gamepad.left_stick_y;
+
             power = input*mult;
+        } else if (joint_macro) {
+            if (jointMotor.getCurrentPosition() <= -1000) {
+                jointMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                joint_macro = false;
+                power = 0;
+            } else {
+                power = 1;
+            }
         }
-         */
 
         return power;
     }
     private double setArmPower(DcMotor armMotor, Gamepad gamepad) {
-        double power;
+        double power = 0;
         double mult = 0.5;
-        double input = -gamepad.right_stick_y;
-        power = input*mult;
 
-        /*
-        if (jointMotor.getCurrentPosition() <= 0 && input < 0) {
-            power = 0;
-        } else {
+        if (!arm_macro && gamepad.a) {
+            arm_macro = true;
+
+            armMotor.setTargetPosition(-1000); // TUNE THE HECK OUT OF THIS POR FAVOR
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
+            arm_macro = false;
+            armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            double input = -gamepad.right_stick_y;
             power = input*mult;
+        } else if (arm_macro) {
+            if (armMotor.getCurrentPosition() <= -1000) {
+                arm_macro = false;
+                armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                power = 0;
+            } else {
+                power = 0.5;
+            }
         }
-
-         */
 
         return power;
     }
@@ -369,6 +389,26 @@ public class AustinDrive extends LinearOpMode {
         }
         if (gamepad.dpad_right) {
             telemetry.addLine("DPad Right Pressed");
+        }
+
+        if (gamepad.a) {
+            telemetry.addLine("A pressed");
+        }
+        if (gamepad.b) {
+            telemetry.addLine("B pressed");
+        }
+        if (gamepad.x) {
+            telemetry.addLine("X pressed");
+        }
+        if (gamepad.y) {
+            telemetry.addLine("Y pressed");
+        }
+
+        if (gamepad.left_bumper) {
+            telemetry.addLine("Left bumper clicked");
+        }
+        if (gamepad.right_bumper) {
+            telemetry.addLine("Right bumper clicked");
         }
     }
 
