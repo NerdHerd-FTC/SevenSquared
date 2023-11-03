@@ -15,7 +15,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name="Dropoff - Blue")
-public class PixelDropoffBlue extends LinearOpMode {
+public class AutoForSim extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -29,8 +29,6 @@ public class PixelDropoffBlue extends LinearOpMode {
     private static final double WHEEL_DIAMETER_INCH = 96/25.4;
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
-    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
-
     @Override
     public void runOpMode() throws InterruptedException {
         // Initialize motors from hardware map
@@ -42,8 +40,8 @@ public class PixelDropoffBlue extends LinearOpMode {
         frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
         backRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Retrieve the IMU from the hardware map
         IMU imu = hardwareMap.get(IMU.class, "imu");
@@ -59,42 +57,23 @@ public class PixelDropoffBlue extends LinearOpMode {
         // Without this, data retrieving from the IMU throws an exception
         imu.initialize(imuParams);
 
-        // VisionPortal
-        VisionPortal visionPortal;
-
-        // Create a new VisionPortal Builder object.
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(blueCubeDetectionPipeline)
-                .setCameraResolution(new Size(640, 480))
-                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
-                .enableLiveView(true)
-                .setAutoStopLiveView(true)
-                .build();
-
-        setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         waitForStart();
 
         while (opModeIsActive()) {
-            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+            double decision = 1;
 
-            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            if (decision == 1) {
                 moveForward(48);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            } else if (decision == 2) {
                 moveForward(24);
                 turn(-90, imu);
                 strafeLeft(12);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            } else if (decision == 3) {
                 moveForward(24);
                 turn(90, imu);
                 strafeRight(12);
             }
         }
-    }
-
-    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return blueCubeDetectionPipeline.getDetection();
     }
 
     // may need to make mods if there aren't enough encoder cables
@@ -166,7 +145,7 @@ public class PixelDropoffBlue extends LinearOpMode {
         double angleDifference = targetAngle - currentAngle;
 
         // adjust threshold as needed
-        while (Math.abs(angleDifference) < 1) {
+        while (angleDifference < 1) {
             currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
             angleDifference = targetAngle - currentAngle;
 
@@ -177,6 +156,7 @@ public class PixelDropoffBlue extends LinearOpMode {
             }
 
             double turnPower = (angleDifference * kP);
+            turnPower = Math.tanh(turnPower);
 
             frontLeft.setPower(turnPower);
             frontRight.setPower(-turnPower);
