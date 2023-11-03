@@ -18,10 +18,10 @@ public class ArmJointPIDTuning extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
     boolean arm_macro = false;
-    double arm_target;
+    double arm_target = 0;
 
     boolean joint_macro = false;
-    double joint_target;
+    double joint_target = 0;
 
     double armKp = 0.01;
     double armKi = 0.00;
@@ -30,6 +30,13 @@ public class ArmJointPIDTuning extends LinearOpMode {
     double jointKp = 0.01;
     double jointKi = 0.00;
     double jointKd = 0.00;
+
+    int DELTA_T = 50;
+
+    double prevJointError = 0;
+    double prevArmError = 0;
+    double jointIntegral = 0;
+    double armIntegral = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -102,8 +109,8 @@ public class ArmJointPIDTuning extends LinearOpMode {
             fieldOrientedDrive(yaw, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
 
             // Articulation
-            jointMotor.setPower(setJointPower(jointMotor, gamepad2));
-            armMotor.setPower(setArmPower(armMotor, gamepad2));
+            jointMotor.setPower(setJointPower(jointMotor, gamepad2, jointKp, jointKi, jointKd));
+            armMotor.setPower(setArmPower(armMotor, gamepad2, armKp, armKi, armKd));
 
             // Reset yaw to 0 7
             if (gamepad1.x) {
@@ -139,7 +146,7 @@ public class ArmJointPIDTuning extends LinearOpMode {
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
             telemetry.update();
-            sleep(50);
+            sleep(DELTA_T);
         }
     }
 
@@ -221,21 +228,31 @@ public class ArmJointPIDTuning extends LinearOpMode {
     private double setJointPower(DcMotor jointMotor, Gamepad gamepad, double Kp, double Ki, double Kd) {
         double power = 0;
         double mult = 1;
-        double targetLocation = 0;
         double currentLocation = jointMotor.getCurrentPosition();
+        double targetLocation = joint_target;
 
         if (!joint_macro && gamepad.b) {
             joint_macro = true;
+
         } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
             joint_macro = false;
-            jointMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             double input = -gamepad.left_stick_y;
             power = input*mult;
         }
 
         if (joint_macro) {
-            double error = targetLocation - currentLocation;
+            double currentError = targetLocation - currentLocation;
+            double p = Kp * currentError;
+            jointIntegral += Ki * currentError * DELTA_T;
 
+            if (jointIntegral > 1) {
+                jointIntegral = 1;
+            } else if (jointIntegral < -1) {
+                jointIntegral = -1;
+            }
+
+            double d = Kd * (currentError - prevJointError) / DELTA_T;
+            power = p + jointIntegral + d;
         }
 
         return power;
@@ -243,25 +260,30 @@ public class ArmJointPIDTuning extends LinearOpMode {
     private double setArmPower(DcMotor armMotor, Gamepad gamepad, double Kp, double Ki, double Kd) {
         double power = 0;
         double mult = 0.5;
+        double currentLocation = armMotor.getCurrentPosition();
+        double targetLocation = arm_target;
 
         if (!arm_macro && gamepad.a) {
             arm_macro = true;
-
-            armMotor.setTargetPosition(-1000); // TUNE THE HECK OUT OF THIS POR FAVOR
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             arm_macro = false;
-            armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             double input = -gamepad.right_stick_y;
             power = input*mult;
-        } else if (arm_macro) {
-            if (armMotor.getCurrentPosition() <= -1000) {
-                arm_macro = false;
-                armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                power = 0;
-            } else {
-                power = 0.5;
+        }
+
+        if (arm_macro) {
+            double currentError = targetLocation - currentLocation;
+            double p = Kp * currentError;
+            jointIntegral += Ki * currentError * DELTA_T;
+
+            if (jointIntegral > 1) {
+                jointIntegral = 1;
+            } else if (jointIntegral < -1) {
+                jointIntegral = -1;
             }
+
+            double d = Kd * (currentError - prevJointError) / DELTA_T;
+            power = p + jointIntegral + d;
         }
 
         return power;
