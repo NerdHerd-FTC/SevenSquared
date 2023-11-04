@@ -95,6 +95,7 @@ public class AustinDrive extends LinearOpMode {
         ClawServoRight.setDirection(Servo.Direction.REVERSE);
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        WristServo.setDirection(Servo.Direction.REVERSE);
 
         waitForStart();
 
@@ -229,6 +230,11 @@ public class AustinDrive extends LinearOpMode {
         motorBL.setPower(backLeftPower);
         motorFR.setPower(frontRightPower);
         motorBR.setPower(backRightPower);
+
+        motorTelemetry(motorFL, "FL");
+        motorTelemetry(motorBL, "BL");
+        motorTelemetry(motorFR, "FR");
+        motorTelemetry(motorBR, "BR");
     }
 
 
@@ -331,7 +337,7 @@ public class AustinDrive extends LinearOpMode {
     }
     private double setArmPower(DcMotor armMotor, Gamepad gamepad) {
         double power = 0;
-        double mult = 0.5;
+        double mult = 0.7;
 
         if (!arm_macro && gamepad.a) {
             arm_macro = true;

@@ -21,6 +21,9 @@ public class PixelDropoffBlue extends LinearOpMode {
     private DcMotor frontLeft, frontRight, backLeft, backRight;
 
     // Constants
+    //11 or 7.5
+    private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
+    private static final double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
 
     // Pulled from "encoder resolution formula": https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
     private static final double TICKS_PER_REV = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
@@ -29,7 +32,10 @@ public class PixelDropoffBlue extends LinearOpMode {
     private static final double WHEEL_DIAMETER_INCH = 96/25.4;
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
+    private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
+
+    boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -76,20 +82,21 @@ public class PixelDropoffBlue extends LinearOpMode {
 
         waitForStart();
 
-        while (opModeIsActive()) {
             BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
             if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-                moveForward(48);
+                moveForward(24);
+                moveForward(-20);
+                strafeLeft(30);
             } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
                 moveForward(24);
-                turn(-90, imu);
-                strafeLeft(12);
+                turn(-90);
+                moveForward(6);
             } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
                 moveForward(24);
-                turn(90, imu);
-                strafeRight(12);
-            }
+                turn(90);
+                moveForward(6);
+
         }
     }
 
@@ -97,92 +104,104 @@ public class PixelDropoffBlue extends LinearOpMode {
         return blueCubeDetectionPipeline.getDetection();
     }
 
-    // may need to make mods if there aren't enough encoder cables
     public void moveForward(double inches) {
-        int move = (int)(inches * TICKS_PER_INCH);
+        if (!running) {
+            running = true;
+            int move = (int) (inches * TICKS_PER_INCH);
 
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-        backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
+            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
 
-        setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(0.5);
-        frontRight.setPower(0.5);
-        backLeft.setPower(0.5);
-        backRight.setPower(0.5);
+            frontLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backLeft.setPower(0.5);
+            backRight.setPower(0.5);
 
-        waitForMotors();
+            waitForMotors();
 
-        stopMotors();
+            stopMotors();
+            running = false;
+        }
     }
 
     public void strafeLeft(double inches) {
-        int move = (int)(inches * TICKS_PER_INCH);
+        if (!running) {
+            running = true;
+            int move = (int) (inches * TICKS_PER_INCH);
 
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-        backRight.setTargetPosition(backRight.getCurrentPosition() - move);
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
+            backRight.setTargetPosition(backRight.getCurrentPosition() - move);
 
-        setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(0.5);
-        frontRight.setPower(0.5);
-        backLeft.setPower(0.5);
-        backRight.setPower(0.5);
+            frontLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backLeft.setPower(0.5);
+            backRight.setPower(0.5);
 
-        waitForMotors();
+            waitForMotors();
 
-        stopMotors();
+            stopMotors();
+            running = false;
+        }
     }
 
     public void strafeRight(double inches) {
-        int move = (int)(inches * TICKS_PER_INCH);
+        if (!running) {
+            running = true;
+            int move = (int) (inches * TICKS_PER_INCH);
 
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() - move);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() - move);
-        backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() - move);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() - move);
+            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
 
-        setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(0.5);
-        frontRight.setPower(0.5);
-        backLeft.setPower(0.5);
-        backRight.setPower(0.5);
+            frontLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backLeft.setPower(0.5);
+            backRight.setPower(0.5);
 
-        waitForMotors();
+            waitForMotors();
 
-        stopMotors();
+            stopMotors();
+            running = false;
+        }
     }
 
     // runs from -180 to 180
-    private void turn(double targetAngle, IMU imu) {
-        final double kP = 0.01;
+    private void turn(double targetAngle) {
+        if (!running) {
+            running = true;
 
-        double currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        double angleDifference = targetAngle - currentAngle;
+            int turnTicks = (int) (targetAngle * TICKS_PER_DEGREE);
 
-        // adjust threshold as needed
-        while (Math.abs(angleDifference) < 1) {
-            currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            angleDifference = targetAngle - currentAngle;
+            // For a left turn, the left motors should move backward and the right motors forward
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - turnTicks);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() + turnTicks);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() - turnTicks);
+            backRight.setTargetPosition(backRight.getCurrentPosition() + turnTicks);
 
-            if (angleDifference > 180) {
-                angleDifference -= 360;
-            } else if (angleDifference < -180) {
-                angleDifference += 360;
-            }
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            double turnPower = (angleDifference * kP);
+            // Set the power for turning, this can be adjusted as necessary
+            final double TURN_POWER = 0.5;
+            frontLeft.setPower(-TURN_POWER);
+            frontRight.setPower(TURN_POWER);
+            backLeft.setPower(-TURN_POWER);
+            backRight.setPower(TURN_POWER);
 
-            frontLeft.setPower(turnPower);
-            frontRight.setPower(-turnPower);
-            backLeft.setPower(turnPower);
-            backRight.setPower(-turnPower);
-            sleep(50);
+            waitForMotors();
+
+            stopMotors();
+            running = false;
         }
     }
 

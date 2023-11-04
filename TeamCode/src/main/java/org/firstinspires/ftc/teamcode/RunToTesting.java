@@ -29,6 +29,11 @@ public class RunToTesting extends LinearOpMode {
     private static final double WHEEL_DIAMETER_INCH = 96/25.4;
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
+    //11 or 7.5
+    private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
+    private static final double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
+
+    boolean running = false;
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     @Override
@@ -75,10 +80,7 @@ public class RunToTesting extends LinearOpMode {
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         waitForStart();
-
-        while (opModeIsActive()) {
-            moveForward(24);
-        }
+        moveForward(24);
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
@@ -87,90 +89,109 @@ public class RunToTesting extends LinearOpMode {
 
     // may need to make mods if there aren't enough encoder cables
     public void moveForward(double inches) {
-        int move = (int)(inches * TICKS_PER_INCH);
+        if (!running) {
+            running = true;
+            int move = (int) (inches * TICKS_PER_INCH);
 
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-        backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
+            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
 
-        setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(0.5);
-        frontRight.setPower(0.5);
-        backLeft.setPower(0.5);
-        backRight.setPower(0.5);
+            frontLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backLeft.setPower(0.5);
+            backRight.setPower(0.5);
 
-        waitForMotors();
+            waitForMotors();
 
-        stopMotors();
+            stopMotors();
+            running = false;
+        }
     }
 
     public void strafeLeft(double inches) {
-        int move = (int)(inches * TICKS_PER_INCH);
+        if (!running) {
+            running = true;
+            int move = (int) (inches * TICKS_PER_INCH);
 
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-        backRight.setTargetPosition(backRight.getCurrentPosition() - move);
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
+            backRight.setTargetPosition(backRight.getCurrentPosition() - move);
 
-        setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(0.5);
-        frontRight.setPower(0.5);
-        backLeft.setPower(0.5);
-        backRight.setPower(0.5);
+            frontLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backLeft.setPower(0.5);
+            backRight.setPower(0.5);
 
-        waitForMotors();
+            waitForMotors();
 
-        stopMotors();
+            stopMotors();
+            running = false;
+        }
     }
 
     public void strafeRight(double inches) {
-        int move = (int)(inches * TICKS_PER_INCH);
+        if (!running) {
+            running = true;
+            int move = (int) (inches * TICKS_PER_INCH);
 
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() - move);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() - move);
-        backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() - move);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() - move);
+            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
 
-        setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(0.5);
-        frontRight.setPower(0.5);
-        backLeft.setPower(0.5);
-        backRight.setPower(0.5);
+            frontLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backLeft.setPower(0.5);
+            backRight.setPower(0.5);
 
-        waitForMotors();
+            waitForMotors();
 
-        stopMotors();
+            stopMotors();
+            running = false;
+        }
     }
 
     // runs from -180 to 180
-    private void turn(double targetAngle, IMU imu) {
-        final double kP = 0.01;
+    private void turn(double targetAngle) {
+        if (!running) {
+            running = true;
 
-        double currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        double angleDifference = targetAngle - currentAngle;
+            // Calculate the distance each side of the robot has to move in ticks
+            double targetDistance = 1 * targetAngle; // targetAngle in degrees, convert to inches
+            int targetTicks = (int) (targetDistance * TICKS_PER_INCH);
 
-        // adjust threshold as needed
-        while (Math.abs(angleDifference) < 1) {
-            currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            angleDifference = targetAngle - currentAngle;
+            // Set the target position for each motor
+            // Left motors need to go backwards for a positive angle (right turn)
+            // Right motors need to go forwards for a positive angle (right turn)
+            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - targetTicks);
+            backLeft.setTargetPosition(backLeft.getCurrentPosition() - targetTicks);
+            frontRight.setTargetPosition(frontRight.getCurrentPosition() + targetTicks);
+            backRight.setTargetPosition(backRight.getCurrentPosition() + targetTicks);
 
-            if (angleDifference > 180) {
-                angleDifference -= 360;
-            } else if (angleDifference < -180) {
-                angleDifference += 360;
-            }
+            // Set the motors to run to position
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            double turnPower = (angleDifference * kP);
+            // Spin each side of the robot in opposite directions
+            frontLeft.setPower(0.5);
+            backLeft.setPower(0.5);
+            frontRight.setPower(0.5);
+            backRight.setPower(0.5);
 
-            frontLeft.setPower(turnPower);
-            frontRight.setPower(-turnPower);
-            backLeft.setPower(turnPower);
-            backRight.setPower(-turnPower);
-            sleep(50);
+            // Wait for motors to reach the position
+            waitForMotors();
+
+            // Stop the motors
+            stopMotors();
+            running = false;
         }
     }
 
