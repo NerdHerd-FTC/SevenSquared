@@ -14,8 +14,8 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="Dropoff - Blue")
-public class PixelDropoffBlue extends LinearOpMode {
+@Autonomous(name="Backdrop - Left")
+public class BackDropLeft extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -82,28 +82,9 @@ public class PixelDropoffBlue extends LinearOpMode {
 
         waitForStart();
 
-            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-                moveForward(33);
-                moveForward(-30);
-                strafeLeft(40);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-                moveForward(24);
-                turn(180);
-                moveForward(9);
-                moveForward(-9);
-                strafeLeft(26);
-                moveForward(40);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-                moveForward(24);
-                turn(-180);
-                moveForward(9);
-                moveForward(-9);
-                turn(360);
-                moveForward(40);
-
-        }
+        strafeLeft(40);
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {

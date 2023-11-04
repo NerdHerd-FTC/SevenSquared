@@ -1,20 +1,29 @@
 package org.firstinspires.ftc.teamcode;
+
 import android.graphics.Canvas;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.VisionProcessor;
-import org.opencv.core.*;
-import org.openftc.easyopencv.OpenCvPipeline;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+
 import java.util.ArrayList;
 import java.util.List;
 
 // Currently only supports left camera - right camera may need to be added separately...
-public class BlueCubeDetectionPipeline implements VisionProcessor {
+public class RedCubeDetectionPipeline implements VisionProcessor {
     private Telemetry telemetry;  // Add Telemetry object
     Mat hsv = new Mat();
     Mat mask = new Mat();
+    Mat mask1 = new Mat(); // Added for the lower red range
+    Mat mask2 = new Mat(); // Added for the upper red range
     Mat morphed = new Mat();
 
     // Create rectangle zones for the blue cubes
@@ -30,10 +39,11 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
     public float center_x = 267;
     public float center_y = 62;
 
-    public float right_x = 572;
-    public float right_y = 100;
-    public Scalar lowerBlue = new Scalar(90, 72, 100);
-    public Scalar upperBlue = new Scalar(140, 255, 255);
+    // Adjust the HSV range for red
+    public Scalar lowerRed1 = new Scalar(0, 100, 100);
+    public Scalar upperRed1 = new Scalar(10, 255, 255);
+    public Scalar lowerRed2 = new Scalar(160, 100, 100);
+    public Scalar upperRed2 = new Scalar(180, 255, 255);
 
     enum Detection {
         LEFT,
@@ -43,7 +53,7 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
 
     Detection detected = Detection.RIGHT;
 
-    public BlueCubeDetectionPipeline(Telemetry telemetry) {  // Constructor to initialize telemetry
+    public RedCubeDetectionPipeline(Telemetry telemetry) {  // Constructor to initialize telemetry
         this.telemetry = telemetry;
     }
 
@@ -55,7 +65,9 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
     @Override
     public Object processFrame(Mat frame, long captureTimeNanos) {
         Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_RGB2HSV);
-        Core.inRange(hsv, lowerBlue, upperBlue, mask);
+        Core.inRange(hsv, lowerRed1, upperRed1, mask1);
+        Core.inRange(hsv, lowerRed2, upperRed2, mask2);
+        Core.bitwise_or(mask1, mask2, mask);
 
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
         Imgproc.morphologyEx(mask, morphed, Imgproc.MORPH_OPEN, kernel);
@@ -87,7 +99,7 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
             } else if (centerX > left_x && centerX < left_x + side_width && centerY > left_y && centerY < left_y + side_height) {
                 telemetry.addData("Location", "Left");
                 detected = Detection.LEFT;
-            } else if (detected == null){
+            } else if (detected == null) {
                 telemetry.addData("Location (Assumed)", "Right");
                 detected = Detection.RIGHT;
             }
