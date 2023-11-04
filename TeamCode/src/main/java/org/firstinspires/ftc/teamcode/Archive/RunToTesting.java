@@ -1,9 +1,10 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Archive;
 
 import android.util.Size;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -15,6 +16,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name="Run To Testing")
+@Disabled
 public class RunToTesting extends LinearOpMode {
 
     // Define motors
@@ -34,7 +36,6 @@ public class RunToTesting extends LinearOpMode {
     private static final double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
 
     boolean running = false;
-    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -64,27 +65,10 @@ public class RunToTesting extends LinearOpMode {
         // Without this, data retrieving from the IMU throws an exception
         imu.initialize(imuParams);
 
-        // VisionPortal
-        VisionPortal visionPortal;
-
-        // Create a new VisionPortal Builder object.
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(blueCubeDetectionPipeline)
-                .setCameraResolution(new Size(640, 480))
-                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
-                .enableLiveView(true)
-                .setAutoStopLiveView(true)
-                .build();
-
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         waitForStart();
         moveForward(24);
-    }
-
-    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return blueCubeDetectionPipeline.getDetection();
     }
 
     // may need to make mods if there aren't enough encoder cables
