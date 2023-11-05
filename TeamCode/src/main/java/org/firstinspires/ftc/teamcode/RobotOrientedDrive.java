@@ -13,8 +13,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "Austin Drive")
-public class AustinDrive extends LinearOpMode {
+@TeleOp(name = "Robot Drive")
+public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
     private ElapsedTime matchTime = new ElapsedTime();
@@ -70,20 +70,6 @@ public class AustinDrive extends LinearOpMode {
         motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        // Retrieve the IMU from the hardware map
-        IMU imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters imuParams;
-
-        imuParams = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                )
-        );
-        // Technically this is the default, however specifying it is clearer
-        // Without this, data retrieving from the IMU throws an exception
-        imu.initialize(imuParams);
-
         // Get servos
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
@@ -108,11 +94,8 @@ public class AustinDrive extends LinearOpMode {
 
 
         while (opModeIsActive()) {
-            // Get yaw
-            double yaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
             // Drive
-            fieldOrientedDrive(yaw, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
+            fieldOrientedDrive(gamepad1, exponential_drive, motorFL, motorBL, motorFR, motorBR);
 
             // Articulation
             jointMotor.setPower(setJointPower(jointMotor, gamepad2));
@@ -125,14 +108,6 @@ public class AustinDrive extends LinearOpMode {
 
             activateDroneLauncher(DroneServo, gamepad2);
 
-            // Reset yaw to 0 7
-            if (gamepad1.x) {
-                imu.resetYaw();
-                telemetry.addLine("IMU reset");
-            }
-
-            // Gyro Telemetry
-            gyroTelemetry(yaw);
             telemetry.addLine("\n");
 
             // Gamepad Telemetry
@@ -156,7 +131,7 @@ public class AustinDrive extends LinearOpMode {
         }
     }
 
-    private void fieldOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, DcMotor motorFL, DcMotor motorBL, DcMotor motorFR, DcMotor motorBR) {
+    private void fieldOrientedDrive(Gamepad gamepad, boolean exponential_drive, DcMotor motorFL, DcMotor motorBL, DcMotor motorFR, DcMotor motorBR) {
         double y_raw = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad1.left_stick_x;
         double rx_raw = gamepad1.right_stick_x;
@@ -173,56 +148,20 @@ public class AustinDrive extends LinearOpMode {
             rx_raw = 0;
         }
 
-        // Toggle exponential drive
-        /*
-        if (gamepad1.y) {
-            exponential_drive = !exponential_drive;
-        }
-         */
-
-        // Toggle slowdown
-        /*if (gamepad1.a) {
-            slowdown = !slowdown;
-        }
-         */
-
         // Exponential Drive
         double exponent = 2.0;
         double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
         double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
 
-        // Slowdown
-        if (slowdown) {
-            y *= 0.75;
-            x *= 0.75;
-            rx *= 0.75;
-        }
-
-        // get heading from IMU
-        double botHeading;
-
-        // restrict range to [0, 360]
-        if (heading <= 0) {
-            botHeading = heading + 2 * Math.PI;
-        } else {
-            botHeading = heading;
-        }
-
-        // Rotate the movement direction counter to the bot's rotation
-        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-
-        rotX = rotX * 1.1;  // Counteract imperfect strafing
-
         // Denominator is the largest motor power (absolute value) or 1
         // This ensures all the powers maintain the same ratio,
         // but only if at least one is out of the range [-1, 1]
-        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-        double frontLeftPower = (rotY + rotX + rx) / denominator;
-        double backLeftPower = (rotY - rotX + rx) / denominator;
-        double frontRightPower = (rotY - rotX - rx) / denominator;
-        double backRightPower = (rotY + rotX - rx) / denominator;
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+        double frontLeftPower = (y + x + rx) / denominator;
+        double backLeftPower = (y - x + rx) / denominator;
+        double frontRightPower = (y - x - rx) / denominator;
+        double backRightPower = (y + x - rx) / denominator;
 
         motorFL.setPower(frontLeftPower);
         motorBL.setPower(backLeftPower);
