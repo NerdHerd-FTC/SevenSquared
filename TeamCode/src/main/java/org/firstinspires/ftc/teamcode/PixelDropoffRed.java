@@ -1,21 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.util.Size;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-
-@Autonomous(name="Dropoff - Blue")
-public class PixelDropoffBlue extends LinearOpMode {
+@Autonomous(name="Dropoff - Red")
+public class PixelDropoffRed extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -33,7 +31,7 @@ public class PixelDropoffBlue extends LinearOpMode {
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
     private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
-    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
+    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
     boolean running = false;
 
@@ -71,7 +69,7 @@ public class PixelDropoffBlue extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(blueCubeDetectionPipeline)
+                .addProcessor(redCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -82,32 +80,30 @@ public class PixelDropoffBlue extends LinearOpMode {
 
         waitForStart();
 
-            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+            RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 moveForward(33);
                 moveForward(-30);
-                strafeLeft(40);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+                strafeRight(40);
+            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 moveForward(24);
                 turn(180);
-                moveForward(9);
-                moveForward(-9);
-                strafeLeft(26);
-                moveForward(40);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+                moveForward(8);
+                moveForward(-49);
+            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
                 moveForward(24);
                 turn(-180);
-                moveForward(9);
-                moveForward(-9);
-                turn(360);
+                moveForward(8);
+                moveForward(-8);
+                strafeRight(26);
                 moveForward(40);
 
         }
     }
 
-    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return blueCubeDetectionPipeline.getDetection();
+    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return redCubeDetectionPipeline.getDetection();
     }
 
     public void moveForward(double inches) {
