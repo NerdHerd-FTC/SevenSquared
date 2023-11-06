@@ -1,19 +1,20 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Auto;
 
 import android.util.Size;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="Backdrop - Right")
-public class BackDropRight extends LinearOpMode {
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+@Autonomous(name="Dropoff - Blue")
+public class PixelDropoffBlue extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -80,9 +81,28 @@ public class BackDropRight extends LinearOpMode {
 
         waitForStart();
 
-        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        strafeRight(40);
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+                moveForward(33);
+                moveForward(-30);
+                strafeLeft(40);
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+                moveForward(24);
+                turn(180);
+                moveForward(9);
+                moveForward(-9);
+                strafeLeft(26);
+                moveForward(40);
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+                moveForward(24);
+                turn(-180);
+                moveForward(9);
+                moveForward(-9);
+                turn(360);
+                moveForward(40);
+
+        }
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
