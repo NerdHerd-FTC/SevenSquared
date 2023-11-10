@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
 import android.util.Size;
+import java.util.List;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -16,10 +17,10 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
-@Autonomous(name="Dropoff - Blue")
+@Autonomous(name="Super Blue")
 public class SuperAutoBlue extends LinearOpMode {
-
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
 
@@ -76,7 +77,6 @@ public class SuperAutoBlue extends LinearOpMode {
         // VisionPortal
         VisionPortal visionPortal;
 
-
         // Create the AprilTag processor.
         aprilTag = new AprilTagProcessor.Builder().build();
 
@@ -99,29 +99,33 @@ public class SuperAutoBlue extends LinearOpMode {
 
         BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
+        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, false);
+        visionPortal.setProcessorEnabled(aprilTag, true);
+
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             moveForward(33);
-            moveForward(-30);
-            strafeLeft(40);
+            moveForward(-6);
+            turn(180);
+            moveForward(35);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             moveForward(24);
             turn(180);
             moveForward(9);
             moveForward(-9);
             strafeLeft(26);
-            moveForward(40);
+            moveForward(35);
+            strafeRight(24);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             moveForward(24);
             turn(-180);
             moveForward(9);
             moveForward(-9);
             turn(360);
-            moveForward(40);
+            moveForward(35);
         }
 
-        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-
-        }
+        // tune offsets
+        precisionAprilTag(aprilTag, decision, 3.5, 0.5);
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
@@ -257,7 +261,146 @@ public class SuperAutoBlue extends LinearOpMode {
         telemetry.addLine("--- " + name + " ---");
         telemetry.addData(name + " Power", motor.getPower());
         telemetry.addData(name + " Position", motor.getCurrentPosition());
-        telemetry.addData(name + " Target Position", motor.getTargetPosition());
+        if (motor.getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
+            telemetry.addData(name + " Target Position", motor.getTargetPosition());
+            telemetry.addData(name + "Error", motor.getTargetPosition() - motor.getCurrentPosition());
+        }
+    }
+
+    private void precisionAprilTag(AprilTagProcessor aprilTag, BlueCubeDetectionPipeline.Detection detection, double horizontalOffset, double verticalOffset) {
+        // default to 1
+        int tagID = 1;
+
+        if (detection == BlueCubeDetectionPipeline.Detection.LEFT) {
+            tagID = 1;
+        } else if (detection == BlueCubeDetectionPipeline.Detection.CENTER) {
+            tagID = 2;
+        } else if (detection == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            tagID = 3;
+        }
+        strafeByAprilTag(aprilTag, tagID, 0.5, horizontalOffset);
+        advanceByAprilTag(aprilTag, tagID, 0.5, verticalOffset);
+    }
+
+    private void strafeByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
+        if (!running) {
+            running = true;
+
+            if (aprilTag.getDetections().size() == 0) {
+                // do something here - add later
+                return;
+            }
+
+            // get tag data
+            AprilTagDetection tag = getTagData(aprilTag, tagID);
+
+            // inches
+            double range = tag.ftcPose.range - offset;
+
+            while (opModeIsActive() && Math.abs(range) > 0.5) {
+                int move = (int) (range * TICKS_PER_INCH);
+
+                frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
+                frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
+                backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
+                backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+
+                setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+                frontLeft.setPower(power);
+                frontRight.setPower(power);
+                backLeft.setPower(power);
+                backRight.setPower(power);
+
+                waitForMotors();
+
+                // refresh
+                tag = getTagData(aprilTag, tagID);
+                range = tag.ftcPose.range;
+            }
+
+            stopMotors();
+            running = false;
+        }
+    }
+
+    private void advanceByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
+        if (!running) {
+            running = true;
+
+            AprilTagDetection tag = getTagData(aprilTag, tagID);
+
+            double distance = tag.ftcPose.x - offset;
+            while (opModeIsActive() && Math.abs(distance) > 0.5) {
+                int move = (int) (distance * TICKS_PER_INCH);
+
+                frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
+                frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
+                backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
+                backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+
+                setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+                frontLeft.setPower(power);
+                frontRight.setPower(power);
+                backLeft.setPower(power);
+                backRight.setPower(power);
+
+                waitForMotors();
+
+                tag = getTagData(aprilTag, tagID);
+                distance = tag.ftcPose.x;
+            }
+            stopMotors();
+            running = false;
+        }
+    }
+
+    private AprilTagDetection getTagData(AprilTagProcessor aprilTag, double tagID) {
+        if (aprilTag.getDetections().size() == 0) {
+            // do something here - add later
+            return null;
+        }
+
+        // get tag data
+        for (AprilTagDetection tag : aprilTag.getDetections()) {
+            if (tag.id == tagID) {
+                return tag;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Add telemetry about AprilTag detections.
+     */
+    private void aprilTagTelemetry() {
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        telemetry.addData("# AprilTags Detected", currentDetections.size());
+
+        // Step through the list of detections and display info for each one.
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+            } else {
+                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+            }
+        }   // end for() loop
+
+        // Add "key" information to telemetry
+        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        telemetry.addLine("RBE = Range, Bearing & Elevation");
+
+    }
+
+    private void articulation() {
+
     }
 
 }
