@@ -9,20 +9,20 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
 @Autonomous(name="Super Blue")
 public class SuperAutoBlue extends LinearOpMode {
     // Define motors
-    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, joint, arm;
+    private Servo ClawServoLeft;
 
     // Constants
     //11 or 7.5
@@ -53,12 +53,27 @@ public class SuperAutoBlue extends LinearOpMode {
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
+        joint = hardwareMap.dcMotor.get("joint");
+        arm = hardwareMap.dcMotor.get("arm");
+
+        joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        joint.setDirection(DcMotor.Direction.REVERSE);
+        joint.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setDirection(DcMotor.Direction.REVERSE);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
         backRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        ClawServoLeft.setDirection(Servo.Direction.REVERSE);
 
         // Retrieve the IMU from the hardware map
         IMU imu = hardwareMap.get(IMU.class, "imu");
@@ -126,6 +141,27 @@ public class SuperAutoBlue extends LinearOpMode {
 
         // tune offsets
         precisionAprilTag(aprilTag, decision, 3.5, 0.5);
+
+        runJoint(joint, RobotConstants.JOINT_SCORE, 1);
+        runArm(arm, RobotConstants.ARM_SCORE, 0.7);
+        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
+        sleep(1000);
+        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_CLOSED);
+        runArm(arm, 0, 1);
+        runJoint(joint, 0, 0.7);
+
+        stopArticulation();
+
+        // tune this
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            strafeLeft(30);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            strafeLeft(22);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            strafeLeft(40);
+        }
+
+        stopMotors();
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
@@ -399,8 +435,53 @@ public class SuperAutoBlue extends LinearOpMode {
 
     }
 
-    private void articulation() {
+    // ARM AND JOINT MOTOR METHODS
+    private void runJoint(DcMotor jointMotor, double targetPosition, double power) {
+        if (!running) {
+            running = true;
 
+            jointMotor.setTargetPosition((int) targetPosition);
+            jointMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            jointMotor.setPower(power);
+
+            waitForArticulation();
+
+            jointMotor.setPower(0);
+            running = false;
+        }
     }
 
+    private void runArm(DcMotor armMotor, double targetPosition, double power) {
+        if (!running) {
+            running = true;
+
+            armMotor.setTargetPosition((int) targetPosition);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armMotor.setPower(power);
+
+            waitForArticulation();
+
+            armMotor.setPower(0);
+            running = false;
+        }
+    }
+
+    private void stopArticulation() {
+        joint.setPower(0);
+        arm.setPower(0);
+    }
+
+    private void waitForArticulation() {
+        while (opModeIsActive() && (joint.isBusy() || arm.isBusy())) {
+            telemetry.addData("Joint Busy", joint.isBusy());
+            telemetry.addData("Arm Busy", arm.isBusy());
+            telemetry.update();
+
+            idle();
+        }
+    }
+
+    private void setClawServoLeft(Servo ClawServoLeft, double position) {
+        ClawServoLeft.setPosition(position);
+    }
 }
