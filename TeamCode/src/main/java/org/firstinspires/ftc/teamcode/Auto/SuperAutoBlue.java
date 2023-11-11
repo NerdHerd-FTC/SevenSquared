@@ -38,13 +38,25 @@ public class SuperAutoBlue extends LinearOpMode {
 
     private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
+    int tagID = 1;
 
     AprilTagProcessor aprilTag;
 
     // Create the vision portal by using a builder.
     VisionPortal.Builder builder = new VisionPortal.Builder();
 
-    boolean running = false;
+    public enum RobotState {
+        IDLE,
+        MOVING_FORWARD,
+        STRAFING_LEFT,
+        STRAFING_RIGHT,
+        TURNING,
+        ARTICULATING_ARM,
+        ARTICULATING_JOINT,
+        ARTICULATING_CLAW,
+        ERROR
+    }
+    private RobotState currentState = RobotState.IDLE;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -117,6 +129,14 @@ public class SuperAutoBlue extends LinearOpMode {
         visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, false);
         visionPortal.setProcessorEnabled(aprilTag, true);
 
+        if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            tagID = 1;
+        } else if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            tagID = 2;
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            tagID = 3;
+        }
+
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             moveForward(33);
             moveForward(-6);
@@ -169,8 +189,8 @@ public class SuperAutoBlue extends LinearOpMode {
     }
 
     public void moveForward(double inches) {
-        if (!running) {
-            running = true;
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.MOVING_FORWARD;
             int move = (int) (inches * TICKS_PER_INCH);
 
             frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
@@ -188,13 +208,13 @@ public class SuperAutoBlue extends LinearOpMode {
             waitForMotors();
 
             stopMotors();
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
     public void strafeLeft(double inches) {
-        if (!running) {
-            running = true;
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.STRAFING_LEFT;
             int move = (int) (inches * TICKS_PER_INCH);
 
             frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
@@ -212,13 +232,13 @@ public class SuperAutoBlue extends LinearOpMode {
             waitForMotors();
 
             stopMotors();
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
     public void strafeRight(double inches) {
-        if (!running) {
-            running = true;
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.STRAFING_RIGHT;
             int move = (int) (inches * TICKS_PER_INCH);
 
             frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
@@ -236,14 +256,14 @@ public class SuperAutoBlue extends LinearOpMode {
             waitForMotors();
 
             stopMotors();
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
     // runs from -180 to 180
     private void turn(double targetAngle) {
-        if (!running) {
-            running = true;
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.TURNING;
 
             int turnTicks = (int) (targetAngle * TICKS_PER_DEGREE);
 
@@ -265,7 +285,7 @@ public class SuperAutoBlue extends LinearOpMode {
             waitForMotors();
 
             stopMotors();
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
@@ -278,10 +298,13 @@ public class SuperAutoBlue extends LinearOpMode {
 
     private void waitForMotors() {
         while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
+            telemetry.addData("Current State", currentState);
             motorTelemetry(frontLeft, "frontLeft");
             motorTelemetry(frontRight, "frontRight");
             motorTelemetry(backLeft, "backLeft");
             motorTelemetry(backRight, "backRight");
+
+            aprilTagTelemetry(tagID);
             idle();
         }
     }
@@ -304,23 +327,13 @@ public class SuperAutoBlue extends LinearOpMode {
     }
 
     private void precisionAprilTag(AprilTagProcessor aprilTag, BlueCubeDetectionPipeline.Detection detection, double horizontalOffset, double verticalOffset) {
-        // default to 1
-        int tagID = 1;
-
-        if (detection == BlueCubeDetectionPipeline.Detection.LEFT) {
-            tagID = 1;
-        } else if (detection == BlueCubeDetectionPipeline.Detection.CENTER) {
-            tagID = 2;
-        } else if (detection == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            tagID = 3;
-        }
         strafeByAprilTag(aprilTag, tagID, 0.5, horizontalOffset);
         advanceByAprilTag(aprilTag, tagID, 0.5, verticalOffset);
     }
 
     private void strafeByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
-        if (!running) {
-            running = true;
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.STRAFING_RIGHT;
 
             if (aprilTag.getDetections().size() == 0) {
                 // do something here - add later
@@ -356,14 +369,13 @@ public class SuperAutoBlue extends LinearOpMode {
             }
 
             stopMotors();
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
     private void advanceByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
-        if (!running) {
-            running = true;
-
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.MOVING_FORWARD;
             AprilTagDetection tag = getTagData(aprilTag, tagID);
 
             double distance = tag.ftcPose.x - offset;
@@ -388,7 +400,7 @@ public class SuperAutoBlue extends LinearOpMode {
                 distance = tag.ftcPose.x;
             }
             stopMotors();
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
@@ -410,36 +422,35 @@ public class SuperAutoBlue extends LinearOpMode {
     /**
      * Add telemetry about AprilTag detections.
      */
-    private void aprilTagTelemetry() {
+    private void aprilTagTelemetry(int tagID) {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+            if (detection.id == tagID) {
+                if (detection.metadata != null) {
+                    telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                    telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                    telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                    telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+                } else {
+                    telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                    telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+                }
+                // Add "key" information to telemetry
+                telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+                telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+                telemetry.addLine("RBE = Range, Bearing & Elevation");
             }
-        }   // end for() loop
-
-        // Add "key" information to telemetry
-        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-        telemetry.addLine("RBE = Range, Bearing & Elevation");
-
+        }
     }
 
     // ARM AND JOINT MOTOR METHODS
     private void runJoint(DcMotor jointMotor, double targetPosition, double power) {
-        if (!running) {
-            running = true;
-
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.ARTICULATING_JOINT;
             jointMotor.setTargetPosition((int) targetPosition);
             jointMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             jointMotor.setPower(power);
@@ -447,14 +458,13 @@ public class SuperAutoBlue extends LinearOpMode {
             waitForArticulation();
 
             jointMotor.setPower(0);
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
     private void runArm(DcMotor armMotor, double targetPosition, double power) {
-        if (!running) {
-            running = true;
-
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.ARTICULATING_ARM;
             armMotor.setTargetPosition((int) targetPosition);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             armMotor.setPower(power);
@@ -462,7 +472,7 @@ public class SuperAutoBlue extends LinearOpMode {
             waitForArticulation();
 
             armMotor.setPower(0);
-            running = false;
+            currentState = RobotState.IDLE;
         }
     }
 
@@ -482,6 +492,10 @@ public class SuperAutoBlue extends LinearOpMode {
     }
 
     private void setClawServoLeft(Servo ClawServoLeft, double position) {
-        ClawServoLeft.setPosition(position);
+        if (currentState == RobotState.IDLE) {
+            currentState = RobotState.ARTICULATING_CLAW;
+            ClawServoLeft.setPosition(position);
+            currentState = RobotState.IDLE;
+        }
     }
 }
