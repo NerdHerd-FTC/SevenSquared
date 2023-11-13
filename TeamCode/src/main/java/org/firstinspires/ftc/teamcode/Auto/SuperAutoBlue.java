@@ -17,7 +17,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 
-@Autonomous(name="Dropoff - Blue")
+@Autonomous(name="Super Blue")
 public class SuperAutoBlue extends LinearOpMode {
 
     // Define motors

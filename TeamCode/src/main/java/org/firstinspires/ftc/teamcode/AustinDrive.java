@@ -46,7 +46,6 @@ public class AustinDrive extends LinearOpMode {
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Drive control variables
-        // Drive control variables
         boolean exponential_drive = true;
         boolean slowdown = false;
 
