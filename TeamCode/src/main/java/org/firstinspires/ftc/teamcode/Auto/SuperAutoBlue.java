@@ -139,24 +139,24 @@ public class SuperAutoBlue extends LinearOpMode {
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             moveForward(33);
-            moveForward(-6);
+            moveForward(-13);
             turn(180);
-            moveForward(35);
+            moveForward(5);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             moveForward(24);
             turn(180);
             moveForward(9);
             moveForward(-9);
             strafeLeft(26);
-            moveForward(35);
-            strafeRight(24);
+            moveForward(15);
+            strafeRight(5);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             moveForward(24);
             turn(-180);
             moveForward(9);
             moveForward(-9);
             turn(360);
-            moveForward(35);
+            moveForward(5);
         }
 
         // tune offsets
@@ -305,6 +305,7 @@ public class SuperAutoBlue extends LinearOpMode {
             motorTelemetry(backRight, "backRight");
 
             aprilTagTelemetry(tagID);
+            telemetry.update();
             idle();
         }
     }
@@ -324,6 +325,7 @@ public class SuperAutoBlue extends LinearOpMode {
             telemetry.addData(name + " Target Position", motor.getTargetPosition());
             telemetry.addData(name + "Error", motor.getTargetPosition() - motor.getCurrentPosition());
         }
+        telemetry.update();
     }
 
     private void precisionAprilTag(AprilTagProcessor aprilTag, BlueCubeDetectionPipeline.Detection detection, double horizontalOffset, double verticalOffset) {
