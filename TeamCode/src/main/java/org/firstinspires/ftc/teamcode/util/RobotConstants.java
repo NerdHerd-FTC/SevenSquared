@@ -33,5 +33,17 @@ public class RobotConstants {
     public static double JOINT_GROUND = 0.0;
 
     // AUTONOMOUS
+    //11 or 7.5
+    private static double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
+    private static double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
+
+    // Pulled from "encoder resolution formula": https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
+    private static double TICKS_PER_REV = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
+
+    // Pulled from strafer kit - converts mm. to in.
+    private static double WHEEL_DIAMETER_INCH = 96/25.4;
+    public static double DRIVE_TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
+
+    public static double DRIVE_TICKS_PER_DEGREE = DRIVE_TICKS_PER_INCH * DEGREES_TO_INCHES;
 
 }

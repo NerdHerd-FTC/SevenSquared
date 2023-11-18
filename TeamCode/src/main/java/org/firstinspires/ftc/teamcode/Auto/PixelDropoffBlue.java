@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
 import android.util.Size;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -13,7 +15,9 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="Dropoff - Blue")
+
+@Autonomous(name="Old Dropoff - Blue")
+@Disabled
 public class PixelDropoffBlue extends LinearOpMode {
 
     // Define motors
