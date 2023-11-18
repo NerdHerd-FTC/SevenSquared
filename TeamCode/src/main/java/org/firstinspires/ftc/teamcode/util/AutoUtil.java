@@ -5,8 +5,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 
-import org.firstinspires.ftc.teamcode.Auto.SuperAutoBlue;
-
 public class AutoUtil {
     public LinearOpMode opMode;
     public DcMotor frontLeft, frontRight, backLeft, backRight, arm, joint;
