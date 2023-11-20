@@ -74,14 +74,13 @@ public class RobotOrientedDrive extends LinearOpMode {
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
-        Servo WristServo = hardwareMap.get(Servo.class, "WS");
+        CRServo WristServo = hardwareMap.get(CRServo.class, "FRSR");
 
 
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.REVERSE);
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
-        WristServo.setDirection(Servo.Direction.REVERSE);
 
         waitForStart();
 
@@ -90,7 +89,6 @@ public class RobotOrientedDrive extends LinearOpMode {
         matchTime.reset();
         CSR.reset();
         CSL.reset();
-        WristServo.setPosition(0);
 
 
         while (opModeIsActive()) {
@@ -231,17 +229,16 @@ public class RobotOrientedDrive extends LinearOpMode {
 
         DroneServo.setPower(power);
     }
-    private void setWristServoPower(Servo WristServo, Gamepad gamepad){
-        double position = WristServo.getPosition();
+    private void setWristServoPower(CRServo WristServo, Gamepad gamepad){
 
         if(gamepad.dpad_up){
-            position += 0.05;
+            WristServo.setPower(1);
         }
         else if(gamepad.dpad_down){
-            position -= 0.05;
+            WristServo.setPower(-1);
+        } else {
+            WristServo.setPower(0);
         }
-
-        WristServo.setPosition(position);
     }
 
     // ARM AND JOINT MOTOR METHODS
@@ -362,7 +359,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    private void servoTelemetry(Servo wrist, Servo FrontRight, Servo FrontLeft) {
+    private void servoTelemetry(CRServo wrist, Servo FrontRight, Servo FrontLeft) {
         telemetry.addLine("--- Servo ---");
         telemetry.addData("FrontRight Closed", fr_closed);
         telemetry.addData("Front Right Location", FrontRight.getPosition());
@@ -370,7 +367,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         telemetry.addData("Front Left Location", FrontLeft.getPosition());
         telemetry.addData("CSR Timer", CSR.seconds());
         telemetry.addData("CSL Timer", CSL.seconds());
-        telemetry.addData("Wrist", wrist.getPosition());
+        telemetry.addData("Wrist",wrist.getPower());
     }
 
     private void gyroTelemetry(double heading) {
