@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.util;
+import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.controller.PIDController;
 
+@Config
 public class RobotConstants {
     public static double WRIST_LOWER_LIMIT = 0.0;
     public static double WRIST_UPPER_LIMIT = 1.0;
@@ -17,20 +20,27 @@ public class RobotConstants {
     public static double ARM_SPEED = 0.8;
 
     // tune...
-    public static double ARM_HOME = 0.0;
-    public static double ARM_SCORE = 1000;
-    public static double ARM_GROUND = 1000;
+    public static Integer ARM_HOME = 0;
+    public static Integer ARM_SCORE = 1000;
+    public static Integer ARM_GROUND = 1000;
 
     // tune...
-    public static double JOINT_LOWER_LIMIT = 0.0;
-    public static double JOINT_UPPER_LIMIT = 1000;
+    public static int JOINT_LOWER_LIMIT = 0;
+    public static int JOINT_UPPER_LIMIT = 1000;
 
     public static double JOINT_SPEED = 1.0;
 
     // tune...
-    public static double JOINT_HOME = 0.0;
-    public static double JOINT_SCORE = 1000;
-    public static double JOINT_GROUND = 0.0;
+    public static Integer JOINT_HOME = 0;
+    public static Integer JOINT_SCORE = 1000;
+    public static Integer JOINT_GROUND = 0;
+
+    // Drive
+    public static double DRIVE_SPEED = 1.0;
+    public static double SLOW_TURN = 0.5;
+
+    // CONTROLLERS
+    public static double DEAD_BAND = 0.1;
 
     // AUTONOMOUS
     //11 or 7.5
