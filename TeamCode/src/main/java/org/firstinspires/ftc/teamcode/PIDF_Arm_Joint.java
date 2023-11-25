@@ -1,25 +1,12 @@
-// Code Created By Derrick, Owen, Shassh
 package org.firstinspires.ftc.teamcode;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.controller.PController;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
 @TeleOp
@@ -27,7 +14,7 @@ public class PIDF_Arm_Joint extends LinearOpMode {
     private PIDController jointPID;
     private PIDController armPID;
 
-    public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, jointF = -0.000047;
+    public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, jointF = 0.000047;
     public static double armP = 0.0035, armI = 0.0, armD = 0.0003, armF = 0.002;
 
     public static int jointTarget = 0, armTarget = 0;
@@ -61,16 +48,20 @@ public class PIDF_Arm_Joint extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            armPID.setPID(armP, armI, armD);
+            // set PID values every loop to account for dashboard changes
+            armPID.setPID(armP, armI, armD); // working values: 0.0035, 0.0, 0.0003 w/ f = 0.002
             jointPID.setPID(jointP, jointI, jointD);
 
+            // calculate PID power
             double joint_out = jointPID.calculate(jointMotor.getCurrentPosition(), jointTarget);
             double arm_out = armPID.calculate(armMotor.getCurrentPosition(), armTarget);
 
+            // calculate angles of joint & arm (in degrees) to account for torque
             double joint_angle = jointMotor.getCurrentPosition() / joint_ticks_per_degree + 193;
             double relative_arm_angle = armMotor.getCurrentPosition() / arm_ticks_per_degree + 29;
-            double arm_angle =270 - relative_arm_angle - joint_angle;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
 
+            // account for negative angles
             if (arm_angle > 360) {
                 arm_angle -= 360;
             } else if (joint_angle < 0) {
@@ -85,37 +76,50 @@ public class PIDF_Arm_Joint extends LinearOpMode {
 
             // joint self-torque: 16.2917713642 lb. in.
             // arm self-torque: 12.9580463969 lb. in.
-            double arm_part_of_joint = Math.cos(Math.toRadians(arm_angle - 29)) * 6.207;
-            if (arm_part_of_joint < 0) {
-                arm_part_of_joint = 0;
+
+            // calculate effective torque arm length - if arm is on the same side as the joint, use arm length with joint, otherwise use joint length only
+            double effective_arm_angle = 90;
+            if (relative_arm_angle > 90) {
+                effective_arm_angle = relative_arm_angle;
             }
 
+            // normalize joint angle to 0-180 - shouldn't be necessary but it's here...
             if (joint_angle > 180) {
                 joint_angle = 180;
             }
 
-            double joint_ff = (-Math.cos(Math.toRadians(joint_angle)) * 3.793 + arm_part_of_joint) * jointF;
+            // calculate feedforward with torque weights and cosine
+            double joint_ff = (Math.cos(Math.toRadians(joint_angle)) * 3.793 + Math.cos(Math.toRadians(effective_arm_angle)) * 6.207) * jointF;
             double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
+            // calculate total power
             double joint_power = joint_out + joint_ff;
             double arm_power = arm_out + arm_ff;
 
+            // allow for manual override for tuning purposes
             if (Math.abs(gamepad1.left_stick_y) > 0.1) {
                 joint_power = gamepad1.left_stick_y * 0.7;
             }
 
+            // set motor powers with tanh to normalize
             jointMotor.setPower(Math.tanh(joint_power));
             armMotor.setPower(Math.tanh(arm_power));
 
             telemetry.addData("Joint Position", jointMotor.getCurrentPosition());
             telemetry.addData("Joint Target", jointTarget);
+            telemetry.addData("Joint Power", jointMotor.getPower());
+            telemetry.addData("Joint FF", joint_ff);
+
+            telemetry.addLine("\n");
+
             telemetry.addData("Arm Position", armMotor.getCurrentPosition());
             telemetry.addData("Arm Target", armTarget);
+
+            telemetry.addLine("\n");
 
             telemetry.addData("Joint Angle", joint_angle);
             telemetry.addData("Arm Angle", arm_angle);
             telemetry.addData("Relative Arm Angle", relative_arm_angle);
-            telemetry.addData("Joint Power", jointMotor.getPower());
 
             telemetry.update();
         }
