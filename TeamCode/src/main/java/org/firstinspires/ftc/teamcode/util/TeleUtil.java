@@ -17,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class TeleUtil {
     public LinearOpMode opMode;
     public DcMotor motorFL, motorFR, motorBL, motorBR, arm, joint;
-    public Servo ClawServoRight, ClawServoLeft;
-    public CRServo DroneServo, WristServo;
+    public Servo ClawServoRight, ClawServoLeft, WristServo;
+    public CRServo DroneServo;
 
     private boolean arm_macro = false;
     private boolean joint_macro = false;
@@ -63,7 +63,7 @@ public class TeleUtil {
     private JointState jointState = JointState.DRIVER_CONTROL;
 
     // Constructor
-    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo WristServo) {
+    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, Servo WristServo) {
         this.opMode = opMode;
         this.motorFL = frontLeft;
         this.motorFR = frontRight;
@@ -201,7 +201,7 @@ public class TeleUtil {
         opMode.telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    public void servoTelemetry(CRServo wrist, Servo FrontRight, Servo FrontLeft) {
+    public void servoTelemetry(Servo wrist, Servo FrontRight, Servo FrontLeft) {
         opMode.telemetry.addLine("--- Servo ---");
         opMode.telemetry.addData("FrontRight Closed", fr_closed);
         opMode.telemetry.addData("Front Right Location", FrontRight.getPosition());
@@ -209,7 +209,7 @@ public class TeleUtil {
         opMode.telemetry.addData("Front Left Location", FrontLeft.getPosition());
         opMode.telemetry.addData("CSR Timer", CSR.seconds());
         opMode.telemetry.addData("CSL Timer", CSL.seconds());
-        opMode.telemetry.addData("Wrist",wrist.getPower());
+        opMode.telemetry.addData("Wrist",wrist.getPosition());
     }
 
     public void gyroTelemetry(double heading) {
@@ -277,14 +277,12 @@ public class TeleUtil {
         DroneServo.setPower(power);
     }
     public void setWristServoPower(Gamepad gamepad){
-
-        if(gamepad.dpad_up){
-            WristServo.setPower(1);
+        double current_position = WristServo.getPosition();
+        if(gamepad.dpad_up) {
+            WristServo.setPosition(current_position + 0.05);
         }
         else if(gamepad.dpad_down){
-            WristServo.setPower(-1);
-        } else {
-            WristServo.setPower(0);
+            WristServo.setPosition(current_position - 0.05);
         }
     }
 

@@ -1,5 +1,8 @@
 // Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -14,12 +17,22 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
+@Config
 @TeleOp(name = "Robot Drive")
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
+    public static double leftOpen = 0.5;
+    public static double leftClosed = 1.0;
+
+    public static double rightOpen = 0.0;
+    public static double rightClosed = 1.0;
+
     @Override
     public void runOpMode() throws InterruptedException {
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
         // Get motors
         DcMotor jointMotor = hardwareMap.dcMotor.get("joint");
         DcMotor armMotor = hardwareMap.dcMotor.get("arm");
@@ -61,11 +74,11 @@ public class RobotOrientedDrive extends LinearOpMode {
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
-        CRServo WristServo = hardwareMap.get(CRServo.class, "FRSR");
+        Servo WristServo = hardwareMap.get(Servo.class, "WS");
 
 
         // Reverse if opposite directions are seen
-        ClawServoRight.setDirection(Servo.Direction.REVERSE);
+        ClawServoRight.setDirection(Servo.Direction.FORWARD);
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -86,8 +99,8 @@ public class RobotOrientedDrive extends LinearOpMode {
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
             armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
-            teleUtil.setClawServoRight(gamepad2, 0,1);
-            teleUtil.setClawServoLeft(gamepad2,0.6,0);
+            teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
+            teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
 
             teleUtil.setWristServoPower(gamepad2);
 
