@@ -14,7 +14,7 @@ public class PIDF_Arm_Joint extends LinearOpMode {
     private PIDController jointPID;
     private PIDController armPID;
 
-    public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, jointF = 0.000047;
+    public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, joint_norm_F = 0.000047, joint_extra_F = 0.0;
     public static double armP = 0.0035, armI = 0.0, armD = 0.0003, armF = 0.002;
 
     public static int jointTarget = 0, armTarget = 0;
@@ -78,11 +78,12 @@ public class PIDF_Arm_Joint extends LinearOpMode {
             // arm self-torque: 12.9580463969 lb. in.
 
             // calculate effective torque arm length - if arm is on the same side as the joint, use arm length with joint, otherwise use arm length as cog since it's pretty close and find additional torque...
-            double arm_torque_term;
-            if (relative_arm_angle > 90) {
-                arm_torque_term = Math.cos(Math.toRadians(relative_arm_angle)) * 6.207;
+            double joint_ff;
+            if (arm_angle < 180) {
+                joint_ff = joint_extra_F * Math.cos(Math.toRadians(arm_angle)) + joint_norm_F * Math.cos(Math.toRadians(joint_angle));
             } else {
-                arm_torque_term = 6.207 * (Math.cos(Math.toRadians(joint_angle))-Math.cos(Math.toRadians(relative_arm_angle)));
+                // will not hold, is underpowered
+                joint_ff = joint_norm_F * Math.cos(Math.toRadians(joint_angle));
             }
 
             // normalize joint angle to 0-180 - shouldn't be necessary but it's here...
@@ -91,7 +92,6 @@ public class PIDF_Arm_Joint extends LinearOpMode {
             }
 
             // calculate feedforward with torque weights and cosine
-            double joint_ff = (Math.cos(Math.toRadians(joint_angle)) * 3.793 + arm_torque_term) * jointF;
             double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
             // calculate total power
