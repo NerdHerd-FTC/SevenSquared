@@ -18,8 +18,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
-@Autonomous(name="Super Blue")
-public class SuperAutoBlue extends LinearOpMode {
+@Autonomous()
+public class AprilTagTesting extends LinearOpMode {
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight, joint, arm;
     private Servo ClawServoLeft;
@@ -71,7 +71,7 @@ public class SuperAutoBlue extends LinearOpMode {
 
         joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        joint.setDirection(DcMotor.Direction.REVERSE);
+        joint.setDirection(DcMotor.Direction.FORWARD);
         joint.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -112,7 +112,6 @@ public class SuperAutoBlue extends LinearOpMode {
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
                 .addProcessor(aprilTag)
-                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -121,44 +120,11 @@ public class SuperAutoBlue extends LinearOpMode {
 
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+
+
         waitForStart();
-        visionPortal.setProcessorEnabled(aprilTag, false);
-        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, true);
 
-        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
-
-        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, false);
-        visionPortal.setProcessorEnabled(aprilTag, true);
-
-        if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            tagID = 1;
-        } else if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            tagID = 2;
-        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            tagID = 3;
-        }
-
-        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            moveForward(33);
-            moveForward(-5);
-            turn(180);
-            moveForward(10);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            moveForward(24);
-            turn(180);
-            moveForward(9);
-            moveForward(-9);
-            strafeLeft(26);
-            moveForward(15);
-            strafeRight(5);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            moveForward(24);
-            turn(-180);
-            moveForward(9);
-            moveForward(-9);
-            turn(360);
-            moveForward(5);
-        }
+        BlueCubeDetectionPipeline.Detection decision = BlueCubeDetectionPipeline.Detection.CENTER;
 
         // tune offsets
         precisionAprilTag(aprilTag, decision, 3.5, 0.5);
@@ -343,16 +309,24 @@ public class SuperAutoBlue extends LinearOpMode {
                 // we lost sight of the tag, but we know where it is
                 AprilTagDetection tag = lastDetectedTag;
                 range = tag.ftcPose.range - offset;
-            } else if (aprilTag.getDetections().size() != 0 && aprilTag.getDetections().get(0).id == tagID) {
-                AprilTagDetection tag = getTagData(aprilTag, tagID);
-                lastDetectedTag = tag;
-
-                // inches
-                range = tag.ftcPose.range - offset;
+            } else if (aprilTag.getDetections().size() > 0) {
+                // go through and see if a tag is in the detections
+                for (AprilTagDetection tag : aprilTag.getDetections()) {
+                    if (tag.id == tagID) {
+                        range = tag.ftcPose.range - offset;
+                        lastDetectedTag = tag;
+                        break;
+                    }
+                }
+                if (lastDetectedTag == null) {
+                    while (opModeIsActive() && aprilTag.getDetections().size() == 0) {
+                        telemetry.addLine("AprilTag Not found!");
+                    }
+                }
             }  else {
                 // wait until we can see the tag
                 while (opModeIsActive() && aprilTag.getDetections().size() == 0) {
-                    // do something here to find it...
+                    telemetry.addLine("AprilTag Not found!");
                 }
             }
 
