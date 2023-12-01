@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.controller.PIDController;
 public class RobotConstants {
     public static double WRIST_LOWER_LIMIT = 0.0;
     public static double WRIST_UPPER_LIMIT = 1.0;
+    public static double WRIST_GROUND = 0.5; // TUNE THIS FOR MACRO
 
     public static double CLAW_RIGHT_CLOSED = 0.0;
     public static double CLAW_RIGHT_OPEN = 1.0;
@@ -21,8 +22,8 @@ public class RobotConstants {
 
     // tune...
     public static Integer ARM_HOME = 0;
-    public static Integer ARM_SCORE = 1000;
-    public static Integer ARM_GROUND = 1000;
+    public static Integer ARM_SCORE = 500; // TUNE THIS FOR MACRO
+    public static Integer ARM_GROUND = 1000; // TUNE THIS FOR MACRO
 
     // tune...
     public static int JOINT_LOWER_LIMIT = 0;
@@ -34,6 +35,9 @@ public class RobotConstants {
     public static Integer JOINT_HOME = 0;
     public static Integer JOINT_SCORE = 1000;
     public static Integer JOINT_GROUND = 0;
+
+    //public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, joint_norm_F = 0.000047, joint_extra_F = 0.0;
+    public static double armP = 0.0035, armI = 0.0, armD = 0.0003, armF = 0.002;
 
     // Drive
     public static double DRIVE_SPEED = 1.0;
@@ -55,5 +59,8 @@ public class RobotConstants {
     public static double DRIVE_TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
     public static double DRIVE_TICKS_PER_DEGREE = DRIVE_TICKS_PER_INCH * DEGREES_TO_INCHES;
+
+    public static double joint_ticks_per_degree = ((((1+(46.0/17))) * (1+(46.0/17))) * (1+(46.0/17)) * 28 * 10.0/3) / 360.0;
+    public static double arm_ticks_per_degree = ((((1+(46.0/17))) * (1+(46.0/11))) * 28 * 5)/360.0;
 
 }

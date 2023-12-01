@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -26,6 +27,9 @@ public class TeleUtil {
     private boolean fr_closed = false;
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
+
+    private PIDController armPID = new PIDController(armP, armI, armD);
+
 
 
     private enum ArmState {
@@ -284,6 +288,10 @@ public class TeleUtil {
         else if(gamepad.dpad_down){
             WristServo.setPosition(current_position - 0.05);
         }
+
+        if (gamepad.b) {
+            WristServo.setPosition(WRIST_GROUND);
+        }
     }
 
     // ARM AND JOINT MOTOR METHODS
@@ -291,6 +299,14 @@ public class TeleUtil {
         double power = 0;
         double mult = 1;
 
+        joint_macro = false;
+        joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double input = -gamepad.left_stick_y;
+
+        // probably should add exponential control here!!
+        power = input*mult;
+
+        /*
         if (!joint_macro && gamepad.b) {
             joint_macro = true;
 
@@ -312,30 +328,30 @@ public class TeleUtil {
             }
         }
 
+         */
+
         return power;
     }
     public double setArmPower(Gamepad gamepad) {
         double power = 0;
         double mult = 0.7;
 
-        if (!arm_macro && gamepad.a) {
-            arm_macro = true;
+        if (gamepad.b) {
+            // ground!
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_GROUND);
 
-            arm.setTargetPosition(-1000); // TUNE THE HECK OUT OF THIS POR FAVOR
-            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // calculate angles of joint & arm (in degrees) to account for torque
+            double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+            power = arm_out + arm_ff;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
-            arm_macro = false;
             arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             double input = -gamepad.right_stick_y;
             power = input*mult;
-        } else if (arm_macro) {
-            if (arm.getCurrentPosition() <= -1000) {
-                arm_macro = false;
-                arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                power = 0;
-            } else {
-                power = 0.5;
-            }
         }
 
         return power;
