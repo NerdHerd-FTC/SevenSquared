@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TeleOp(name = "Single Servo Testing")
+@Disabled
 public class ServoTesting extends LinearOpMode {
 
     @Override

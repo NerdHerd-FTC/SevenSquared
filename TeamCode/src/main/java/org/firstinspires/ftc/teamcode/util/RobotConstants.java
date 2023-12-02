@@ -22,7 +22,7 @@ public class RobotConstants {
 
     // tune...
     public static Integer ARM_HOME = 0;
-    public static Integer ARM_SCORE = 500; // TUNE THIS FOR MACRO
+    //public static Integer ARM_SCORE = 0; // TUNE THIS FOR MACRO
     public static Integer ARM_GROUND = 1000; // TUNE THIS FOR MACRO
 
     // tune...
