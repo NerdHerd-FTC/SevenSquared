@@ -18,6 +18,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
+/*
 @Autonomous()
 public class AprilTagTesting extends LinearOpMode {
     // Define motors
@@ -405,7 +406,6 @@ public class AprilTagTesting extends LinearOpMode {
 
     /**
      * Add telemetry about AprilTag detections.
-     */
     private void aprilTagTelemetry(int tagID) {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -483,3 +483,4 @@ public class AprilTagTesting extends LinearOpMode {
         }
     }
 }
+*/

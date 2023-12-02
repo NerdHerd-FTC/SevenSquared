@@ -18,6 +18,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
+/*
 @Autonomous(name="Super Blue")
 public class SuperAutoBlue extends LinearOpMode {
     // Define motors
@@ -431,7 +432,6 @@ public class SuperAutoBlue extends LinearOpMode {
 
     /**
      * Add telemetry about AprilTag detections.
-     */
     private void aprilTagTelemetry(int tagID) {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -509,3 +509,5 @@ public class SuperAutoBlue extends LinearOpMode {
         }
     }
 }
+
+ */

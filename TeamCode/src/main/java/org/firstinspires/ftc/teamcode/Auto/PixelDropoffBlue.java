@@ -17,7 +17,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 
 @Autonomous(name="Old Dropoff - Blue")
-@Disabled
 public class PixelDropoffBlue extends LinearOpMode {
 
     // Define motors
