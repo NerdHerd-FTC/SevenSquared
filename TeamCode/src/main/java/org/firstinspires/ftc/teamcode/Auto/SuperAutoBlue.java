@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
 import android.util.Size;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -345,16 +347,24 @@ public class SuperAutoBlue extends LinearOpMode {
                 // we lost sight of the tag, but we know where it is
                 AprilTagDetection tag = lastDetectedTag;
                 range = tag.ftcPose.range - offset;
-            } else if (aprilTag.getDetections().size() != 0 && aprilTag.getDetections().get(0).id == tagID) {
-                AprilTagDetection tag = getTagData(aprilTag, tagID);
-                lastDetectedTag = tag;
+            } else if (aprilTag.getDetections().size() != 0) {
+                for (AprilTagDetection tag : aprilTag.getDetections()) {
+                     if (tag.id == tagID) {
+                        lastDetectedTag = tag;
+                    }
+                }
+
+                if (lastDetectedTag.id != tagID) {
+                    // we can't see the tag
+                    return;
+                }
 
                 // inches
-                range = tag.ftcPose.range - offset;
+                range = lastDetectedTag.ftcPose.range - offset;
             }  else {
                 // wait until we can see the tag
                 while (opModeIsActive() && aprilTag.getDetections().size() == 0) {
-                    // do something here to find it...
+                    telemetry.addLine("Tag not found....");
                 }
             }
 
@@ -388,6 +398,32 @@ public class SuperAutoBlue extends LinearOpMode {
     private void advanceByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
         if (currentState == RobotState.IDLE) {
             currentState = RobotState.MOVING_FORWARD;
+
+            double range = 0.0;
+            if (aprilTag.getDetections().size() == 0 && lastDetectedTag.id == tagID) {
+                // we lost sight of the tag, but we know where it is
+                AprilTagDetection tag = lastDetectedTag;
+                range = tag.ftcPose.range - offset;
+            } else if (aprilTag.getDetections().size() != 0) {
+                for (AprilTagDetection tag : aprilTag.getDetections()) {
+                    if (tag.id == tagID) {
+                        lastDetectedTag = tag;
+                    }
+                }
+
+                if (lastDetectedTag.id != tagID) {
+                    // we can't see the tag
+                    return;
+                }
+
+                // inches
+                range = lastDetectedTag.ftcPose.range - offset;
+            }  else {
+                // wait until we can see the tag
+                while (opModeIsActive() && aprilTag.getDetections().size() == 0) {
+                    telemetry.addLine("Tag not found....");
+                }
+            }
             AprilTagDetection tag = getTagData(aprilTag, tagID);
 
             double distance = tag.ftcPose.x - offset;

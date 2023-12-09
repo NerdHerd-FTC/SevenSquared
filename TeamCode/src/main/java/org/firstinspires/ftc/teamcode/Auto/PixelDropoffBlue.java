@@ -99,6 +99,7 @@ public class PixelDropoffBlue extends LinearOpMode {
                 moveForward(40);
             } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
                 moveForward(24);
+                sleep(1500);
                 turn(-180);
                 moveForward(9);
                 moveForward(-9);

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.roadrunner.drive;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 /*
@@ -24,6 +25,15 @@ public class DriveConstants {
      */
     public static final double TICKS_PER_REV = 537.6;
     public static final double MAX_RPM = 312;
+
+    /*
+     * Adjust the orientations here to match your robot. See the FTC SDK documentation for details.
+     */
+    public static RevHubOrientationOnRobot.LogoFacingDirection LOGO_FACING_DIR =
+            RevHubOrientationOnRobot.LogoFacingDirection.UP;
+    public static RevHubOrientationOnRobot.UsbFacingDirection USB_FACING_DIR =
+            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
 
     /*
      * Set RUN_USING_ENCODER to true to enable built-in hub velocity control using drive encoders.
