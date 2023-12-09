@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.apache.commons.math3.analysis.function.Add;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -18,7 +19,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
-/*
+
 @Autonomous(name="Super Blue")
 public class SuperAutoBlue extends LinearOpMode {
     // Define motors
@@ -430,8 +431,6 @@ public class SuperAutoBlue extends LinearOpMode {
         return null;
     }
 
-    /**
-     * Add telemetry about AprilTag detections.
     private void aprilTagTelemetry(int tagID) {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -509,5 +508,3 @@ public class SuperAutoBlue extends LinearOpMode {
         }
     }
 }
-
- */
