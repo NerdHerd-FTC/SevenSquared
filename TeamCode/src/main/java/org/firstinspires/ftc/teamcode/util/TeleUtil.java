@@ -349,9 +349,13 @@ public class TeleUtil {
 
             power = arm_out + arm_ff;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
-            arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             double input = -gamepad.right_stick_y;
             power = input*mult;
+        }
+
+        // deadband
+        if (Math.abs(power) < 0.05) {
+            power = 0;
         }
 
         return power;

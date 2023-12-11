@@ -6,7 +6,7 @@ import com.arcrobotics.ftclib.controller.PIDController;
 public class RobotConstants {
     public static double WRIST_LOWER_LIMIT = 0.0;
     public static double WRIST_UPPER_LIMIT = 1.0;
-    public static double WRIST_GROUND = 0.5; // TUNE THIS FOR MACRO
+    public static double WRIST_GROUND = 0.55; // TUNE THIS FOR MACRO
 
     public static double CLAW_RIGHT_CLOSED = 0.0;
     public static double CLAW_RIGHT_OPEN = 1.0;

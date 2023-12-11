@@ -165,9 +165,8 @@ public class SuperAutoBlue extends LinearOpMode {
         }
 
         // tune offsets
-        precisionAprilTag(aprilTag, decision, 3.5, 0.5);
+        precisionAprilTag(aprilTag, decision, 3.5, 8);
 
-        runJoint(joint, RobotConstants.JOINT_SCORE, 1);
         runArm(arm, RobotConstants.ARM_SCORE, 0.7);
         setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
         sleep(1000);
@@ -335,7 +334,7 @@ public class SuperAutoBlue extends LinearOpMode {
 
     private void precisionAprilTag(AprilTagProcessor aprilTag, BlueCubeDetectionPipeline.Detection detection, double horizontalOffset, double verticalOffset) {
         strafeByAprilTag(aprilTag, tagID, 0.5, horizontalOffset);
-        advanceByAprilTag(aprilTag, tagID, 0.5, verticalOffset);
+        advanceByAprilTag(aprilTag, 2, 0.5, verticalOffset);
     }
 
     private void strafeByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
@@ -400,20 +399,15 @@ public class SuperAutoBlue extends LinearOpMode {
             currentState = RobotState.MOVING_FORWARD;
 
             double range = 0.0;
+
             if (aprilTag.getDetections().size() == 0 && lastDetectedTag.id == tagID) {
                 // we lost sight of the tag, but we know where it is
-                AprilTagDetection tag = lastDetectedTag;
-                range = tag.ftcPose.range - offset;
+                range = lastDetectedTag.ftcPose.range - offset;
             } else if (aprilTag.getDetections().size() != 0) {
                 for (AprilTagDetection tag : aprilTag.getDetections()) {
                     if (tag.id == tagID) {
                         lastDetectedTag = tag;
                     }
-                }
-
-                if (lastDetectedTag.id != tagID) {
-                    // we can't see the tag
-                    return;
                 }
 
                 // inches
