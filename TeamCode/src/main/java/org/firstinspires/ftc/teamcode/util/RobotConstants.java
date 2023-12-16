@@ -8,11 +8,11 @@ public class RobotConstants {
     public static double WRIST_UPPER_LIMIT = 1.0;
     public static double WRIST_GROUND = 0.55; // TUNE THIS FOR MACRO
 
-    public static double CLAW_RIGHT_CLOSED = 0.0;
-    public static double CLAW_RIGHT_OPEN = 1.0;
+    public static double CLAW_RIGHT_CLOSED = 1.0;
+    public static double CLAW_RIGHT_OPEN = 0.75;
 
-    public static double CLAW_LEFT_CLOSED = 0.6;
-    public static double CLAW_LEFT_OPEN = 0.0;
+    public static double CLAW_LEFT_CLOSED = 0.7;
+    public static double CLAW_LEFT_OPEN = 1.0;
 
     // tune...
     public static double ARM_LOWER_LIMIT = 0.0;
@@ -22,7 +22,7 @@ public class RobotConstants {
 
     // tune...
     public static Integer ARM_HOME = 0;
-    public static Integer ARM_SCORE = 0; // TUNE THIS FOR MACRO
+    public static Integer ARM_SCORE = 500; // TUNE THIS FOR MACRO
     public static Integer ARM_GROUND = 1000; // TUNE THIS FOR MACRO
 
     // tune...

@@ -4,7 +4,6 @@ import android.util.Size;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -13,8 +12,8 @@ import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="Old Dropoff - Red")
-public class PixelDropoffRed extends LinearOpMode {
+@Autonomous(name="NOT BACK Old Dropoff - Red")
+public class PixelDropoffRedNotBack extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -86,20 +85,16 @@ public class PixelDropoffRed extends LinearOpMode {
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 moveForward(33);
                 moveForward(-30);
-                strafeRight(40);
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-                moveForward(27);
+                moveForward(24);
                 turn(180);
                 moveForward(8);
-                moveForward(-49);
+                moveForward(-8);
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-                moveForward(27);
+                moveForward(24);
                 turn(-180);
                 moveForward(8);
                 moveForward(-8);
-                strafeRight(26);
-                moveForward(40);
-
         }
     }
 

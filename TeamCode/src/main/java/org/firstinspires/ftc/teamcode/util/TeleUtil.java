@@ -23,8 +23,8 @@ public class TeleUtil {
 
     private boolean arm_macro = false;
     private boolean joint_macro = false;
-    private boolean fl_closed = false;
-    private boolean fr_closed = false;
+    private boolean fl_closed = true;
+    private boolean fr_closed = true;
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
 

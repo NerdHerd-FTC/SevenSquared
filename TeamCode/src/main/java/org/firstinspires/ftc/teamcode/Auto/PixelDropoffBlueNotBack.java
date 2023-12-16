@@ -4,7 +4,6 @@ import android.util.Size;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -13,8 +12,9 @@ import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="Old Dropoff - Red")
-public class PixelDropoffRed extends LinearOpMode {
+
+@Autonomous(name="Old Dropoff - Not Backdrop")
+public class PixelDropoffBlueNotBack extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -32,7 +32,7 @@ public class PixelDropoffRed extends LinearOpMode {
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
     private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
-    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     boolean running = false;
 
@@ -70,7 +70,7 @@ public class PixelDropoffRed extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -81,30 +81,27 @@ public class PixelDropoffRed extends LinearOpMode {
 
         waitForStart();
 
-            RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
                 moveForward(33);
                 moveForward(-30);
-                strafeRight(40);
-            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-                moveForward(27);
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+                moveForward(24);
                 turn(180);
-                moveForward(8);
-                moveForward(-49);
-            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-                moveForward(27);
+                moveForward(9);
+                moveForward(-9);
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+                moveForward(24);
+                sleep(1500);
                 turn(-180);
-                moveForward(8);
-                moveForward(-8);
-                strafeRight(26);
-                moveForward(40);
-
+                moveForward(9);
+                moveForward(-9);
         }
     }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
+    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return blueCubeDetectionPipeline.getDetection();
     }
 
     public void moveForward(double inches) {
@@ -195,7 +192,7 @@ public class PixelDropoffRed extends LinearOpMode {
             setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // Set the power for turning, this can be adjusted as necessary
-            final double TURN_POWER = 0.5;
+            final double TURN_POWER = 0.7;
             frontLeft.setPower(-TURN_POWER);
             frontRight.setPower(TURN_POWER);
             backLeft.setPower(-TURN_POWER);
