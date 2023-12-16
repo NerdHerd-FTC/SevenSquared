@@ -39,6 +39,8 @@ public class RobotConstants {
     //public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, joint_norm_F = 0.000047, joint_extra_F = 0.0;
     public static double armP = 0.0035, armI = 0.0, armD = 0.0003, armF = 0.002;
 
+    public static double jointF = -0.054;
+
     // Drive
     public static double DRIVE_SPEED = 1.0;
     public static double SLOW_TURN = 0.5;

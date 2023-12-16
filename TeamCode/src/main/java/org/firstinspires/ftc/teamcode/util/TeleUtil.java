@@ -299,36 +299,29 @@ public class TeleUtil {
         double power = 0;
         double mult = 1;
 
-        joint_macro = false;
-        joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        double input = -gamepad.left_stick_y;
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
 
-        // probably should add exponential control here!!
-        power = input*mult;
 
-        /*
-        if (!joint_macro && gamepad.b) {
-            joint_macro = true;
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * jointF;
 
-            joint.setTargetPosition(-1000); // TUNE THE HECK OUT OF THIS POR FAVOR
-            joint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
-            joint_macro = false;
-            joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        if (Math.abs(gamepad.left_stick_y) > 0.1) {
             double input = -gamepad.left_stick_y;
-
-            power = input*mult;
-        } else if (joint_macro) {
-            if (joint.getCurrentPosition() <= -1000) {
-                joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                joint_macro = false;
-                power = 0;
-            } else {
-                power = 1;
-            }
+            power = input*mult + joint_ff;
+        } else {
+            power = joint_ff;
         }
 
-         */
+        if (joint.getCurrentPosition() > 10) {
+            power = 0.0;
+        }
+
+        if (power > 1.0) {
+            power = 1.0;
+        } else if (Math.abs(power) < 0.05) {
+            power = 0;
+        } else if (power < -1.0) {
+            power = -1.0;
+        }
 
         return power;
     }
@@ -336,26 +329,31 @@ public class TeleUtil {
         double power = 0;
         double mult = 0.7;
 
+        // calculate angles of joint & arm (in degrees) to account for torque
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+        double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
         if (gamepad.b) {
             // ground!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_GROUND);
-
-            // calculate angles of joint & arm (in degrees) to account for torque
-            double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
-            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
-            double arm_angle = 270 - relative_arm_angle - joint_angle;
-
-            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
-
             power = arm_out + arm_ff;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             double input = -gamepad.right_stick_y;
             power = input*mult;
+        } else {
+            power = arm_ff;
         }
 
         // deadband
         if (Math.abs(power) < 0.05) {
             power = 0;
+        } else if (power > 1.0) {
+            power = 1.0;
+        } else if (power < -1.0) {
+            power = -1.0;
         }
 
         return power;
