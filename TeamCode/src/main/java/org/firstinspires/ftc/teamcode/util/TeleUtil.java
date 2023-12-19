@@ -303,16 +303,16 @@ public class TeleUtil {
 
 
         double joint_ff = Math.cos(Math.toRadians(joint_angle)) * jointF;
+        double input = -gamepad.left_stick_y;
 
         if (Math.abs(gamepad.left_stick_y) > 0.1) {
-            double input = -gamepad.left_stick_y;
             power = input*mult + joint_ff;
         } else {
-            power = joint_ff;
-        }
-
-        if (joint.getCurrentPosition() > 10) {
-            power = 0.0;
+            if (joint.getCurrentPosition() < 10) {
+                power = 0.0;
+            } else {
+                power = joint_ff;
+            }
         }
 
         if (power > 1.0) {
