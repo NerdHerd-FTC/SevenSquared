@@ -11,13 +11,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Config
 @TeleOp
-@Disabled
 public class PIDF_Arm_Joint extends LinearOpMode {
     private PIDController jointPID;
     private PIDController armPID;
 
-    public static double jointP = 0.00009, jointI = 0.0, jointD = 0.0, joint_norm_F = 0.000047, joint_extra_F = 0.0;
-    public static double armP = 0.0035, armI = 0.0, armD = 0.0003, armF = 0.002;
+    public static double jointP = 0.0009, jointI = 0.0, jointD = 0.00005, joint_norm_F = 0.0015, joint_arm_F = 0.0;
+    public static double armP = 0.003, armI = 0.0, armD = 0.00015, armF = 0.002;
 
     public static int jointTarget = 0, armTarget = 0;
 
@@ -61,7 +60,7 @@ public class PIDF_Arm_Joint extends LinearOpMode {
             // calculate angles of joint & arm (in degrees) to account for torque
             double joint_angle = jointMotor.getCurrentPosition() / joint_ticks_per_degree + 193;
             double relative_arm_angle = armMotor.getCurrentPosition() / arm_ticks_per_degree + 29;
-            double arm_angle = 270 - relative_arm_angle - joint_angle;
+            double arm_angle = 180 + joint_angle - relative_arm_angle;
 
             // account for negative angles
             if (arm_angle > 360) {
@@ -81,16 +80,11 @@ public class PIDF_Arm_Joint extends LinearOpMode {
 
             // calculate effective torque arm length - if arm is on the same side as the joint, use arm length with joint, otherwise use arm length as cog since it's pretty close and find additional torque...
             double joint_ff;
-            if (arm_angle < 180) {
-                joint_ff = joint_extra_F * Math.cos(Math.toRadians(arm_angle)) + joint_norm_F * Math.cos(Math.toRadians(joint_angle));
+            if (arm_angle >0 ) {
+                joint_ff = joint_arm_F * Math.cos(Math.toRadians(arm_angle)) + joint_norm_F * Math.cos(Math.toRadians(joint_angle));
             } else {
                 // will not hold, is underpowered
                 joint_ff = joint_norm_F * Math.cos(Math.toRadians(joint_angle));
-            }
-
-            // normalize joint angle to 0-180 - shouldn't be necessary but it's here...
-            if (joint_angle > 180) {
-                joint_angle = 180;
             }
 
             // calculate feedforward with torque weights and cosine
@@ -127,6 +121,5 @@ public class PIDF_Arm_Joint extends LinearOpMode {
 
             telemetry.update();
         }
-
     }
 }
