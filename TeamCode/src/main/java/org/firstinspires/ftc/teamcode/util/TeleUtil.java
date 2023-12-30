@@ -9,6 +9,10 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -29,7 +33,7 @@ public class TeleUtil {
     private ElapsedTime CSL = new ElapsedTime();
 
     private PIDController armPID = new PIDController(armP, armI, armD);
-
+    private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
 
     private enum ArmState {
@@ -302,23 +306,25 @@ public class TeleUtil {
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
 
 
-        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * jointF;
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
         double input = -gamepad.left_stick_y;
 
-        if (Math.abs(gamepad.left_stick_y) > 0.1) {
-            power = input*mult + joint_ff;
+
+
+        if (gamepad.b) {
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_GROUND);
+            power = joint_out + joint_ff;
+        } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
+            power = input * mult + joint_ff;
+        } else if (joint.getCurrentPosition() < 10) {
+            power = 0.0;
         } else {
-            if (joint.getCurrentPosition() < 10) {
-                power = 0.0;
-            } else {
-                power = joint_ff;
-            }
+            power = joint_ff;
         }
+
 
         if (power > 1.0) {
             power = 1.0;
-        } else if (Math.abs(power) < 0.05) {
-            power = 0;
         } else if (power < -1.0) {
             power = -1.0;
         }
