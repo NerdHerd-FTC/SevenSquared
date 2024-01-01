@@ -33,7 +33,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 @Config
 @Autonomous(name="DR Dropoff - Blue")
 public class PixelDropoffBlueDR extends LinearOpMode {
-    public static int CENTER_Y = 25, CENTER_ROT = 180, CENTER_X = 3;
+    public static int CENTER_Y = 25, CENTER_ROT = 180, CENTER_X = 18;
     public static int LEFT_Y = 17, LEFT_X = 3;
     public static int RIGHT_Y = 10, RIGHT_X = 4;
 
