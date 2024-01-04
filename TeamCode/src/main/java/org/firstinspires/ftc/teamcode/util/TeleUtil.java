@@ -35,12 +35,16 @@ public class TeleUtil {
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
+    private double joint_hold = 0;
+    private double arm_hold = 0;
+
 
     private enum ArmState {
         DRIVER_CONTROL(null),
         HOMING(ARM_HOME),
         GROUNDING(ARM_GROUND),
-        SCORING(800);
+        SCORING(800),
+        HOLDING(null);
 
         private Integer target;
         ArmState(Integer target) {
@@ -55,7 +59,8 @@ public class TeleUtil {
     private enum JointState {
         DRIVER_CONTROL(null),
         GROUNDING(0),
-        SCORING(800);
+        SCORING(800),
+        HOLDING(null);
 
         private Integer target;
         JointState(Integer target) {
@@ -305,21 +310,45 @@ public class TeleUtil {
 
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
 
+        if (joint_angle > 360) {
+            joint_angle -= 360;
+        } else if (joint_angle < 0) {
+            joint_angle += 360;
+        }
 
         double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
         double input = -gamepad.left_stick_y;
 
-
-
         if (gamepad.b) {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_GROUND);
             power = joint_out + joint_ff;
+            joint_hold = JOINT_GROUND;
+            jointState = JointState.GROUNDING;
+        } else if (gamepad.a) {
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), 0);
+            power = joint_out + joint_ff;
+            joint_hold = 0;
+            jointState = JointState.GROUNDING;
+        } else if (gamepad.y) {
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_BACKWARDS_SCORE);
+            power = joint_out + joint_ff;
+            joint_hold = JOINT_BACKWARDS_SCORE;
+            jointState = JointState.SCORING; // fix to include forward scoring as well
         } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
             power = input * mult + joint_ff;
-        } else if (joint.getCurrentPosition() < 10) {
+            joint_hold = joint.getCurrentPosition();
+            jointState = JointState.DRIVER_CONTROL;
+        } else if (joint.getCurrentPosition() > -10) {
+            jointState = JointState.GROUNDING;
             power = 0.0;
+            joint_hold = 0;
         } else {
-            power = joint_ff;
+            if (jointState != JointState.HOLDING) {
+                joint_hold = joint.getCurrentPosition();
+            }
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
+            power = joint_out + joint_ff;
+            jointState = JointState.HOLDING;
         }
 
 
@@ -328,6 +357,9 @@ public class TeleUtil {
         } else if (power < -1.0) {
             power = -1.0;
         }
+
+        power = Math.tanh(power);
+
 
         return power;
     }
@@ -346,11 +378,23 @@ public class TeleUtil {
             // ground!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_GROUND);
             power = arm_out + arm_ff;
+            arm_hold = ARM_GROUND;
+        } else if (gamepad.a) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), 0);
+            power = arm_out + arm_ff;
+            arm_hold = 0;
+        } else if (gamepad.y) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_BACKWARDS_SCORE);
+            power = arm_out + arm_ff;
+            arm_hold = ARM_BACKWARDS_SCORE;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             double input = -gamepad.right_stick_y;
             power = input*mult;
+            arm_hold = arm.getCurrentPosition();
         } else {
-            power = arm_ff;
+
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+            power = arm_ff + arm_out;
         }
 
         // deadband
@@ -361,6 +405,8 @@ public class TeleUtil {
         } else if (power < -1.0) {
             power = -1.0;
         }
+
+        power = Math.tanh(power);
 
         return power;
     }
@@ -437,6 +483,12 @@ public class TeleUtil {
         if (gamepad.right_bumper) {
             opMode.telemetry.addLine("Right bumper clicked");
         }
+
+        opMode.telemetry.addData("Joint Hold", joint_hold);
+        opMode.telemetry.addData("Joint Current", joint.getCurrentPosition());
+        opMode.telemetry.addData("Joint Current Hold Error", joint_hold - joint.getCurrentPosition());
+        opMode.telemetry.addData("Joint Power", joint.getPower());
+
     }
 
     public void logGamepad(Telemetry telemetry, Gamepad gamepad, String position) {
