@@ -59,7 +59,7 @@ public class TeleUtil {
     private enum JointState {
         DRIVER_CONTROL(null),
         GROUNDING(0),
-        SCORING(800),
+        BACKWARDS_SCORING(JOINT_BACKWARDS_SCORE),
         HOLDING(null);
 
         private Integer target;
@@ -333,7 +333,7 @@ public class TeleUtil {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_BACKWARDS_SCORE);
             power = joint_out + joint_ff;
             joint_hold = JOINT_BACKWARDS_SCORE;
-            jointState = JointState.SCORING; // fix to include forward scoring as well
+            jointState = JointState.BACKWARDS_SCORING; // fix to include forward scoring as well
         } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
             power = input * mult + joint_ff;
             joint_hold = joint.getCurrentPosition();
