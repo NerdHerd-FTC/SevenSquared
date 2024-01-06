@@ -74,8 +74,6 @@ public class RobotOrientedDrive extends LinearOpMode {
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
-        Servo WristServo = hardwareMap.get(Servo.class, "WS");
-
 
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
@@ -83,7 +81,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TeleUtil instance
-        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, WristServo);
+        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
 
         waitForStart();
 
@@ -103,8 +101,6 @@ public class RobotOrientedDrive extends LinearOpMode {
             teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
             teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
 
-            teleUtil.setWristServoPower(gamepad2);
-
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
 
             telemetry.addLine("\n");
@@ -121,7 +117,8 @@ public class RobotOrientedDrive extends LinearOpMode {
             telemetry.addLine("\n");
 
             // Servo Telemetry
-            teleUtil.servoTelemetry(WristServo, ClawServoRight, ClawServoLeft);
+            teleUtil.servoTelemetry(ClawServoLeft, "Left Claw");
+            teleUtil.servoTelemetry(ClawServoRight, " Right Claw");
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
