@@ -56,6 +56,11 @@ public class RobotOrientedDrive extends LinearOpMode {
         DcMotor motorFR = hardwareMap.dcMotor.get("frontRight");
         DcMotor motorBR = hardwareMap.dcMotor.get("backRight");
 
+        motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         // Unlock full speed of drive motors
         motorFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
