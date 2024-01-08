@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -17,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 
 @Config
 public class TeleUtil {
@@ -43,7 +46,8 @@ public class TeleUtil {
         DRIVER_CONTROL(null),
         HOMING(ARM_HOME),
         GROUNDING(ARM_GROUND),
-        SCORING(800),
+        BACKWARDS_SCORING(ARM_BACKWARDS_SCORE),
+        FORWARDS_SCORING(ARM_FORWARDS_SCORE),
         HOLDING(null);
 
         private Integer target;
@@ -89,7 +93,7 @@ public class TeleUtil {
         this.DroneServo = DroneServo;
     }
 
-    public void fieldOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
+    public void robotOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad.left_stick_x;
         double rx_raw = gamepad.right_stick_x;
@@ -157,6 +161,39 @@ public class TeleUtil {
         motorTelemetry(motorBL, "BL");
         motorTelemetry(motorFR, "FR");
         motorTelemetry(motorBR, "BR");
+    }
+
+    public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
+        // Read pose
+        Pose2d poseEstimate = drive.getPoseEstimate();
+
+        // Create a vector from the gamepad x/y inputs
+        // Then, rotate that vector by the inverse of that heading
+
+        // Exponential Drive
+        double exponent = 2.0;
+
+        double y_raw = -gamepad.left_stick_y;
+        double x_raw = -gamepad.left_stick_x;
+        double rx = -gamepad.right_stick_x;
+
+        Vector2d input = new Vector2d(Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent),
+                Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent))
+                .rotated(-poseEstimate.getHeading());
+
+        // Pass in the rotated input + right stick value for rotation
+        // Rotation is not part of the rotated input thus must be passed in separately
+        double rot_ex = 5.0;
+
+        drive.setWeightedDrivePower(
+                new Pose2d(
+                        input.getX(),
+                        input.getY(),
+                        Math.signum(rx) * Math.pow(Math.abs(rx), rot_ex)
+                )
+        );
+
+        opMode.telemetry.addData("Heading", poseEstimate.getHeading() * 180 / Math.PI);
     }
 
     public void robotOrientedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
@@ -275,7 +312,7 @@ public class TeleUtil {
 
     public void activateDroneLauncher(Gamepad gamepad, ElapsedTime matchTime) {
         double power = 0;
-        if(gamepad.a && matchTime.seconds() > 0)  {
+        if(gamepad.dpad_up && matchTime.seconds() > 0)  {
             power = 1;
         }
 
@@ -373,22 +410,34 @@ public class TeleUtil {
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_GROUND);
             power = arm_out + arm_ff;
             arm_hold = ARM_GROUND;
+            armState = ArmState.GROUNDING;
         } else if (gamepad.a) {
             double arm_out = armPID.calculate(arm.getCurrentPosition(), 0);
             power = arm_out + arm_ff;
             arm_hold = 0;
+            armState = ArmState.GROUNDING;
         } else if (gamepad.y) {
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_BACKWARDS_SCORE);
             power = arm_out + arm_ff;
             arm_hold = ARM_BACKWARDS_SCORE;
+            armState = ArmState.BACKWARDS_SCORING;
+        } else if (gamepad.x) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_FORWARDS_SCORE);
+            power = arm_out + arm_ff;
+            arm_hold = ARM_FORWARDS_SCORE;
+            armState = ArmState.FORWARDS_SCORING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             double input = -gamepad.right_stick_y;
             power = input*mult;
             arm_hold = arm.getCurrentPosition();
+            armState = ArmState.DRIVER_CONTROL;
         } else {
-
+            if (armState != ArmState.HOLDING) {
+                arm_hold = arm.getCurrentPosition();
+            }
             double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
             power = arm_ff + arm_out;
+            armState = ArmState.HOLDING;
         }
 
         // deadband

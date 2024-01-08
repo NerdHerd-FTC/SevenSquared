@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence;
 
 import android.util.Size;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -20,6 +22,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline.*;
 
 
+/*
 @Autonomous(name="Fifty Blue - Backdrop Side")
 public class BlueRRFifty extends LinearOpMode {
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
@@ -31,7 +34,9 @@ public class BlueRRFifty extends LinearOpMode {
         // Initialize SampleMecanumDrive object
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        Pose2d startPose = new Pose2d()
+        Pose2d startPose = new Pose2d(-12, 60, Math.toRadians(270));
+
+        drive.setPoseEstimate(startPose);
 
         Trajectory centerForward = drive.trajectoryBuilder(new )
 
@@ -115,3 +120,4 @@ public class BlueRRFifty extends LinearOpMode {
     }
 
 }
+ */
