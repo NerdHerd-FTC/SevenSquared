@@ -33,11 +33,9 @@ import org.firstinspires.ftc.vision.VisionPortal;
 @Config
 @Autonomous(name="DR Dropoff - Blue")
 public class PixelDropoffBlueDR extends LinearOpMode {
-    public static int CENTER_Y = 20, CENTER_ROT = 180, CENTER_X = 18;
+    public static int CENTER_Y = 25, CENTER_ROT = 180, CENTER_X = 3;
     public static int LEFT_Y = 17, LEFT_X = 3;
     public static int RIGHT_Y = 10, RIGHT_X = 4;
-
-    public static int CORNER_OFFSET = 5;
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight, arm;
@@ -151,18 +149,9 @@ public class PixelDropoffBlueDR extends LinearOpMode {
             setArmPower(ARM_SCORE);
             stopArticulation();
             setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
-            sleep(50);
             setArmPower(0);
             stopArticulation();
-            setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
-            moveForward(-5);
-            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-                strafeLeft(CENTER_Y + CORNER_OFFSET);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-                strafeLeft(LEFT_Y + CORNER_OFFSET);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-                strafeLeft(24+RIGHT_Y +CORNER_OFFSET);
-            }
+            stopMotors();
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
@@ -257,7 +246,7 @@ public class PixelDropoffBlueDR extends LinearOpMode {
             setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // Set the power for turning, this can be adjusted as necessary
-            final double TURN_POWER = 0.3;
+            final double TURN_POWER = 0.7;
             frontLeft.setPower(-TURN_POWER);
             frontRight.setPower(TURN_POWER);
             backLeft.setPower(-TURN_POWER);
@@ -307,7 +296,7 @@ public class PixelDropoffBlueDR extends LinearOpMode {
 
         running = true;
 
-        while (running && opModeIsActive()) {
+        while (running) {
             // calculate angles of joint & arm (in degrees) to account for torque
             double joint_angle = 0 / joint_ticks_per_degree + 193;
             double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
@@ -315,10 +304,8 @@ public class PixelDropoffBlueDR extends LinearOpMode {
 
             double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_SCORE);
             power = arm_out + arm_ff;
-
-            double error = target - arm.getCurrentPosition();
 
             // deadband
             if (Math.abs(power) < 0.05) {
@@ -329,17 +316,13 @@ public class PixelDropoffBlueDR extends LinearOpMode {
                 power = -1.0;
             }
 
-            if (Math.abs(error) < 40 ) {
+            if (Math.abs(arm.getTargetPosition() - target) < 40 ) {
                 power = 0;
                 arm.setPower(0);
                 running = false;
             }
 
-            telemetry.addData("Error", error);
-            telemetry.addData("Running", running);
-
             arm.setPower(power);
-            telemetry.update();
         }
     }
 

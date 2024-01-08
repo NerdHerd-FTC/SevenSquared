@@ -35,7 +35,7 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
     public Scalar lowerBlue = new Scalar(90, 72, 100);
     public Scalar upperBlue = new Scalar(140, 255, 255);
 
-    public enum Detection {
+    enum Detection {
         LEFT,
         CENTER,
         RIGHT

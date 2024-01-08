@@ -2,9 +2,6 @@ package org.firstinspires.ftc.teamcode.Auto;
 
 import android.util.Size;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -14,7 +11,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Autonomous(name="Old Dropoff - Red")
@@ -68,36 +64,6 @@ public class PixelDropoffRed extends LinearOpMode {
         // Without this, data retrieving from the IMU throws an exception
         imu.initialize(imuParams);
 
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-
-        // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        Pose2d startPose = new Pose2d(-12, -60, Math.toRadians(0));
-
-        drive.setPoseEstimate(startPose);
-
-        Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(33)
-                .build();
-
-        Trajectory center2 = drive.trajectoryBuilder(center1.end())
-                .forward(-30)
-                .build();
-
-        Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .strafeRight(40)
-                .build();
-
-        /*
-        moveForward(27);
-                turn(180);
-                moveForward(8);
-                moveForward(-49);
-         */
-
-
-
-
-
         // VisionPortal
         VisionPortal visionPortal;
 
@@ -118,9 +84,9 @@ public class PixelDropoffRed extends LinearOpMode {
             RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-                drive.followTrajectory(center1);
-                drive.followTrajectory(center2);
-                drive.followTrajectory(center3);
+                moveForward(33);
+                moveForward(-30);
+                strafeRight(40);
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 moveForward(27);
                 turn(180);

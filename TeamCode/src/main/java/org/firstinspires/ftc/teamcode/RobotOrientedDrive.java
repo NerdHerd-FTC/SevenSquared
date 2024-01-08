@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -17,11 +15,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
-@TeleOp(name = "Robot Drive - Blue Back")
+@TeleOp(name = "Robot Drive")
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
@@ -59,22 +56,17 @@ public class RobotOrientedDrive extends LinearOpMode {
         DcMotor motorFR = hardwareMap.dcMotor.get("frontRight");
         DcMotor motorBR = hardwareMap.dcMotor.get("backRight");
 
-        motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         // Unlock full speed of drive motors
         motorFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorFR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Left motors should move in reverse
+        // Right motors should move in reverse
         motorFL.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBL.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Right motors should move forward
+        // Left motors should move forward
         motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
@@ -82,6 +74,8 @@ public class RobotOrientedDrive extends LinearOpMode {
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
+        Servo WristServo = hardwareMap.get(Servo.class, "WS");
+
 
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
@@ -89,7 +83,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TeleUtil instance
-        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
+        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, WristServo);
 
         waitForStart();
 
@@ -109,6 +103,8 @@ public class RobotOrientedDrive extends LinearOpMode {
             teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
             teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
 
+            teleUtil.setWristServoPower(gamepad2);
+
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
 
             telemetry.addLine("\n");
@@ -125,8 +121,7 @@ public class RobotOrientedDrive extends LinearOpMode {
             telemetry.addLine("\n");
 
             // Servo Telemetry
-            teleUtil.servoTelemetry(ClawServoLeft, "Left Claw");
-            teleUtil.servoTelemetry(ClawServoRight, " Right Claw");
+            teleUtil.servoTelemetry(WristServo, ClawServoRight, ClawServoLeft);
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
