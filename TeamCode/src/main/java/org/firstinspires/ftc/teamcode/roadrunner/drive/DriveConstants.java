@@ -57,7 +57,7 @@ public class DriveConstants {
      */
     public static double WHEEL_RADIUS = 1.8898; // in (from goBILDA: 96 mm)
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 15.748; // in (from CAD: 0.4 m)
+    public static double TRACK_WIDTH = 19.44; // in (from CAD: 0.4 m) - theoretical: 15.748 in.
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -65,9 +65,9 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV = 1.0 / rpmToVelocity(MAX_RPM);
-    public static double kA = 0;
-    public static double kStatic = 0;
+    public static double kV = 0.0131;
+    public static double kA = 0.0021;
+    public static double kStatic = 0.05248;
 
     /*
      * These values are used to generate the trajectories for you robot. To ensure proper operation,
@@ -99,7 +99,7 @@ public class DriveConstants {
      */
     public static double MAX_VEL = 52.48291908330528; // theoretical max velocity: 61.743303783697616
     public static double MAX_ACCEL = 52.48291908330528;
-    public static double MAX_ANG_VEL = Math.toRadians(190.94804165608335);
+    public static double MAX_ANG_VEL = 3.114857287413855; // MAX: 3.893571609267319 rad. or 223.08522044297743 deg.; theoretical: 190.94804165608335 deg.
     public static double MAX_ANG_ACCEL = Math.toRadians(190.94804165608335);
 
 
