@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -17,12 +19,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 
 @Config
 public class TeleUtil {
     public LinearOpMode opMode;
     public DcMotor motorFL, motorFR, motorBL, motorBR, arm, joint;
-    public Servo ClawServoRight, ClawServoLeft, WristServo;
+    public Servo ClawServoRight, ClawServoLeft;
     public CRServo DroneServo;
 
     private boolean arm_macro = false;
@@ -35,12 +38,17 @@ public class TeleUtil {
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
+    private double joint_hold = 0;
+    private double arm_hold = 0;
+
 
     private enum ArmState {
         DRIVER_CONTROL(null),
         HOMING(ARM_HOME),
         GROUNDING(ARM_GROUND),
-        SCORING(800);
+        BACKWARDS_SCORING(ARM_BACKWARDS_SCORE),
+        FORWARDS_SCORING(ARM_FORWARDS_SCORE),
+        HOLDING(null);
 
         private Integer target;
         ArmState(Integer target) {
@@ -55,7 +63,8 @@ public class TeleUtil {
     private enum JointState {
         DRIVER_CONTROL(null),
         GROUNDING(0),
-        SCORING(800);
+        BACKWARDS_SCORING(JOINT_BACKWARDS_SCORE),
+        HOLDING(null);
 
         private Integer target;
         JointState(Integer target) {
@@ -71,7 +80,7 @@ public class TeleUtil {
     private JointState jointState = JointState.DRIVER_CONTROL;
 
     // Constructor
-    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, Servo WristServo) {
+    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo) {
         this.opMode = opMode;
         this.motorFL = frontLeft;
         this.motorFR = frontRight;
@@ -82,10 +91,9 @@ public class TeleUtil {
         this.ClawServoRight = ClawServoRight;
         this.ClawServoLeft = ClawServoLeft;
         this.DroneServo = DroneServo;
-        this.WristServo = WristServo;
     }
 
-    public void fieldOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
+    public void robotOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad.left_stick_x;
         double rx_raw = gamepad.right_stick_x;
@@ -155,6 +163,39 @@ public class TeleUtil {
         motorTelemetry(motorBR, "BR");
     }
 
+    public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
+        // Read pose
+        Pose2d poseEstimate = drive.getPoseEstimate();
+
+        // Create a vector from the gamepad x/y inputs
+        // Then, rotate that vector by the inverse of that heading
+
+        // Exponential Drive
+        double exponent = 2.0;
+
+        double y_raw = -gamepad.left_stick_y;
+        double x_raw = -gamepad.left_stick_x;
+        double rx = -gamepad.right_stick_x;
+
+        Vector2d input = new Vector2d(Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent),
+                Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent))
+                .rotated(-poseEstimate.getHeading());
+
+        // Pass in the rotated input + right stick value for rotation
+        // Rotation is not part of the rotated input thus must be passed in separately
+        double rot_ex = 5.0;
+
+        drive.setWeightedDrivePower(
+                new Pose2d(
+                        input.getX(),
+                        input.getY(),
+                        Math.signum(rx) * Math.pow(Math.abs(rx), rot_ex)
+                )
+        );
+
+        opMode.telemetry.addData("Heading", poseEstimate.getHeading() * 180 / Math.PI);
+    }
+
     public void robotOrientedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad.left_stick_x;
@@ -209,15 +250,8 @@ public class TeleUtil {
         opMode.telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    public void servoTelemetry(Servo wrist, Servo FrontRight, Servo FrontLeft) {
-        opMode.telemetry.addLine("--- Servo ---");
-        opMode.telemetry.addData("FrontRight Closed", fr_closed);
-        opMode.telemetry.addData("Front Right Location", FrontRight.getPosition());
-        opMode.telemetry.addData("FrontLeft Closed", fl_closed);
-        opMode.telemetry.addData("Front Left Location", FrontLeft.getPosition());
-        opMode.telemetry.addData("CSR Timer", CSR.seconds());
-        opMode.telemetry.addData("CSL Timer", CSL.seconds());
-        opMode.telemetry.addData("Wrist",wrist.getPosition());
+    public void servoTelemetry(Servo servo, String name) {
+        opMode.telemetry.addData(name + " Position", servo.getPosition());
     }
 
     public void gyroTelemetry(double heading) {
@@ -278,12 +312,13 @@ public class TeleUtil {
 
     public void activateDroneLauncher(Gamepad gamepad, ElapsedTime matchTime) {
         double power = 0;
-        if(gamepad.a && matchTime.seconds() > 0)  {
+        if(gamepad.dpad_up && matchTime.seconds() > 0)  {
             power = 1;
         }
 
         DroneServo.setPower(power);
     }
+    /*
     public void setWristServoPower(Gamepad gamepad){
         double current_position = WristServo.getPosition();
         if(gamepad.dpad_up) {
@@ -297,6 +332,7 @@ public class TeleUtil {
             WristServo.setPosition(WRIST_GROUND);
         }
     }
+     */
 
     // ARM AND JOINT MOTOR METHODS
     public double setJointPower(Gamepad gamepad) {
@@ -305,21 +341,45 @@ public class TeleUtil {
 
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
 
+        if (joint_angle > 360) {
+            joint_angle -= 360;
+        } else if (joint_angle < 0) {
+            joint_angle += 360;
+        }
 
         double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
         double input = -gamepad.left_stick_y;
 
-
-
         if (gamepad.b) {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_GROUND);
             power = joint_out + joint_ff;
+            joint_hold = JOINT_GROUND;
+            jointState = JointState.GROUNDING;
+        } else if (gamepad.a) {
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), 0);
+            power = joint_out + joint_ff;
+            joint_hold = 0;
+            jointState = JointState.GROUNDING;
+        } else if (gamepad.y) {
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_BACKWARDS_SCORE);
+            power = joint_out + joint_ff;
+            joint_hold = JOINT_BACKWARDS_SCORE;
+            jointState = JointState.BACKWARDS_SCORING; // fix to include forward scoring as well
         } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
             power = input * mult + joint_ff;
-        } else if (joint.getCurrentPosition() < 10) {
+            joint_hold = joint.getCurrentPosition();
+            jointState = JointState.DRIVER_CONTROL;
+        } else if (joint.getCurrentPosition() > -10) {
+            jointState = JointState.GROUNDING;
             power = 0.0;
+            joint_hold = 0;
         } else {
-            power = joint_ff;
+            if (jointState != JointState.HOLDING) {
+                joint_hold = joint.getCurrentPosition();
+            }
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
+            power = joint_out + joint_ff;
+            jointState = JointState.HOLDING;
         }
 
 
@@ -328,6 +388,9 @@ public class TeleUtil {
         } else if (power < -1.0) {
             power = -1.0;
         }
+
+        power = Math.tanh(power);
+
 
         return power;
     }
@@ -346,11 +409,35 @@ public class TeleUtil {
             // ground!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_GROUND);
             power = arm_out + arm_ff;
+            arm_hold = ARM_GROUND;
+            armState = ArmState.GROUNDING;
+        } else if (gamepad.a) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), 0);
+            power = arm_out + arm_ff;
+            arm_hold = 0;
+            armState = ArmState.GROUNDING;
+        } else if (gamepad.y) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_BACKWARDS_SCORE);
+            power = arm_out + arm_ff;
+            arm_hold = ARM_BACKWARDS_SCORE;
+            armState = ArmState.BACKWARDS_SCORING;
+        } else if (gamepad.x) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_FORWARDS_SCORE);
+            power = arm_out + arm_ff;
+            arm_hold = ARM_FORWARDS_SCORE;
+            armState = ArmState.FORWARDS_SCORING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             double input = -gamepad.right_stick_y;
             power = input*mult;
+            arm_hold = arm.getCurrentPosition();
+            armState = ArmState.DRIVER_CONTROL;
         } else {
-            power = arm_ff;
+            if (armState != ArmState.HOLDING) {
+                arm_hold = arm.getCurrentPosition();
+            }
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+            power = arm_ff + arm_out;
+            armState = ArmState.HOLDING;
         }
 
         // deadband
@@ -361,6 +448,8 @@ public class TeleUtil {
         } else if (power < -1.0) {
             power = -1.0;
         }
+
+        power = Math.tanh(power);
 
         return power;
     }
@@ -437,6 +526,12 @@ public class TeleUtil {
         if (gamepad.right_bumper) {
             opMode.telemetry.addLine("Right bumper clicked");
         }
+
+        opMode.telemetry.addData("Joint Hold", joint_hold);
+        opMode.telemetry.addData("Joint Current", joint.getCurrentPosition());
+        opMode.telemetry.addData("Joint Current Hold Error", joint_hold - joint.getCurrentPosition());
+        opMode.telemetry.addData("Joint Power", joint.getPower());
+
     }
 
     public void logGamepad(Telemetry telemetry, Gamepad gamepad, String position) {

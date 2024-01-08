@@ -45,7 +45,7 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
     public Scalar lowerRed2 = new Scalar(160, 100, 100);
     public Scalar upperRed2 = new Scalar(180, 255, 255);
 
-    enum Detection {
+    public enum Detection {
         LEFT,
         CENTER,
         RIGHT
