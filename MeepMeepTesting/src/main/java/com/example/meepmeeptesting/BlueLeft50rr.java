@@ -18,8 +18,9 @@ public class BlueLeft50rr { //closest to backdrop
                                // .splineTo(new Vector2d(12, 34), Math.toRadians(90))
                                // .splineTo(new Vector2d(12, 52), Math.toRadians(90))
                                 .splineTo(new Vector2d(22, 37), Math.toRadians(90))
+                                .forward(5)
                                 .splineTo(new Vector2d(48, 36), Math.toRadians(0))
-                                .strafeRight(20) // separate trajectory
+                                .strafeLeft(20) // separate trajectory
                                 .build()
                 );
 
