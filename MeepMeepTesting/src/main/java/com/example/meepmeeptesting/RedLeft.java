@@ -15,11 +15,12 @@ public class RedLeft {
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
-                                .splineTo(new Vector2d(0, -32), Math.toRadians(90))
-                                .splineToSplineHeading(new Pose2d(49, -36), Math.toRadians(90))
-                                .strafeRight(20) // separate trajectory
+                                .splineToSplineHeading(new Pose2d(0, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                                .lineToLinearHeading(new Pose2d(24, -33, Math.toRadians(180))) // Intermediate to allow for turning
+                                .splineToSplineHeading(new Pose2d(49, -36, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
                                 .build()
                 );
+
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
