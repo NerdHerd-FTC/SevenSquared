@@ -16,8 +16,8 @@ public class RedLeft {
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
                                 .splineToSplineHeading(new Pose2d(0, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
-                                .lineToLinearHeading(new Pose2d(24, -33, Math.toRadians(180))) // Intermediate to allow for turning
-                                .splineToSplineHeading(new Pose2d(49, -36, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+                                .lineToLinearHeading(new Pose2d(30, -30, Math.toRadians(180))) // Intermediate to allow for turning
+                                .splineToSplineHeading(new Pose2d(49, -30, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
                                 .build()
                 );
 
