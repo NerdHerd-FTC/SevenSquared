@@ -19,10 +19,6 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 @Autonomous(name="Old Dropoff - Red")
 public class PixelDropoffRed extends LinearOpMode {
-
-    // Define motors
-    private DcMotor frontLeft, frontRight, backLeft, backRight;
-
     // Constants
     //11 or 7.5
     private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
@@ -42,32 +38,6 @@ public class PixelDropoffRed extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // Initialize motors from hardware map
-        frontLeft = hardwareMap.dcMotor.get("frontLeft");
-        frontRight = hardwareMap.dcMotor.get("frontRight");
-        backLeft = hardwareMap.dcMotor.get("backLeft");
-        backRight = hardwareMap.dcMotor.get("backRight");
-
-        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        backRight.setDirection(DcMotorSimple.Direction.FORWARD);
-
-        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        // Retrieve the IMU from the hardware map
-        IMU imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters imuParams;
-
-        imuParams = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                )
-        );
-        // Technically this is the default, however specifying it is clearer
-        // Without this, data retrieving from the IMU throws an exception
-        imu.initialize(imuParams);
-
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 90 degrees
@@ -79,14 +49,21 @@ public class PixelDropoffRed extends LinearOpMode {
                 .splineTo(new Vector2d(12, -34), Math.toRadians(90))
                 .splineTo(new Vector2d(12, -52), Math.toRadians(90))
                 .build();
-        Trajectory left = drive.trajectoryBuilder(startPose)
+
+        Trajectory left1 = drive.trajectoryBuilder(startPose)
                 .splineToSplineHeading(new Pose2d(5, -34, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                .build();
+
+        Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .lineToLinearHeading(new Pose2d(30, -30, Math.toRadians(180))) // Intermediate to allow for turning
                 .splineToSplineHeading(new Pose2d(49, -34, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
-
                 .build();
-        Trajectory right = drive.trajectoryBuilder(startPose)
+
+        Trajectory right1 = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(22, -37), Math.toRadians(90))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
                 .back(5)
                 .splineTo(new Vector2d(44.5, -36), Math.toRadians(180))
                 .build();
@@ -108,8 +85,6 @@ public class PixelDropoffRed extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
-        setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         waitForStart();
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
@@ -117,140 +92,17 @@ public class PixelDropoffRed extends LinearOpMode {
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-            drive.followTrajectory(left);
+            drive.followTrajectory(left1);
+            drive.followTrajectory(left2);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-            drive.followTrajectory(right);
+            drive.followTrajectory(right1);
+            drive.followTrajectory(right2);
         }
         drive.followTrajectory(corner);
     }
 
     public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
         return redCubeDetectionPipeline.getDetection();
-    }
-
-    public void moveForward(double inches) {
-        if (!running) {
-            running = true;
-            int move = (int) (inches * TICKS_PER_INCH);
-
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            frontLeft.setPower(0.5);
-            frontRight.setPower(0.5);
-            backLeft.setPower(0.5);
-            backRight.setPower(0.5);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    public void strafeLeft(double inches) {
-        if (!running) {
-            running = true;
-            int move = (int) (inches * TICKS_PER_INCH);
-
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-            backRight.setTargetPosition(backRight.getCurrentPosition() - move);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            frontLeft.setPower(0.5);
-            frontRight.setPower(0.5);
-            backLeft.setPower(0.5);
-            backRight.setPower(0.5);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    public void strafeRight(double inches) {
-        if (!running) {
-            running = true;
-            int move = (int) (inches * TICKS_PER_INCH);
-
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() - move);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() - move);
-            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            frontLeft.setPower(0.5);
-            frontRight.setPower(0.5);
-            backLeft.setPower(0.5);
-            backRight.setPower(0.5);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    // runs from -180 to 180
-    private void turn(double targetAngle) {
-        if (!running) {
-            running = true;
-
-            int turnTicks = (int) (targetAngle * TICKS_PER_DEGREE);
-
-            // For a left turn, the left motors should move backward and the right motors forward
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - turnTicks);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() + turnTicks);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() - turnTicks);
-            backRight.setTargetPosition(backRight.getCurrentPosition() + turnTicks);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // Set the power for turning, this can be adjusted as necessary
-            final double TURN_POWER = 0.5;
-            frontLeft.setPower(-TURN_POWER);
-            frontRight.setPower(TURN_POWER);
-            backLeft.setPower(-TURN_POWER);
-            backRight.setPower(TURN_POWER);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    private void setMotorMode(DcMotor.RunMode mode) {
-        frontLeft.setMode(mode);
-        frontRight.setMode(mode);
-        backLeft.setMode(mode);
-        backRight.setMode(mode);
-    }
-
-    private void waitForMotors() {
-        while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-            motorTelemetry(frontLeft, "frontLeft");
-            motorTelemetry(frontRight, "frontRight");
-            motorTelemetry(backLeft, "backLeft");
-            motorTelemetry(backRight, "backRight");
-            idle();
-        }
-    }
-
-    private void stopMotors() {
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
     }
 
     private void motorTelemetry(DcMotor motor, String name) {
