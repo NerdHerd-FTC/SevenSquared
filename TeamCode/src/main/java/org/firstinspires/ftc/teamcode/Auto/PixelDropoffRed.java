@@ -87,17 +87,6 @@ public class PixelDropoffRed extends LinearOpMode {
                 .strafeRight(40)
                 .build();
 
-        /*
-        moveForward(27);
-                turn(180);
-                moveForward(8);
-                moveForward(-49);
-         */
-
-
-
-
-
         // VisionPortal
         VisionPortal visionPortal;
 
