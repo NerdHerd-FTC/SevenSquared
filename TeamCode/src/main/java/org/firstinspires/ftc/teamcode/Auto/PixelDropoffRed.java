@@ -71,32 +71,29 @@ public class PixelDropoffRed extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        Pose2d startPose = new Pose2d(-12, -60, Math.toRadians(0));
+        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(33)
+        Trajectory center = drive.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(12, -34), Math.toRadians(90))
+                .splineTo(new Vector2d(12, -52), Math.toRadians(90))
+                .build();
+        Trajectory left = drive.trajectoryBuilder(startPose)
+                .splineToSplineHeading(new Pose2d(5, -34, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                .lineToLinearHeading(new Pose2d(30, -30, Math.toRadians(180))) // Intermediate to allow for turning
+                .splineToSplineHeading(new Pose2d(49, -34, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+
+                .build();
+        Trajectory right = drive.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(22, -37), Math.toRadians(90))
+                .back(5)
+                .splineTo(new Vector2d(44.5, -36), Math.toRadians(180))
                 .build();
 
-        Trajectory center2 = drive.trajectoryBuilder(center1.end())
-                .forward(-30)
+        Trajectory corner = drive.trajectoryBuilder(startPose)
+                .strafeRight(20)
                 .build();
-
-        Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .strafeRight(40)
-                .build();
-
-        /*
-        moveForward(27);
-                turn(180);
-                moveForward(8);
-                moveForward(-49);
-         */
-
-
-
-
 
         // VisionPortal
         VisionPortal visionPortal;
@@ -115,26 +112,16 @@ public class PixelDropoffRed extends LinearOpMode {
 
         waitForStart();
 
-            RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-                drive.followTrajectory(center1);
-                drive.followTrajectory(center2);
-                drive.followTrajectory(center3);
-            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-                moveForward(27);
-                turn(180);
-                moveForward(8);
-                moveForward(-49);
-            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-                moveForward(27);
-                turn(-180);
-                moveForward(8);
-                moveForward(-8);
-                strafeRight(26);
-                moveForward(40);
-
+        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            drive.followTrajectory(center);
+        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            drive.followTrajectory(left);
+        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            drive.followTrajectory(right);
         }
+        drive.followTrajectory(corner);
     }
 
     public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
