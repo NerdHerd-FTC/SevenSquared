@@ -71,20 +71,13 @@ public class PixelDropoffRed extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        Pose2d startPose = new Pose2d(-12, -60, Math.toRadians(0));
+        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(33)
-                .build();
-
-        Trajectory center2 = drive.trajectoryBuilder(center1.end())
-                .forward(-30)
-                .build();
-
-        Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .strafeRight(40)
+        Trajectory center = drive.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(12, -34), Math.toRadians(90))
+                .splineTo(new Vector2d(12, -52), Math.toRadians(90))
                 .build();
 
         // VisionPortal
@@ -107,9 +100,7 @@ public class PixelDropoffRed extends LinearOpMode {
             RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-                drive.followTrajectory(center1);
-                drive.followTrajectory(center2);
-                drive.followTrajectory(center3);
+                drive.followTrajectory(center);
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 moveForward(27);
                 turn(180);

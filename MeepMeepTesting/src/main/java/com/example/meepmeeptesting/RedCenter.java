@@ -18,11 +18,7 @@ public class RedCenter {
                                 .splineTo(new Vector2d(12, -34), Math.toRadians(90))
                                 .splineTo(new Vector2d(12, -52), Math.toRadians(90))
                                 .splineTo(new Vector2d(49, -36), Math.toRadians(0))
-                                .splineTo(new Vector2d(38, -36), Math.toRadians(0))
-                                .splineTo(new Vector2d(36, -11), Math.toRadians(180))
-                                .splineTo(new Vector2d(-63, -11), Math.toRadians(180))
-                                .splineTo(new Vector2d(36, -11), Math.toRadians(180))
-                                .splineTo(new Vector2d(49, -36), Math.toRadians(0))
+                                .strafeRight(20) // separate trajectory
                                 .build()
                 );
 
