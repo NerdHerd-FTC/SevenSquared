@@ -101,7 +101,7 @@ public class FieldBlueBack extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // TEMPORARY - FIX LATER by pulling from auto
-        Pose2d startPose = new Pose2d(-12, 60, Math.toRadians(0));
+        Pose2d startPose = new Pose2d(12, 63, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
 
