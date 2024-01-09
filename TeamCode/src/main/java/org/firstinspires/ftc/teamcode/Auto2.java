@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="AutoCode")
+@Autonomous(name="AutoCode2")
 public class Auto2 extends LinearOpMode {
     // Define motor variables
     private final DcMotor flMotor = hardwareMap.dcMotor.get("frontLeft");
