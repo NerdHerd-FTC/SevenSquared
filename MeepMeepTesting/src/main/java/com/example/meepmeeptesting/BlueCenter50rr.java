@@ -14,11 +14,13 @@ public class BlueCenter50rr {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(12, 63, Math.toRadians(90)))
-                                .splineTo(new Vector2d(12, 34), Math.toRadians(90))
-                                .splineTo(new Vector2d(12, 52), Math.toRadians(90))
+                        drive.trajectorySequenceBuilder(new Pose2d(12, 63, Math.toRadians(270)))
+                                .splineTo(new Vector2d(12, 34), Math.toRadians(270))
+                                //.splineTo(new Vector2d(12, 52), Math.toRadians(90))
+                                .splineToConstantHeading(new Vector2d(12, 52), Math.toRadians(270))
+                                //.splineToSplineHeading(new Pose2d(12, 52, Math.toRadians(180)), Math.toRadians(180))
                                 .splineTo(new Vector2d(49, 36), Math.toRadians(0))
-                                .strafeRight(20) // separate trajectory
+                                .strafeLeft(20) // separate trajectory
                                 .build()
                 );
 

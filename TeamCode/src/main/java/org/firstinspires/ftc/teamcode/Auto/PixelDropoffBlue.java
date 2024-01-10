@@ -41,7 +41,7 @@ public class PixelDropoffBlue extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        Pose2d startPose = new Pose2d(12, 63, Math.toRadians(90));
+        Pose2d startPose = new Pose2d(12, 63, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
@@ -52,19 +52,17 @@ public class PixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(28, 35), Math.toRadians(180))
+                .splineTo(new Vector2d(25, 47), Math.toRadians(270))
+                .splineTo(new Vector2d(25, 37), Math.toRadians(270))
+                .back(5)
+
                 .build();
-
-
-
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .splineToSplineHeading(new Pose2d(48, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
-
         Trajectory right1 = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(5.5, 34), Math.toRadians(175))
                 .back(7)
-                 // separate trajectory
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
