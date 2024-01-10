@@ -66,7 +66,7 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
                 .back(5)
-                .splineTo(new Vector2d(44.5, -36), Math.toRadians(180))
+                .splineToSplineHeading(new Pose2d(44.5, -36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory corner = drive.trajectoryBuilder(startPose)
@@ -95,9 +95,11 @@ public class PixelDropoffRed extends LinearOpMode {
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
+            drive.followTrajectory(corner);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
+            drive.followTrajectory(corner);
         }
         drive.followTrajectory(corner);
     }

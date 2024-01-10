@@ -19,7 +19,8 @@ public class RedRight50rr { //closest to backdrop
                                 // .splineTo(new Vector2d(12, 52), Math.toRadians(90))
                                 .splineTo(new Vector2d(22, -37), Math.toRadians(90))
                                 .back(5)
-                                .splineTo(new Vector2d(44.5, -36), Math.toRadians(180))
+                                .splineToSplineHeading(new Pose2d(44.5, -36, Math.toRadians(0)), Math.toRadians(0))
+                                //.splineTo(new Vector2d(44.5, -36), Math.toRadians(180))
                                 .strafeRight(20) // separate trajectory
                                 .build()
                 );
