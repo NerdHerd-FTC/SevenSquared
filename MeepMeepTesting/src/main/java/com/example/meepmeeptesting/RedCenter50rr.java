@@ -16,7 +16,7 @@ public class RedCenter50rr {
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
                                 .splineTo(new Vector2d(12, -34), Math.toRadians(90))
-                                .splineTo(new Vector2d(12, -52), Math.toRadians(90))
+                                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
                                 .splineTo(new Vector2d(49, -36), Math.toRadians(0))
                                 .strafeRight(20) // separate trajectory
                                 .build()

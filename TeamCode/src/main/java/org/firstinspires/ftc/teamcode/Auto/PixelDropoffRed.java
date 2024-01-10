@@ -47,7 +47,7 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory center = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(12, -34), Math.toRadians(90))
-                .splineTo(new Vector2d(12, -52), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
                 .splineTo(new Vector2d(49, -36), Math.toRadians(0))
                 .build();
 
