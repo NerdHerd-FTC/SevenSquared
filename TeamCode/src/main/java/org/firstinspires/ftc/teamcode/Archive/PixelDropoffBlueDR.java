@@ -1,5 +1,6 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Archive;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_GROUND;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
@@ -9,29 +10,40 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
 
+import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.controller.PIDController;
+
 import android.util.Size;
 
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="DR Dropoff - Red")
-public class PixelDropoffRedDR extends LinearOpMode {
-    public static int CENTER_Y = 10, CENTER_ROT = -180, CENTER_X = 3;
-    public static int LEFT_Y = 6, LEFT_X = 3, LEFT_ROT = 360;
-    public static int RIGHT_Y = 10, RIGHT_X = 3;
+
+@Config
+@Autonomous(name="DR Dropoff - Blue")
+@Disabled
+public class PixelDropoffBlueDR extends LinearOpMode {
+    public static int CENTER_Y = 20, CENTER_ROT = 180, CENTER_X = 18;
+    public static int LEFT_Y = 17, LEFT_X = 3;
+    public static int RIGHT_Y = 10, RIGHT_X = 4;
+
+    public static int CORNER_OFFSET = 5;
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight, arm;
+    private Servo ClawServoLeft;
 
     // Constants
     //11 or 7.5
@@ -46,12 +58,11 @@ public class PixelDropoffRedDR extends LinearOpMode {
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
     private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
-    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     private PIDController armPID = new PIDController(armP, armI, armD);
 
     boolean running = false;
-    private Servo ClawServoLeft;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -95,7 +106,7 @@ public class PixelDropoffRedDR extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -108,46 +119,56 @@ public class PixelDropoffRedDR extends LinearOpMode {
 
         setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
 
-            RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
                 moveForward(33);
                 moveForward(-30);
-                strafeRight(35);
+                strafeLeft(30);
+                moveForward(CENTER_Y);
                 turn(CENTER_ROT);
-                strafeLeft(CENTER_Y);
                 moveForward(CENTER_X);
-            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
                 moveForward(24);
                 turn(180);
-                moveForward(8);
-                moveForward(-40);
-                turn(LEFT_ROT);
-                strafeLeft(LEFT_Y);
+                moveForward(9);
+                moveForward(-9);
+                strafeLeft(26);
+                moveForward(30);
+                strafeRight(LEFT_Y);
                 moveForward(LEFT_X);
-            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
                 moveForward(24);
+                sleep(1500);
                 turn(-180);
-                moveForward(8);
-                moveForward(-8);
-                strafeRight(26);
-                moveForward(40);
-                strafeLeft(RIGHT_Y);
+                moveForward(7);
+                moveForward(-7);
+                turn(360);
+                moveForward(30);
+                strafeRight(RIGHT_Y);
                 moveForward(RIGHT_X);
 
         }
-
-        stopMotors();
-        setArmPower(ARM_SCORE);
-        stopArticulation();
-        setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
-        setArmPower(0);
-        stopArticulation();
-        stopMotors();
+            stopMotors();
+            setArmPower(ARM_SCORE);
+            stopArticulation();
+            setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
+            sleep(50);
+            setArmPower(0);
+            stopArticulation();
+            setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
+            moveForward(-5);
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+                strafeLeft(CENTER_Y + CORNER_OFFSET);
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+                strafeLeft(LEFT_Y + CORNER_OFFSET);
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+                strafeLeft(24+RIGHT_Y +CORNER_OFFSET);
+            }
     }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
+    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return blueCubeDetectionPipeline.getDetection();
     }
 
     public void moveForward(double inches) {
@@ -238,7 +259,7 @@ public class PixelDropoffRedDR extends LinearOpMode {
             setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // Set the power for turning, this can be adjusted as necessary
-            final double TURN_POWER = 0.7;
+            final double TURN_POWER = 0.3;
             frontLeft.setPower(-TURN_POWER);
             frontRight.setPower(TURN_POWER);
             backLeft.setPower(-TURN_POWER);
@@ -282,14 +303,13 @@ public class PixelDropoffRedDR extends LinearOpMode {
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-
     public void setArmPower(double target) {
         double power = 0;
         double mult = 0.7;
 
         running = true;
 
-        while (running) {
+        while (running && opModeIsActive()) {
             // calculate angles of joint & arm (in degrees) to account for torque
             double joint_angle = 0 / joint_ticks_per_degree + 193;
             double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
@@ -297,8 +317,10 @@ public class PixelDropoffRedDR extends LinearOpMode {
 
             double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_SCORE);
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
             power = arm_out + arm_ff;
+
+            double error = target - arm.getCurrentPosition();
 
             // deadband
             if (Math.abs(power) < 0.05) {
@@ -309,26 +331,22 @@ public class PixelDropoffRedDR extends LinearOpMode {
                 power = -1.0;
             }
 
-            if (Math.abs(arm.getTargetPosition() - target) < 30 ) {
-                running = false;
+            if (Math.abs(error) < 40 ) {
                 power = 0;
+                arm.setPower(0);
+                running = false;
             }
 
+            telemetry.addData("Error", error);
+            telemetry.addData("Running", running);
+
             arm.setPower(power);
+            telemetry.update();
         }
     }
 
     private void stopArticulation() {
         arm.setPower(0);
-    }
-
-    private void waitForArticulation() {
-        while (opModeIsActive() && (arm.isBusy())) {
-            telemetry.addData("Arm Busy", arm.isBusy());
-            telemetry.update();
-
-            idle();
-        }
     }
 
     private void setClawServoLeft(Servo ClawServoLeft, double position) {

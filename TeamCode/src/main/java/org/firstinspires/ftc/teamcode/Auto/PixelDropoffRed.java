@@ -69,8 +69,16 @@ public class PixelDropoffRed extends LinearOpMode {
                 .splineToSplineHeading(new Pose2d(44.5, -36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
-        Trajectory corner = drive.trajectoryBuilder(startPose)
+        Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
                 .strafeRight(20)
+                .build();
+
+        Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
+                .strafeRight(27)
+                .build();
+
+        Trajectory cornerRight = drive.trajectoryBuilder(right2.end())
+                .strafeRight(15)
                 .build();
 
         // VisionPortal
@@ -92,16 +100,16 @@ public class PixelDropoffRed extends LinearOpMode {
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
+            drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            drive.followTrajectory(corner);
+            drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
-            drive.followTrajectory(corner);
+            drive.followTrajectory(cornerRight);
         }
-        drive.followTrajectory(corner);
     }
 
     public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
