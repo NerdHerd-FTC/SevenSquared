@@ -66,7 +66,7 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
                 .back(5)
-                .splineToSplineHeading(new Pose2d(44.5, -36, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(47, -36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory corner = drive.trajectoryBuilder(startPose)

@@ -6,7 +6,7 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-public class RedRight50rr { //closest to backdrop
+public class BlueCenter85RR {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -14,14 +14,17 @@ public class RedRight50rr { //closest to backdrop
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
-                                // .splineTo(new Vector2d(12, 34), Math.toRadians(90))
-                                // .splineTo(new Vector2d(12, 52), Math.toRadians(90))
-                                .splineTo(new Vector2d(22, -37), Math.toRadians(90))
-                                .back(5)
-                                .splineToSplineHeading(new Pose2d(47, -36, Math.toRadians(0)), Math.toRadians(0))
-                                //.splineTo(new Vector2d(44.5, -36), Math.toRadians(180))
-                                .strafeRight(20) // separate trajectory
+                        drive.trajectorySequenceBuilder(new Pose2d(12, 63, Math.toRadians(270)))
+                                .splineTo(new Vector2d(12, 34), Math.toRadians(270))
+                                //.splineTo(new Vector2d(12, 52), Math.toRadians(90))
+                                .splineToConstantHeading(new Vector2d(12, 52), Math.toRadians(270))
+                                //.splineToSplineHeading(new Pose2d(12, 52, Math.toRadians(180)), Math.toRadians(180))
+                                .splineTo(new Vector2d(41, 36), Math.toRadians(0))
+                                .splineTo(new Vector2d(19, 9), Math.toRadians(180))
+                                .splineTo(new Vector2d(-49, 12), Math.toRadians(180))
+                                //.strafeRight(28) // separate trajectory
+                                //.lineToLinearHeading(new Pose2d(-52, 12, Math.toRadians(180)))
+                                //.forward(100)
                                 .build()
                 );
 
