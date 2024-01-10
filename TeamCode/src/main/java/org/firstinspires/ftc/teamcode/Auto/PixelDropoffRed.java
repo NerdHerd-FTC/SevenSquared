@@ -1,10 +1,21 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
+
 import android.util.Size;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -12,13 +23,21 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Autonomous(name="Old Dropoff - Red")
 public class PixelDropoffRed extends LinearOpMode {
+    DcMotor arm;
+
+    private PIDController armPID = new PIDController(armP, armI, armD);
+
+    public Servo ClawServoLeft;
+
     // Constants
     //11 or 7.5
     private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
@@ -38,6 +57,10 @@ public class PixelDropoffRed extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        arm = hardwareMap.get(DcMotor.class, "arm");
+        ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        ClawServoLeft.setDirection(Servo.Direction.REVERSE);
+
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 90 degrees
@@ -100,14 +123,35 @@ public class PixelDropoffRed extends LinearOpMode {
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            sleep(500);
+            moveArm(ARM_HOME);
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            sleep(500);
+            moveArm(ARM_HOME);
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            sleep(500);
+            moveArm(ARM_HOME);
             drive.followTrajectory(cornerRight);
         }
     }
@@ -121,6 +165,34 @@ public class PixelDropoffRed extends LinearOpMode {
         telemetry.addData(name + " Power", motor.getPower());
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
+    }
+
+    private void moveArm(double target) {
+        double error = target - arm.getCurrentPosition();
+
+        while (opModeIsActive() && Math.abs(error) > 10) {
+            // calculate angles of joint & arm (in degrees) to account for torque
+            double joint_angle = 0 / joint_ticks_per_degree + 193;
+            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+            error = target - arm.getCurrentPosition();
+
+            double pid = armPID.calculate(arm.getCurrentPosition(), target);
+
+            double power = Math.tanh(arm_ff + pid);
+
+            arm.setPower(power);
+
+            motorTelemetry(arm, "Arm");
+        }
+
+    }
+
+    private void moveLeftFinger(double target) {
+        ClawServoLeft.setPosition(target);
     }
 
 }
