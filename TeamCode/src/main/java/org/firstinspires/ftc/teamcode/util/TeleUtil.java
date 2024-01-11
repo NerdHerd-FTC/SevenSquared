@@ -38,8 +38,8 @@ public class TeleUtil {
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
-    private double joint_hold = 0;
-    private double arm_hold = 0;
+    public static double joint_hold = 0;
+    public static double arm_hold = 0;
 
 
     private enum ArmState {
@@ -312,8 +312,10 @@ public class TeleUtil {
 
     public void activateDroneLauncher(Gamepad gamepad, ElapsedTime matchTime) {
         double power = 0;
-        if(gamepad.dpad_up && matchTime.seconds() > 0)  {
-            power = 1;
+        if(gamepad.dpad_up)  {
+            power = 1.0;
+        } else if (gamepad.dpad_down) {
+            power = -1.0;
         }
 
         DroneServo.setPower(power);
@@ -336,6 +338,7 @@ public class TeleUtil {
 
     // ARM AND JOINT MOTOR METHODS
     public double setJointPower(Gamepad gamepad) {
+        jointPID.setPID(jointP, jointI, jointD);
         double power = 0;
         double mult = 1;
 
@@ -395,12 +398,13 @@ public class TeleUtil {
         return power;
     }
     public double setArmPower(Gamepad gamepad) {
+        armPID.setPID(armP, armI, armD);
         double power = 0;
         double mult = 0.7;
 
         // calculate angles of joint & arm (in degrees) to account for torque
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
-        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
         double arm_angle = 270 - relative_arm_angle - joint_angle;
 
         double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
@@ -441,9 +445,7 @@ public class TeleUtil {
         }
 
         // deadband
-        if (Math.abs(power) < 0.05) {
-            power = 0;
-        } else if (power > 1.0) {
+        if (power > 1.0) {
             power = 1.0;
         } else if (power < -1.0) {
             power = -1.0;

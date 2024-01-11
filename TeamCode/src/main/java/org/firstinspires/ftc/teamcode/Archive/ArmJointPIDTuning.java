@@ -1,5 +1,5 @@
-// Code Created By Derrick, Owen, Shash
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Archive;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -14,14 +14,32 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "Archer Drive")
+@TeleOp(name = "Arm Joint PID Tuning")
 @Disabled
-public class DriveLiftIntegrated extends LinearOpMode {
-    ElapsedTime CSR = new ElapsedTime();
-    ElapsedTime matchTime = new ElapsedTime();
+public class ArmJointPIDTuning extends LinearOpMode {
+    private ElapsedTime matchTime = new ElapsedTime();
+    private ElapsedTime debounceTime = new ElapsedTime();
 
-    // Servo info
-    boolean fr_closed = false;
+    boolean arm_macro = false;
+    double arm_target = 0;
+
+    boolean joint_macro = false;
+    double joint_target = 0;
+
+    double armKp = 0.01;
+    double armKi = 0.00;
+    double armKd = 0.00;
+
+    double jointKp = 0.01;
+    double jointKi = 0.00;
+    double jointKd = 0.00;
+
+    int DELTA_T = 50;
+
+    double prevJointError = 0;
+    double prevArmError = 0;
+    double jointIntegral = 0;
+    double armIntegral = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -77,45 +95,40 @@ public class DriveLiftIntegrated extends LinearOpMode {
         // Without this, data retrieving from the IMU throws an exception
         imu.initialize(imuParams);
 
-        // Get servos
-        Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
-        CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
-        Servo WristServo = hardwareMap.get(Servo.class, "WS");
-
-        // Reverse if opposite directions are seen
-        ClawServoRight.setDirection(Servo.Direction.FORWARD);
-
-        DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
-
         waitForStart();
 
         imu.resetYaw();
 
-        if (isStopRequested()) return;
-
         matchTime.reset();
-        CSR.reset();
 
         while (opModeIsActive()) {
             // Get yaw
-            double yaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            
+            double yaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
             // Drive
             fieldOrientedDrive(yaw, gamepad1, exponential_drive, slowdown, motorFL, motorBL, motorFR, motorBR);
 
             // Articulation
-            jointMotor.setPower(setJointPower(jointMotor, gamepad2));
-            armMotor.setPower(setArmPower(armMotor, gamepad2));
-
-            setClawServoRight(ClawServoRight, gamepad2, -1, 0.6);
-            setWristServoPower(WristServo, gamepad2);
-
-            activateDroneLauncher(DroneServo, gamepad2);
+            jointMotor.setPower(setJointPower(jointMotor, gamepad2, jointKp, jointKi, jointKd));
+            armMotor.setPower(setArmPower(armMotor, gamepad2, armKp, armKi, armKd));
 
             // Reset yaw to 0 7
             if (gamepad1.x) {
                 imu.resetYaw();
                 telemetry.addLine("IMU reset");
+            }
+
+            if (debounceTime.seconds() > 0.5) {
+                if (gamepad2.dpad_up) {
+                    jointKp += 0.01;
+                } else if (gamepad2.dpad_down) {
+                    jointKp -= 0.01;
+                } else if (gamepad2.dpad_right) {
+                    armKp += 0.01;
+                } else if (gamepad2.dpad_left) {
+                    armKp -= 0.01;
+                }
+                debounceTime.reset();
             }
 
             // Gyro Telemetry
@@ -133,13 +146,10 @@ public class DriveLiftIntegrated extends LinearOpMode {
             motorTelemetry(armMotor, "Arm");
             telemetry.addLine("\n");
 
-            // Servo Telemetry
-            servoTelemetry(WristServo, ClawServoRight);
-
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
             telemetry.update();
-            sleep(50);
+            sleep(DELTA_T);
         }
     }
 
@@ -161,14 +171,17 @@ public class DriveLiftIntegrated extends LinearOpMode {
         }
 
         // Toggle exponential drive
+        /*
         if (gamepad1.y) {
             exponential_drive = !exponential_drive;
         }
+         */
 
         // Toggle slowdown
-        if (gamepad1.a) {
+        /*if (gamepad1.a) {
             slowdown = !slowdown;
         }
+         */
 
         // Exponential Drive
         double exponent = 2.0;
@@ -214,82 +227,67 @@ public class DriveLiftIntegrated extends LinearOpMode {
         motorBR.setPower(backRightPower);
     }
 
-    // SERVO METHODS
-    private void setClawServoRight(Servo ClawServoRight, Gamepad gamepad, double closed_position, double open_position) {
-        double position;
-        if (fr_closed) {
-            position = closed_position;
-        } else {
-            position = open_position;
-        }
-
-        if(gamepad.right_bumper && CSR.seconds() > 0.5)  {
-            if (fr_closed){
-                position = open_position;
-                fr_closed = false;
-            }
-            else {
-                position = closed_position;
-                fr_closed = true;
-            }
-            CSR.reset();
-        }
-
-        ClawServoRight.setPosition(position);
-    }
-    private void activateDroneLauncher(CRServo DroneServo, Gamepad gamepad) {
-        double power = 0;
-        if(gamepad.a && matchTime.seconds() > 0)  {
-            power = 1;
-        }
-
-        DroneServo.setPower(power);
-    }
-    private void setWristServoPower(Servo WristServo, Gamepad gamepad){
-        double position = WristServo.getPosition();
-
-        if(gamepad.dpad_up){
-            position += 0.05;
-        }
-        else if(gamepad.dpad_down){
-            position -= -0.05;
-        }
-
-        WristServo.setPosition(position);
-    }
-
     // ARM AND JOINT MOTOR METHODS
-    private double setJointPower(DcMotor jointMotor, Gamepad gamepad) {
-        double power;
+    private double setJointPower(DcMotor jointMotor, Gamepad gamepad, double Kp, double Ki, double Kd) {
+        double power = 0;
         double mult = 1;
-        double input = -gamepad.left_stick_y;
+        double currentLocation = jointMotor.getCurrentPosition();
+        double targetLocation = joint_target;
 
-        power = input*mult;
+        if (!joint_macro && gamepad.b) {
+            joint_macro = true;
 
-        /*
-        if (jointMotor.getCurrentPosition() <= 0 && input < 0) {
-            power = 0;
-        } else {
+        } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
+            joint_macro = false;
+            double input = -gamepad.left_stick_y;
             power = input*mult;
         }
-         */
+
+        if (joint_macro) {
+            double currentError = targetLocation - currentLocation;
+            double p = Kp * currentError;
+            jointIntegral += Ki * currentError * DELTA_T * 0.001;
+
+            if (jointIntegral > 1) {
+                jointIntegral = 1;
+            } else if (jointIntegral < -1) {
+                jointIntegral = -1;
+            }
+
+            double d = Kd * (currentError - prevJointError) / DELTA_T;
+            power = p + jointIntegral + d;
+        }
 
         return power;
     }
-    private double setArmPower(DcMotor armMotor, Gamepad gamepad) {
-        double power;
+    private double setArmPower(DcMotor armMotor, Gamepad gamepad, double Kp, double Ki, double Kd) {
+        double power = 0;
         double mult = 0.5;
-        double input = -gamepad.right_stick_y;
-        power = input*mult;
+        double currentLocation = armMotor.getCurrentPosition();
+        double targetLocation = arm_target;
 
-        /*
-        if (jointMotor.getCurrentPosition() <= 0 && input < 0) {
-            power = 0;
-        } else {
+        if (!arm_macro && gamepad.a) {
+            arm_macro = true;
+        } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
+            arm_macro = false;
+            double input = -gamepad.right_stick_y;
             power = input*mult;
         }
 
-         */
+        if (arm_macro) {
+            double currentError = targetLocation - currentLocation;
+            double p = Kp * currentError;
+            armIntegral += Ki * currentError * DELTA_T * 0.001;
+
+            if (armIntegral > 1) {
+                armIntegral = 1;
+            } else if (armIntegral < -1) {
+                armIntegral = -1;
+            }
+
+            double d = Kd * (currentError - prevJointError) / DELTA_T;
+            power = p + armIntegral + d;
+        }
 
         return power;
     }
@@ -328,6 +326,26 @@ public class DriveLiftIntegrated extends LinearOpMode {
         if (gamepad.dpad_right) {
             telemetry.addLine("DPad Right Pressed");
         }
+
+        if (gamepad.a) {
+            telemetry.addLine("A pressed");
+        }
+        if (gamepad.b) {
+            telemetry.addLine("B pressed");
+        }
+        if (gamepad.x) {
+            telemetry.addLine("X pressed");
+        }
+        if (gamepad.y) {
+            telemetry.addLine("Y pressed");
+        }
+
+        if (gamepad.left_bumper) {
+            telemetry.addLine("Left bumper clicked");
+        }
+        if (gamepad.right_bumper) {
+            telemetry.addLine("Right bumper clicked");
+        }
     }
 
     private void motorTelemetry(DcMotor motor, String name) {
@@ -335,17 +353,6 @@ public class DriveLiftIntegrated extends LinearOpMode {
         telemetry.addData(name + " Power", motor.getPower());
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
-    }
-
-    private void servoTelemetry(Servo wrist, Servo FrontRight) {
-        telemetry.addLine("--- Servo ---");
-        telemetry.addData("FrontRight Closed", fr_closed);
-        telemetry.addData("Front Right Location", FrontRight.getPosition());
-        //telemetry.addData("FrontLeft Closed", fl_closed);
-        //telemetry.addData("Front Left Location", FrontLeft.getPosition());
-        telemetry.addData("CSR Timer", CSR.seconds());
-        //telemetry.addData("CSL Timer", CSL.seconds());
-        telemetry.addData("Wrist", wrist.getPosition());
     }
 
     private void gyroTelemetry(double heading) {

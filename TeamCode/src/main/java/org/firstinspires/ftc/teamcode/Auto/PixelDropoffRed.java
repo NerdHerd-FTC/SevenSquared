@@ -34,8 +34,6 @@ import org.firstinspires.ftc.vision.VisionPortal;
 public class PixelDropoffRed extends LinearOpMode {
     DcMotor arm;
 
-    private PIDController armPID = new PIDController(armP, armI, armD);
-
     public Servo ClawServoLeft;
 
     // Constants
@@ -53,11 +51,19 @@ public class PixelDropoffRed extends LinearOpMode {
     private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
+    public static double armPower = 0.0;
+
     boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
         arm = hardwareMap.get(DcMotor.class, "arm");
+
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setDirection(DcMotor.Direction.REVERSE);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
 
@@ -69,9 +75,9 @@ public class PixelDropoffRed extends LinearOpMode {
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -34), Math.toRadians(90))
+                .splineTo(new Vector2d(12, -27), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(new Vector2d(49, -36), Math.toRadians(0))
+                .splineTo(new Vector2d(57, -30), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
@@ -80,7 +86,7 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .lineToLinearHeading(new Pose2d(30, -30, Math.toRadians(180))) // Intermediate to allow for turning
-                .splineToSplineHeading(new Pose2d(49, -34, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+                .splineToSplineHeading(new Pose2d(60, -36, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
@@ -89,19 +95,19 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
                 .back(5)
-                .splineToSplineHeading(new Pose2d(44.5, -36, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(60, -36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeRight(20)
+                .strafeRight(28)
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
-                .strafeRight(27)
+                .strafeRight(35)
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right2.end())
-                .strafeRight(15)
+                .strafeRight(23)
                 .build();
 
         // VisionPortal
@@ -121,37 +127,39 @@ public class PixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
+        moveLeftFinger(CLAW_LEFT_OPEN);
+
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
             moveArm(ARM_HOME);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
             moveArm(ARM_HOME);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
             moveArm(ARM_HOME);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
             drive.followTrajectory(cornerRight);
         }
     }
@@ -168,25 +176,30 @@ public class PixelDropoffRed extends LinearOpMode {
     }
 
     private void moveArm(double target) {
+        PIDController armPID = new PIDController(armP, armI, armD);
         double error = target - arm.getCurrentPosition();
 
         while (opModeIsActive() && Math.abs(error) > 10) {
             // calculate angles of joint & arm (in degrees) to account for torque
-            double joint_angle = 0 / joint_ticks_per_degree + 193;
-            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 29;
+            double joint_angle = 193;
+            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
             double arm_angle = 270 - relative_arm_angle - joint_angle;
 
             double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
             error = target - arm.getCurrentPosition();
 
-            double pid = armPID.calculate(arm.getCurrentPosition(), target);
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
 
-            double power = Math.tanh(arm_ff + pid);
+            double arm_power = arm_ff + arm_out;
 
-            arm.setPower(power);
+            arm.setPower(arm_power);
 
             motorTelemetry(arm, "Arm");
+            telemetry.addData("Error", error);
+            telemetry.addData("Power", arm_power);
+            telemetry.update();
+            sleep(100);
         }
 
     }

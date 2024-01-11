@@ -6,6 +6,8 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
+import java.util.Vector;
+
 public class BlueRight50rr { //closest to backdrop
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
@@ -17,9 +19,10 @@ public class BlueRight50rr { //closest to backdrop
                         drive.trajectorySequenceBuilder(new Pose2d(12, 63, Math.toRadians(0)))
                                 // .splineTo(new Vector2d(12, 34), Math.toRadians(90))
                                 // .splineTo(new Vector2d(12, 52), Math.toRadians(90))
-                                .splineTo(new Vector2d(5.5, 34), Math.toRadians(175))
-                                .back(7)
-                                .splineToSplineHeading(new Pose2d(47, 36, Math.toRadians(0)), Math.toRadians(0))
+                                .splineTo(new Vector2d(5.5, 34), Math.toRadians(180))
+                                //.splineToConstantHeading(new Vector2d(22.6, 34), Math.toRadians(180))
+                                .splineToConstantHeading(new Vector2d(20, 36), Math.toRadians(180))
+                                .splineTo(new Vector2d(47, 36), Math.toRadians(0))
                                 .strafeLeft(20) // separate trajectory
                                 .build()
                 );
