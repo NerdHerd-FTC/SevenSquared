@@ -40,8 +40,8 @@ public class PixelDropoffBlue extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        Pose2d startPose = new Pose2d(12, 63, Math.toRadians(90));
+        // We want to start the bot at x: 10, y: -8, heading: 270 degrees
+        Pose2d startPose = new Pose2d(12, 61.5, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 

@@ -17,8 +17,8 @@ public class RedLeft50rr {
                         drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
                                 .splineToSplineHeading(new Pose2d(5, -34, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
                                 .lineToLinearHeading(new Pose2d(30, -30, Math.toRadians(180))) // Intermediate to allow for turning
-                                .splineToSplineHeading(new Pose2d(49, -34, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
-                                .strafeRight(20) // separate trajectory
+                                .splineToSplineHeading(new Pose2d(57, -27, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+                                .strafeRight(35) // separate trajectory
 
                                 .build()
                 );

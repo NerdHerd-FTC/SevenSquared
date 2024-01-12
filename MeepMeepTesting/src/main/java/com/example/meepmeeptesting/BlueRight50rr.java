@@ -16,14 +16,14 @@ public class BlueRight50rr { //closest to backdrop
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(12, 63, Math.toRadians(0)))
+                        drive.trajectorySequenceBuilder(new Pose2d(12, 61.5, Math.toRadians(270)))
                                 // .splineTo(new Vector2d(12, 34), Math.toRadians(90))
                                 // .splineTo(new Vector2d(12, 52), Math.toRadians(90))
                                 .splineTo(new Vector2d(5.5, 34), Math.toRadians(180))
-                                //.splineToConstantHeading(new Vector2d(22.6, 34), Math.toRadians(180))
-                                .splineToConstantHeading(new Vector2d(20, 36), Math.toRadians(180))
-                                .splineTo(new Vector2d(47, 36), Math.toRadians(0))
-                                .strafeLeft(20) // separate trajectory
+                                //.splineToConstantHeading(new Vector2d(15, 34), Math.toRadians(180))
+                                //.splineToConstantHeading(new Vector2d(20, 34), Math.toRadians(180))
+                                .splineToSplineHeading(new Pose2d(57, 24), Math.toRadians(0))
+                                .strafeLeft(35) // separate trajectory
                                 .build()
                 );
 
