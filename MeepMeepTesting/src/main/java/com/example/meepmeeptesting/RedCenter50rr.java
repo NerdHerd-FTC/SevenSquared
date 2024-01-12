@@ -15,10 +15,10 @@ public class RedCenter50rr {
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
-                                .splineTo(new Vector2d(12, -34), Math.toRadians(90))
+                                .splineTo(new Vector2d(12, -27), Math.toRadians(90))
                                 .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                                .splineTo(new Vector2d(49, -36), Math.toRadians(0))
-                                .strafeRight(20) // separate trajectory
+                                .splineTo(new Vector2d(57, -30), Math.toRadians(0))
+                                .strafeRight(28) // separate trajectory
                                 .build()
                 );
 

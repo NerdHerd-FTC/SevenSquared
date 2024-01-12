@@ -24,8 +24,8 @@ public class RobotConstants {
     public static Integer ARM_HOME = 0;
     public static Integer ARM_SCORE = 500; // TUNE THIS FOR MACRO
     public static Integer ARM_BACKWARDS_SCORE = 1100;
-    public static Integer ARM_GROUND = 1000; // TUNE THIS FOR MACRO
-    public static Integer ARM_FORWARDS_SCORE = 575;
+    public static Integer ARM_GROUND = 1200; // TUNE THIS FOR MACRO
+    public static Integer ARM_FORWARDS_SCORE = 715;
 
     // tune...
     public static int JOINT_LOWER_LIMIT = 0;
@@ -40,7 +40,7 @@ public class RobotConstants {
     public static Integer JOINT_GROUND = 0;
 
     public static double jointP = 0.002, jointI = 0.0, jointD = 0.000018, joint_norm_F = 0.0015;
-    public static double armP = 0.003, armI = 0.0, armD = 0.00015, armF = 0.002;
+    public static double armP = 0.003, armI = 0.0, armD = 0.0002, armF = 0.0035;
 
     // Drive
     public static double DRIVE_SPEED = 1.0;

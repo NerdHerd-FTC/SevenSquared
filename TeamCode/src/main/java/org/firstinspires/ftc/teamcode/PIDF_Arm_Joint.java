@@ -59,7 +59,7 @@ public class PIDF_Arm_Joint extends LinearOpMode {
 
             // calculate angles of joint & arm (in degrees) to account for torque
             double joint_angle = jointMotor.getCurrentPosition() / joint_ticks_per_degree + 193;
-            double relative_arm_angle = armMotor.getCurrentPosition() / arm_ticks_per_degree + 29;
+            double relative_arm_angle = armMotor.getCurrentPosition() / arm_ticks_per_degree + 14.8;
             double arm_angle = 180 + joint_angle - relative_arm_angle;
 
             // account for negative angles
