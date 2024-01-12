@@ -12,6 +12,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per
 
 import android.util.Size;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -30,6 +31,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
+@Config
 @Autonomous(name="Old Dropoff - Red")
 public class PixelDropoffRed extends LinearOpMode {
     DcMotor arm;
@@ -73,34 +75,31 @@ public class PixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
+        Vector2d centerEnd = new Vector2d(57, -30);
+        Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(59, -39, Math.toRadians(0));
+
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -27), Math.toRadians(90))
+                .splineTo(new Vector2d(12, -25), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(new Vector2d(57, -30), Math.toRadians(0))
+                .splineTo(centerEnd, Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToSplineHeading(new Pose2d(5, -34, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                .splineToSplineHeading(new Pose2d(2, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
                 .build();
 
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .lineToLinearHeading(new Pose2d(30, -30, Math.toRadians(180))) // Intermediate to allow for turning
-                .splineToSplineHeading(new Pose2d(60, -36, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+                .lineToLinearHeading(new Pose2d(28, -30, Math.toRadians(180))) // Intermediate to allow for turning
+                .splineToSplineHeading(leftEnd, Math.toRadians(0)) // Move backward to (49, -36)
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(22, -37), Math.toRadians(90))
-                .build();
-
-        Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .back(5)
-
-                .splineToSplineHeading(new Pose2d(47, -36, Math.toRadians(0)), Math.toRadians(0))
-
-                .splineToSplineHeading(new Pose2d(60, -36, Math.toRadians(0)), Math.toRadians(0))
-
+                .splineTo(new Vector2d(22, -38), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(22, -60), Math.toRadians(90))
+                .splineToSplineHeading(rightEnd, Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
@@ -108,11 +107,12 @@ public class PixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
-                .strafeRight(35)
+                // new Pose2d(57, -30, Math.toRadians(0));
+                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right2.end())
-                .strafeRight(23)
+        Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
+                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
                 .build();
 
         // VisionPortal
@@ -140,8 +140,9 @@ public class PixelDropoffRed extends LinearOpMode {
             sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
-            moveArm(ARM_HOME);
+            moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
+            moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_OPEN);
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
@@ -151,19 +152,20 @@ public class PixelDropoffRed extends LinearOpMode {
             sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
-            moveArm(ARM_HOME);
+            moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
+            moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_OPEN);
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
-            drive.followTrajectory(right2);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
-            moveArm(ARM_HOME);
+            moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
+            moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_OPEN);
             drive.followTrajectory(cornerRight);
         }

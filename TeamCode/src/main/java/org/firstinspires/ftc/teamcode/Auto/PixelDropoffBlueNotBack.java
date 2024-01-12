@@ -4,6 +4,7 @@ import android.util.Size;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -14,6 +15,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 
 @Autonomous(name="Old Dropoff - Not Backdrop")
+@Disabled
 public class PixelDropoffBlueNotBack extends LinearOpMode {
 
     // Define motors
