@@ -75,14 +75,14 @@ public class PixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
-        Vector2d centerEnd = new Vector2d(57, -30);
+        Vector2d centerEnd = new Vector2d(57, -33);
         Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(59, -39, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(59, -42, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -25), Math.toRadians(90))
+                .splineTo(new Vector2d(12, -28), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
                 .splineTo(centerEnd, Math.toRadians(0))
                 .build();
