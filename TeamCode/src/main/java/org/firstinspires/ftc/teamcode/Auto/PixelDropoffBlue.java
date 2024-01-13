@@ -66,14 +66,19 @@ public class PixelDropoffBlue extends LinearOpMode {
         Trajectory left1 = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(28, 30), Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
-                .splineToSplineHeading(new Pose2d(55, 36, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(57, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(4, 31), Math.toRadians(180))
-                .splineToConstantHeading(new Vector2d(20, 34), Math.toRadians(180))
-                //.splineToConstantHeading(new Vector2d(20, 34), Math.toRadians(180))
-                .splineToSplineHeading(new Pose2d(52, 24), Math.toRadians(0))
+                .splineTo(new Vector2d(1, 30), Math.toRadians(180))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(20)
+                .build();
+
+        Trajectory right3 = drive.trajectoryBuilder(right2.end())
+                .splineToSplineHeading(new Pose2d(58, 21), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
@@ -84,8 +89,8 @@ public class PixelDropoffBlue extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
+        Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
+                .splineToConstantHeading(new Vector2d(53, 60), Math.toRadians(0))
                 .build();
 
         // VisionPortal
@@ -129,6 +134,8 @@ public class PixelDropoffBlue extends LinearOpMode {
             drive.followTrajectory(cornerLeft);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
+            drive.followTrajectory(right2);
+            drive.followTrajectory(right3);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_CLOSED);
