@@ -30,19 +30,18 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
-
+/*
 @Config
 @Autonomous(name="Far Dropoff - Red")
 public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm;
 
     public Servo ClawServoLeft;
+    public Servo ClawServoRight;
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
     public static double armPower = 0.0;
-
-    boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -54,24 +53,25 @@ public class FarPixelDropoffRed extends LinearOpMode {
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
+        ClawServoRight.setDirection(Servo.Direction.FORWARD);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 90 degrees
         // probably should be ~61 but keep this for consistency with other paths
-        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
-
-        Vector2d centerEnd = new Vector2d(57, -33);
-        Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(59, -42, Math.toRadians(0));
+        Pose2d startPose = new Pose2d(-34, -61, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -28), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(centerEnd, Math.toRadians(0))
+                .forward(36)
+                .back(19)
+                .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
+                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
@@ -203,3 +203,5 @@ public class FarPixelDropoffRed extends LinearOpMode {
     }
 
 }
+
+ */

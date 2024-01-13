@@ -1,22 +1,23 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Archive;
 
 import android.util.Size;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
 
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name="Old Dropoff - Not Backdrop")
+@Autonomous(name="Backdrop - Left")
 @Disabled
-public class PixelDropoffBlueNotBack extends LinearOpMode {
+public class BackDropLeft extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -83,23 +84,9 @@ public class PixelDropoffBlueNotBack extends LinearOpMode {
 
         waitForStart();
 
-            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-                moveForward(33);
-                moveForward(-30);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-                moveForward(24);
-                turn(180);
-                moveForward(9);
-                moveForward(-9);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-                moveForward(24);
-                sleep(1500);
-                turn(-180);
-                moveForward(9);
-                moveForward(-9);
-        }
+        strafeLeft(40);
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
@@ -194,7 +181,7 @@ public class PixelDropoffBlueNotBack extends LinearOpMode {
             setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // Set the power for turning, this can be adjusted as necessary
-            final double TURN_POWER = 0.7;
+            final double TURN_POWER = 0.5;
             frontLeft.setPower(-TURN_POWER);
             frontRight.setPower(TURN_POWER);
             backLeft.setPower(-TURN_POWER);
