@@ -32,8 +32,8 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
 
     public float right_x = 572;
     public float right_y = 100;
-    public Scalar lowerBlue = new Scalar(90, 72, 100);
-    public Scalar upperBlue = new Scalar(140, 255, 255);
+    public Scalar lowerBlue = new Scalar(100, 40, 50);
+    public Scalar upperBlue = new Scalar(130, 190, 190);
 
     public enum Detection {
         LEFT,
