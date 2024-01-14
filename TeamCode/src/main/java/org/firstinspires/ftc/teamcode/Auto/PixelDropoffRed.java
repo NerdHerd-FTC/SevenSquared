@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
@@ -75,7 +76,7 @@ public class PixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
-        Vector2d centerEnd = new Vector2d(57, -33);
+        Vector2d centerEnd = new Vector2d(55, -31.5);
         Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
         Pose2d rightEnd = new Pose2d(59, -42, Math.toRadians(0));
 
@@ -135,12 +136,12 @@ public class PixelDropoffRed extends LinearOpMode {
         moveLeftFinger(CLAW_LEFT_OPEN);
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_SCORE);
-            sleep(500);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_OPEN);
