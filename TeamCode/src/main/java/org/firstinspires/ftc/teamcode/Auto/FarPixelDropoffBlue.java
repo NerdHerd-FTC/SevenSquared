@@ -67,7 +67,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(-34, 25), Math.toRadians(270))
+                .splineTo(new Vector2d(-36, 28), Math.toRadians(270))
                 .build();
 
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
@@ -87,7 +87,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
 
         // arrive at backdrop
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
-                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(57, 33, Math.toRadians(0)))
                 .build();
 
         // move to left corner
@@ -98,7 +98,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
         // push to spike
         Trajectory right1 = drive.trajectoryBuilder(startPose)
                 .forward(20)
-                .splineTo(new Vector2d(-47, 34), Math.toRadians(180))
+                .splineTo(new Vector2d(-47, 30), Math.toRadians(180))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
@@ -118,7 +118,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
 
         // arrive at backdrop
         Trajectory right5 = drive.trajectoryBuilder(right4.end())
-                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(58, 17, Math.toRadians(0)))
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right5.end())
@@ -129,7 +129,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
         // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
                 .forward(20)
-                .splineTo(new Vector2d(-23, 36), Math.toRadians(0))
+                .splineTo(new Vector2d(-20, 30), Math.toRadians(0))
                 .build();
 
         // moving to pixel stack
@@ -150,7 +150,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
 
         // arrive at backdrop
         Trajectory left5 = drive.trajectoryBuilder(left4.end())
-                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(57, 36, Math.toRadians(0)))
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left5.end())
