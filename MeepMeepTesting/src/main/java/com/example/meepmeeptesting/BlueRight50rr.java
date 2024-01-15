@@ -19,7 +19,9 @@ public class BlueRight50rr { //closest to backdrop
                         drive.trajectorySequenceBuilder(new Pose2d(12, 61.5, Math.toRadians(270)))
                                 // .splineTo(new Vector2d(12, 34), Math.toRadians(90))
                                 // .splineTo(new Vector2d(12, 52), Math.toRadians(90))
+
                                 .splineTo(new Vector2d(5.5, 34), Math.toRadians(180))
+                                .back(8)
                                 //.splineToConstantHeading(new Vector2d(15, 34), Math.toRadians(180))
                                 //.splineToConstantHeading(new Vector2d(20, 34), Math.toRadians(180))
                                 .splineToSplineHeading(new Pose2d(57, 24), Math.toRadians(0))

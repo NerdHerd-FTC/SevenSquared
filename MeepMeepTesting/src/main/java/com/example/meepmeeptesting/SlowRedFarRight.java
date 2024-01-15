@@ -6,7 +6,7 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-public class FarSideBlueRight {
+public class SlowRedFarRight {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -14,21 +14,16 @@ public class FarSideBlueRight {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-30, 63, Math.toRadians(270)))
-                                .forward(20)
-                                .splineTo(new Vector2d(-23, 36), Math.toRadians(0))
-                                .back(15)
-                                .strafeRight(15)
-                                .splineToLinearHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, -63, Math.toRadians(90)))
+                                .forward(21)
+                                .splineToLinearHeading(new Pose2d(-26, -28, Math.toRadians(90)), Math.toRadians(90))
+                                .back(9)
+                                .lineToSplineHeading(new Pose2d(-50, -36, Math.toRadians(180)))
                                 .waitSeconds(1)
-                                .back(90)
-                                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
 
-
-                                //.splineToLinearHeading(new Vector2d(-55, -34), Math.toRadians(180))
-                                // .splineToConstantHeading()
-                                //.splineTo(new Vector2d(57, -30), Math.toRadians(0))
-                                //.strafeRight(48) // separate trajectory
+                                //.splineToLinearHeading(new Pose2d(40, 40, Math.toRadians(90)), Math.toRadians(0))
+                                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
+                                //.splineToLinearHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(180))
                                 .build()
                 );
 
