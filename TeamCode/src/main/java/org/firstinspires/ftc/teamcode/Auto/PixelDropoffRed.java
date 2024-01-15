@@ -3,13 +3,12 @@ package org.firstinspires.ftc.teamcode.Auto;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
 
 import android.util.Size;
 
@@ -18,13 +17,9 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -133,41 +128,40 @@ public class PixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        moveLeftFinger(CLAW_LEFT_OPEN);
+        moveLeftFinger(CLAW_LEFT_CLOSED);
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-            moveArm(ARM_FORWARDS_LOW_SCORE);
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_OPEN);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
             moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_OPEN);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
             moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_OPEN);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerRight);
         }
     }

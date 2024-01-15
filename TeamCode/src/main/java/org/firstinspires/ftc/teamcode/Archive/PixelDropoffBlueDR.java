@@ -1,9 +1,8 @@
 package org.firstinspires.ftc.teamcode.Archive;
 
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_GROUND;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_SCORE;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -21,7 +20,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -117,7 +115,7 @@ public class PixelDropoffBlueDR extends LinearOpMode {
 
         waitForStart();
 
-        setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
+        setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
 
             BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
@@ -152,11 +150,11 @@ public class PixelDropoffBlueDR extends LinearOpMode {
             stopMotors();
             setArmPower(ARM_SCORE);
             stopArticulation();
-            setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
+            setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
             sleep(50);
             setArmPower(0);
             stopArticulation();
-            setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
+            setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
             moveForward(-5);
             if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
                 strafeLeft(CENTER_Y + CORNER_OFFSET);

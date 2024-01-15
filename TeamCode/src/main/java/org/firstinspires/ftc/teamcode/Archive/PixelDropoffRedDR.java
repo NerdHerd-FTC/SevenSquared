@@ -1,8 +1,8 @@
 package org.firstinspires.ftc.teamcode.Archive;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_SCORE;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -109,7 +109,7 @@ public class PixelDropoffRedDR extends LinearOpMode {
 
         waitForStart();
 
-        setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
+        setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
 
             RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
@@ -143,7 +143,7 @@ public class PixelDropoffRedDR extends LinearOpMode {
         stopMotors();
         setArmPower(ARM_SCORE);
         stopArticulation();
-        setClawServoLeft(ClawServoLeft, CLAW_LEFT_CLOSED);
+        setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
         setArmPower(0);
         stopArticulation();
         stopMotors();

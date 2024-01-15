@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.Archive;
 
 import android.util.Size;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -15,7 +14,6 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.apache.commons.math3.analysis.function.Add;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -174,9 +172,9 @@ public class SuperAutoBlue extends LinearOpMode {
         precisionAprilTag(aprilTag, decision, 3.5, 8);
 
         runArm(arm, RobotConstants.ARM_SCORE, 0.7);
-        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
-        sleep(1000);
         setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_CLOSED);
+        sleep(1000);
+        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
         runArm(arm, 0, 1);
         runJoint(joint, 0, 0.7);
 

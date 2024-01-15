@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.util;
 import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.controller.PIDController;
 
 @Config
 public class RobotConstants {
@@ -11,8 +10,8 @@ public class RobotConstants {
     public static double CLAW_RIGHT_CLOSED = 1.0;
     public static double CLAW_RIGHT_OPEN = 0.75;
 
-    public static double CLAW_LEFT_CLOSED = 0.7;
-    public static double CLAW_LEFT_OPEN = 1.0;
+    public static double CLAW_LEFT_OPEN = 0.7;
+    public static double CLAW_LEFT_CLOSED = 1.0;
 
     // tune...
     public static double ARM_LOWER_LIMIT = 0.0;

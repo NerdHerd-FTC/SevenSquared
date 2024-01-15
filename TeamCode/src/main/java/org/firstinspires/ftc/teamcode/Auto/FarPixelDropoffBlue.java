@@ -8,10 +8,6 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
 
 import android.util.Size;
 
@@ -19,7 +15,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -28,18 +23,17 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.AutoUtil;
-import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Config
-@Autonomous(name="Far Dropoff - Red")
-public class FarPixelDropoffRed extends LinearOpMode {
+@Autonomous(name="Far Dropoff - Blue")
+public class FarPixelDropoffBlue extends LinearOpMode {
     DcMotor arm, joint;
 
     public Servo ClawServoLeft;
     public Servo ClawServoRight;
 
-    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     public static double armPower = 0.0;
 
@@ -68,7 +62,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // Bot starts on the far side of the red side of the field
+        // Bot starts on the far side of the blue side of the field
         Pose2d startPose = new Pose2d(-34, -61, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
@@ -156,7 +150,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -165,57 +159,57 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         waitForStart();
 
-        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        moveLeftFinger(CLAW_LEFT_CLOSED);
+        autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
-        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center1);
             drive.followTrajectory(center2);
-            moveRightFinger(CLAW_RIGHT_OPEN);
-            moveArm(ARM_GROUND); // PICKUP
-            moveRightFinger(CLAW_RIGHT_CLOSED);
+            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+            autoUtil.moveArm(ARM_GROUND); // PICKUP
+            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
             sleep(500);
-            moveArm(ARM_HOME);
+            autoUtil.moveArm(ARM_HOME);
             drive.followTrajectory(center3);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
+            autoUtil.moveArm(ARM_FORWARDS_LOW_SCORE);
             sleep(500);
-            moveRightFinger(CLAW_RIGHT_OPEN);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+            autoUtil.moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(100);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            moveRightFinger(CLAW_RIGHT_CLOSED);
+            autoUtil.moveArm(ARM_HOME);
+            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
             drive.followTrajectory(cornerCenter);
-        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            moveArm(ARM_FORWARDS_SCORE);
+            autoUtil.moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
+            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            autoUtil.moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            autoUtil.moveArm(ARM_HOME);
+            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerLeft);
-        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
-            moveArm(ARM_FORWARDS_SCORE);
+            autoUtil.moveArm(ARM_FORWARDS_SCORE);
             sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
+            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            autoUtil.moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            autoUtil.moveArm(ARM_HOME);
+            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerRight);
         }
     }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
+    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return blueCubeDetectionPipeline.getDetection();
     }
 
     private void motorTelemetry(DcMotor motor, String name) {
@@ -223,43 +217,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
         telemetry.addData(name + " Power", motor.getPower());
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
-    }
-
-    private void moveArm(double target) {
-        PIDController armPID = new PIDController(armP, armI, armD);
-        double error = target - arm.getCurrentPosition();
-
-        while (opModeIsActive() && Math.abs(error) > 10) {
-            // calculate angles of joint & arm (in degrees) to account for torque
-            double joint_angle = 193;
-            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
-            double arm_angle = 270 - relative_arm_angle - joint_angle;
-
-            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
-
-            error = target - arm.getCurrentPosition();
-
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
-
-            double arm_power = arm_ff + arm_out;
-
-            arm.setPower(arm_power);
-
-            motorTelemetry(arm, "Arm");
-            telemetry.addData("Error", error);
-            telemetry.addData("Power", arm_power);
-            telemetry.update();
-            sleep(100);
-        }
-
-    }
-
-    private void moveLeftFinger(double target) {
-        ClawServoLeft.setPosition(target);
-    }
-
-    private void moveRightFinger(double target) {
-        ClawServoRight.setPosition(target);
     }
 
 }
