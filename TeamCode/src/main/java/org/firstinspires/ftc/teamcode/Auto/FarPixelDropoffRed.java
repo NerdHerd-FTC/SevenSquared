@@ -107,8 +107,11 @@ public class FarPixelDropoffRed extends LinearOpMode {
         // moving to pixel stack
         Trajectory left3 = drive.trajectoryBuilder(left2.end())
                 .strafeRight(15)
+                .build();
+        Trajectory left5 = drive.trajectoryBuilder(left2.end())
                 .splineToLinearHeading(new Pose2d(-55, -11, Math.toRadians(180)), Math.toRadians(0))
                 .build();
+
 
         // spline through the middle truss to drop off at backdrop
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
@@ -137,8 +140,10 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         // spline through middle truss to get to backdrop
-        Trajectory right4 = drive.trajectoryBuilder(right3.end())
+        Trajectory right5 = drive.trajectoryBuilder(right3.end())
                 .strafeRight(6)
+                .build();
+        Trajectory right4 = drive.trajectoryBuilder(right3.end())
                 .splineTo(new Vector2d(34, -10), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(59, -42, Math.toRadians(0)), Math.toRadians(0))
                 .build();
@@ -187,6 +192,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
             drive.followTrajectory(left3);
+            drive.followTrajectory(left5);
 
             autoUtil.pixelPickup(1);
 
@@ -204,6 +210,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
             drive.followTrajectory(right3);
+            drive.followTrajectory(right5);
 
             autoUtil.pixelPickup(1);
 
