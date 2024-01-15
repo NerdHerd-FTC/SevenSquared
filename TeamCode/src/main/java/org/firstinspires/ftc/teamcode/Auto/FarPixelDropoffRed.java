@@ -1,9 +1,13 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_GROUND;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -37,12 +41,11 @@ public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm;
 
     public Servo ClawServoLeft;
+    public Servo ClawServoRight;
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
     public static double armPower = 0.0;
-
-    boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -54,52 +57,92 @@ public class FarPixelDropoffRed extends LinearOpMode {
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
+        ClawServoRight.setDirection(Servo.Direction.FORWARD);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        // probably should be ~61 but keep this for consistency with other paths
-        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
-
-        Vector2d centerEnd = new Vector2d(57, -33);
-        Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(59, -42, Math.toRadians(0));
+        // Bot starts on the far side of the red side of the field
+        Pose2d startPose = new Pose2d(-34, -61, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -28), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(centerEnd, Math.toRadians(0))
+        // Push toward spike
+        Trajectory center1 = drive.trajectoryBuilder(startPose)
+                .forward(36)
+                .back(19)
                 .build();
 
+        // Move to pixel stack
+        Trajectory center2 = drive.trajectoryBuilder(center1.end())
+                .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
+                .build();
+
+        // Spline under the edge truss to drop off at backdrop
+        Trajectory center3 = drive.trajectoryBuilder(center2.end())
+                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(55, -31.5, Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        // move to left corner
+        Trajectory cornerCenter = drive.trajectoryBuilder(center3.end())
+                .strafeLeft(28)
+                .build();
+
+        // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToSplineHeading(new Pose2d(2, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                .splineTo(new Vector2d(-47, -34), Math.toRadians(180))
                 .build();
 
+        // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .lineToLinearHeading(new Pose2d(28, -30, Math.toRadians(180))) // Intermediate to allow for turning
-                .splineToSplineHeading(leftEnd, Math.toRadians(0)) // Move backward to (49, -36)
+                .back(14)
                 .build();
 
-        Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(22, -38), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(22, -60), Math.toRadians(90))
-                .splineToSplineHeading(rightEnd, Math.toRadians(0))
+
+        // moving to pixel stack
+        Trajectory left3 = drive.trajectoryBuilder(left2.end())
+                .strafeRight(15)
+                .splineToLinearHeading(new Pose2d(-55, -11, Math.toRadians(180)), Math.toRadians(0))
                 .build();
 
-        Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeRight(28)
+        // spline through the middle truss to drop off at backdrop
+        Trajectory left4 = drive.trajectoryBuilder(left3.end())
+                .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
+                .splineToConstantHeading(new Vector2d(59, -25), Math.toRadians(0))
                 .build();
 
-        Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
+        Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
                 // new Pose2d(57, -30, Math.toRadians(0));
-                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
+        // RIGHT goes through the edge truss to drop off at backdrop
+        Trajectory right1 = drive.trajectoryBuilder(startPose)
+                .forward(11)
+                .splineTo(new Vector2d(-26, -35), Math.toRadians(0))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(9)
+                .build();
+
+        // go to pixel stack
+        Trajectory right3 = drive.trajectoryBuilder(right2.end())
+                .lineToSplineHeading(new Pose2d(-50, -34, Math.toRadians(180)))
+                .build();
+
+        // spline through edge truss to get to backdrop
+        Trajectory right4 = drive.trajectoryBuilder(right3.end())
+                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
+                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
                 .build();
 
         // VisionPortal
@@ -122,15 +165,23 @@ public class FarPixelDropoffRed extends LinearOpMode {
         moveLeftFinger(CLAW_LEFT_OPEN);
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_SCORE);
-            sleep(500);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            drive.followTrajectory(center1);
+            drive.followTrajectory(center2);
+            moveRightFinger(CLAW_RIGHT_OPEN);
+            moveArm(ARM_GROUND); // PICKUP
+            moveRightFinger(CLAW_RIGHT_CLOSED);
             sleep(500);
             moveArm(ARM_HOME);
+            drive.followTrajectory(center3);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(500);
+            moveRightFinger(CLAW_RIGHT_OPEN);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            sleep(100);
+            moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_OPEN);
+            moveRightFinger(CLAW_RIGHT_CLOSED);
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
@@ -200,6 +251,10 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
     private void moveLeftFinger(double target) {
         ClawServoLeft.setPosition(target);
+    }
+
+    private void moveRightFinger(double target) {
+        ClawServoRight.setPosition(target);
     }
 
 }

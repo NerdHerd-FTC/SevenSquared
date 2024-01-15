@@ -32,8 +32,8 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
 
     public float right_x = 572;
     public float right_y = 100;
-    public Scalar lowerBlue = new Scalar(90, 72, 100);
-    public Scalar upperBlue = new Scalar(140, 255, 255);
+    public Scalar lowerBlue = new Scalar(100, 40, 50);
+    public Scalar upperBlue = new Scalar(130, 190, 190);
 
     public enum Detection {
         LEFT,
@@ -69,6 +69,8 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
         Imgproc.rectangle(frame, new Point(center_x, center_y), new Point(center_x + center_width, center_y + center_height), new Scalar(0, 255, 0), 1);
         Imgproc.rectangle(frame, new Point(left_x, left_y), new Point(left_x + side_width, left_y + side_height), new Scalar(0,255, 0), 1);
 
+        List<MatOfPoint> valid_contours = new ArrayList<>();
+
         for (MatOfPoint contour : contours) {
             Rect rect = Imgproc.boundingRect(contour);
             double centerX = rect.x + rect.width / 2.0;
@@ -79,6 +81,8 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
             // detect location
             if (area < 3000) {
                 break;
+            } else {
+                valid_contours.add(contour);
             }
 
             if (centerX > center_x && centerX < center_x + center_width && centerY > center_y && centerY < center_y + center_height) {
@@ -87,15 +91,21 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
             } else if (centerX > left_x && centerX < left_x + side_width && centerY > left_y && centerY < left_y + side_height) {
                 telemetry.addData("Location", "Left");
                 detected = Detection.LEFT;
-            } else if (detected == null){
+            } else {
                 telemetry.addData("Location (Assumed)", "Right");
                 detected = Detection.RIGHT;
             }
 
             // Telemetry data for the area of each blue object
             telemetry.addData("Area", area);
+            telemetry.update();
 
             Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
+        }
+
+        if (valid_contours.size() < 1) {
+            detected = Detection.RIGHT;
+            telemetry.addData("Location (Assumed)", "Right");
         }
 
         telemetry.update();

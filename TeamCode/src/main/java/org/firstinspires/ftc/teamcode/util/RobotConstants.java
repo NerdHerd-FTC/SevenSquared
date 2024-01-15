@@ -26,10 +26,8 @@ public class RobotConstants {
     public static Integer ARM_BACKWARDS_SCORE = 1100;
     public static Integer ARM_GROUND = 1200; // TUNE THIS FOR MACRO
     public static Integer ARM_FORWARDS_SCORE = 730;
-
-    // tune...
-    public static int JOINT_LOWER_LIMIT = 0;
-    public static int JOINT_UPPER_LIMIT = 1000;
+    public static Integer ARM_FORWARDS_LOW_SCORE = 780;
+    public static Integer ARM_AIRPLANE = 2160;
 
     public static double JOINT_SPEED = 1.0;
 
@@ -38,6 +36,7 @@ public class RobotConstants {
     public static Integer JOINT_BACKWARDS_SCORE = -2000;
     public static Integer JOINT_FORWARDS_SCORE = 0;
     public static Integer JOINT_GROUND = 0;
+    public static Integer JOINT_AIRPLANE = -1430;
 
     public static double jointP = 0.002, jointI = 0.0, jointD = 0.000018, joint_norm_F = 0.0015;
     public static double armP = 0.003, armI = 0.0, armD = 0.0002, armF = 0.0035;

@@ -46,8 +46,11 @@ public class TeleUtil {
         DRIVER_CONTROL(null),
         HOMING(ARM_HOME),
         GROUNDING(ARM_GROUND),
-        BACKWARDS_SCORING(ARM_BACKWARDS_SCORE),
-        FORWARDS_SCORING(ARM_FORWARDS_SCORE),
+        BACKWARDS_SCORING(ARM_BACKWARDS_SCORE - 1),
+        BACKWARDS_REACHED(ARM_BACKWARDS_SCORE),
+        FORWARDS_SCORING(ARM_FORWARDS_SCORE - 1),
+        FORWARDS_REACHED(ARM_FORWARDS_SCORE),
+        PLANE_LAUNCHING(ARM_AIRPLANE),
         HOLDING(null);
 
         private Integer target;
@@ -63,7 +66,9 @@ public class TeleUtil {
     private enum JointState {
         DRIVER_CONTROL(null),
         GROUNDING(0),
-        BACKWARDS_SCORING(JOINT_BACKWARDS_SCORE),
+        BACKWARDS_SCORING(JOINT_BACKWARDS_SCORE - 1),
+        BACKWARDS_REACHED(JOINT_BACKWARDS_SCORE),
+        PLANE_LAUNCHING(JOINT_AIRPLANE),
         HOLDING(null);
 
         private Integer target;
@@ -367,8 +372,19 @@ public class TeleUtil {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_BACKWARDS_SCORE);
             power = joint_out + joint_ff;
             joint_hold = JOINT_BACKWARDS_SCORE;
-            jointState = JointState.BACKWARDS_SCORING; // fix to include forward scoring as well
-        } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
+
+            double error = joint.getCurrentPosition() - JOINT_BACKWARDS_SCORE;
+            if (Math.abs(error) < 10) {
+                jointState = JointState.BACKWARDS_REACHED;
+            } else {
+                jointState = JointState.BACKWARDS_SCORING;
+            }
+        }  else if (gamepad.left_trigger > 0.5) {
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_AIRPLANE);
+            power = joint_out + joint_ff;
+            joint_hold = JOINT_AIRPLANE;
+            jointState = JointState.PLANE_LAUNCHING;
+        }  else if (Math.abs(gamepad.left_stick_y) > 0.1) {
             power = input * mult + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
@@ -425,11 +441,30 @@ public class TeleUtil {
             power = arm_out + arm_ff;
             arm_hold = ARM_BACKWARDS_SCORE;
             armState = ArmState.BACKWARDS_SCORING;
+
+            double error = arm.getCurrentPosition() - ARM_BACKWARDS_SCORE;
+            if (Math.abs(error) < 10) {
+                armState = ArmState.BACKWARDS_REACHED;
+            } else {
+                armState = ArmState.BACKWARDS_SCORING;
+            }
         } else if (gamepad.x) {
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_FORWARDS_SCORE);
             power = arm_out + arm_ff;
             arm_hold = ARM_FORWARDS_SCORE;
             armState = ArmState.FORWARDS_SCORING;
+
+            double error = arm.getCurrentPosition() - ARM_FORWARDS_SCORE;
+            if (Math.abs(error) < 10) {
+                armState = ArmState.FORWARDS_REACHED;
+            } else {
+                armState = ArmState.FORWARDS_SCORING;
+            }
+        } else if (gamepad.left_trigger > 0.5) {
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_AIRPLANE);
+            power = arm_out + arm_ff;
+            arm_hold = ARM_FORWARDS_SCORE;
+            armState = ArmState.PLANE_LAUNCHING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             double input = -gamepad.right_stick_y;
             power = input*mult;

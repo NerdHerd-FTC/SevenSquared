@@ -1,10 +1,20 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+
 import android.util.Size;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -12,69 +22,76 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Autonomous(name="Old Dropoff - Blue")
 public class PixelDropoffBlue extends LinearOpMode {
-    // Constants
-    //11 or 7.5
-    private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
-    private static final double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
+    public DcMotor arm;
+    public Servo ClawServoLeft;
 
-    // Pulled from "encoder resolution formula": https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
-    private static final double TICKS_PER_REV = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
-
-    // Pulled from strafer kit - converts mm. to in.
-    private static final double WHEEL_DIAMETER_INCH = 96/25.4;
-    private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
-
-    private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
+        arm = hardwareMap.get(DcMotor.class, "arm");
+
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setDirection(DcMotor.Direction.REVERSE);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        ClawServoLeft.setDirection(Servo.Direction.REVERSE);
+
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 270 degrees
-        Pose2d startPose = new Pose2d(12, 61.5, Math.toRadians(270));
+        Pose2d startPose = new Pose2d(12, 62, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, 34), Math.toRadians(90))
-                .splineTo(new Vector2d(12, 52), Math.toRadians(90))
-                .splineTo(new Vector2d(49, 36), Math.toRadians(0))
+                .splineTo(new Vector2d(12, 28), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
+                .splineTo(new Vector2d(57, 28), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(28, 35), Math.toRadians(180))
-                .build();
-
-
-
-        Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .splineToSplineHeading(new Pose2d(48, 36, Math.toRadians(0)), Math.toRadians(0))
+                .splineTo(new Vector2d(28, 30), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
+                .splineToSplineHeading(new Pose2d(57, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(5.5, 34), Math.toRadians(175))
-                .back(7)
-                // separate trajectory
+                .splineTo(new Vector2d(1, 30), Math.toRadians(180))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .splineToSplineHeading(new Pose2d(47, 36, Math.toRadians(0)), Math.toRadians(0))
+                .back(20)
                 .build();
 
-        Trajectory corner = drive.trajectoryBuilder(startPose)
-                .strafeLeft(20)
+        Trajectory right3 = drive.trajectoryBuilder(right2.end())
+                .splineToSplineHeading(new Pose2d(58, 17), Math.toRadians(0))
                 .build();
 
+        Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
+                .strafeLeft(28)
+                .build();
+
+        Trajectory cornerLeft = drive.trajectoryBuilder(left1.end())
+                .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
+                .build();
+
+        Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
+                .splineToConstantHeading(new Vector2d(53, 60), Math.toRadians(0))
+                .build();
 
         // VisionPortal
         VisionPortal visionPortal;
@@ -95,16 +112,40 @@ public class PixelDropoffBlue extends LinearOpMode {
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            sleep(500);
+            moveArm(ARM_FORWARDS_SCORE - 100);
+            sleep(500);
+            moveArm(ARM_HOME);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            drive.followTrajectory(cornerCenter);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
-            drive.followTrajectory(left2);
-            drive.followTrajectory(corner);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            sleep(500);
+            moveArm(ARM_FORWARDS_SCORE - 100);
+            sleep(500);
+            moveArm(ARM_HOME);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            drive.followTrajectory(cornerLeft);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
-            drive.followTrajectory(corner);
+            drive.followTrajectory(right3);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            sleep(500);
+            moveArm(ARM_FORWARDS_SCORE - 100);
+            sleep(500);
+            moveArm(ARM_HOME);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            drive.followTrajectory(cornerRight);
         }
-        drive.followTrajectory(corner);
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
@@ -117,5 +158,39 @@ public class PixelDropoffBlue extends LinearOpMode {
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
+
+    private void moveArm(double target) {
+        PIDController armPID = new PIDController(armP, armI, armD);
+        double error = target - arm.getCurrentPosition();
+
+        while (opModeIsActive() && Math.abs(error) > 10) {
+            // calculate angles of joint & arm (in degrees) to account for torque
+            double joint_angle = 193;
+            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+            error = target - arm.getCurrentPosition();
+
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+
+            double arm_power = arm_ff + arm_out;
+
+            arm.setPower(arm_power);
+
+            motorTelemetry(arm, "Arm");
+            telemetry.addData("Error", error);
+            telemetry.addData("Power", arm_power);
+            telemetry.update();
+            sleep(100);
+        }
+
+    }
+
+    private void moveLeftFinger(double target) {
+        ClawServoLeft.setPosition(target);
+    }
+
 
 }
