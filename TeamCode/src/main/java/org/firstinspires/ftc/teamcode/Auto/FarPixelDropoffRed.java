@@ -74,16 +74,19 @@ public class FarPixelDropoffRed extends LinearOpMode {
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
                 .forward(34)
+                .build();
+
+        Trajectory center2 = drive.trajectoryBuilder(center1.end())
                 .back(19)
                 .build();
 
         // Move to pixel stack
-        Trajectory center2 = drive.trajectoryBuilder(center1.end())
+        Trajectory center3 = drive.trajectoryBuilder(center1.end())
                 .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // Spline under the edge truss to drop off at backdrop
-        Trajectory center3 = drive.trajectoryBuilder(center2.end())
+        Trajectory center4 = drive.trajectoryBuilder(center2.end())
                 .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
                 .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(55, -31.5, Math.toRadians(0)), Math.toRadians(0))
@@ -170,11 +173,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
             autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(center1);
             drive.followTrajectory(center2);
+            drive.followTrajectory(center3);
 
             autoUtil.pixelPickup(1);
 
             autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(center3);
+            drive.followTrajectory(center4);
             while (opModeIsActive() && drive.isBusy()) {
                 autoUtil.asyncMoveArm(ARM_HOME);
             }
