@@ -18,8 +18,10 @@ public class SlowRedFarCenter {
                                 .forward(36)
                                 .back(19)
                                 .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
-                                .back(50)
-                                .lineToSplineHeading(new Pose2d(50, -34, Math.toRadians(0)))
+                                .strafeRight(6)
+                                .splineTo(new Vector2d(34, -10), Math.toRadians(0))
+                                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
+                                .strafeRight(30)
 
                                 .waitSeconds(1)
 
