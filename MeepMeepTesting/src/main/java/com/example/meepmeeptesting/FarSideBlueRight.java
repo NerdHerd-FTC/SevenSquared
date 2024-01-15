@@ -14,11 +14,11 @@ public class FarSideBlueRight {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-30, 63, Math.toRadians(270)))
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, 63, Math.toRadians(270)))
                                 .forward(20)
-                                .splineTo(new Vector2d(-23, 36), Math.toRadians(0))
+                                .splineTo(new Vector2d(-47, 34), Math.toRadians(180))
                                 .back(15)
-                                .strafeRight(15)
+                                .strafeLeft(15)
                                 .splineToLinearHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
                                 .waitSeconds(1)
                                 .back(90)

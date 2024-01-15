@@ -35,8 +35,6 @@ public class FarPixelDropoffBlue extends LinearOpMode {
 
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
-    public static double armPower = 0.0;
-
     @Override
     public void runOpMode() throws InterruptedException {
         arm = hardwareMap.get(DcMotor.class, "arm");
@@ -63,85 +61,100 @@ public class FarPixelDropoffBlue extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // Bot starts on the far side of the blue side of the field
-        Pose2d startPose = new Pose2d(-34, -61, Math.toRadians(90));
+        Pose2d startPose = new Pose2d(-34, 62, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(36)
-                .back(19)
+                .splineTo(new Vector2d(-34, 25), Math.toRadians(270))
                 .build();
 
-        // Move to pixel stack
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
-                .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
+                .back(20)
                 .build();
 
-        // Spline under the edge truss to drop off at backdrop
+        // Go to pixel pickup
         Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(55, -31.5, Math.toRadians(0)), Math.toRadians(0))
+                .strafeRight(5)
+                .splineToSplineHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
+                .build();
+
+        // move towards backdrop
+        Trajectory center4 = drive.trajectoryBuilder(center3.end())
+                .back(90)
+                .build();
+
+        // arrive at backdrop
+        Trajectory center5 = drive.trajectoryBuilder(center4.end())
+                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
                 .build();
 
         // move to left corner
-        Trajectory cornerCenter = drive.trajectoryBuilder(center3.end())
-                .strafeLeft(28)
+        Trajectory cornerCenter = drive.trajectoryBuilder(center5.end())
+                .splineToConstantHeading(new Vector2d(50, 10), Math.toRadians(0))
+                .build();
+
+        // push to spike
+        Trajectory right1 = drive.trajectoryBuilder(startPose)
+                .forward(20)
+                .splineTo(new Vector2d(-47, 34), Math.toRadians(180))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(15)
+                .build();
+
+        // move to pixel stack
+        Trajectory right3 = drive.trajectoryBuilder(right2.end())
+                .strafeLeft(15)
+                .splineToLinearHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
+                .build();
+
+        // move towards backdrop
+        Trajectory right4 = drive.trajectoryBuilder(right3.end())
+                .back(90)
+                .build();
+
+        // arrive at backdrop
+        Trajectory right5 = drive.trajectoryBuilder(right4.end())
+                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
+                .build();
+
+        Trajectory cornerRight = drive.trajectoryBuilder(right5.end())
+                // new Pose2d(57, -30, Math.toRadians(0));
+                .splineToConstantHeading(new Vector2d(50, 10), Math.toRadians(0))
                 .build();
 
         // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(-47, -34), Math.toRadians(180))
+                .forward(20)
+                .splineTo(new Vector2d(-23, 36), Math.toRadians(0))
                 .build();
 
         // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .back(14)
+                .back(15)
                 .build();
 
-
-        // moving to pixel stack
+        // arrive at pixel stack
         Trajectory left3 = drive.trajectoryBuilder(left2.end())
-                .strafeRight(15)
-                .splineToLinearHeading(new Pose2d(-55, -11, Math.toRadians(180)), Math.toRadians(0))
+                .strafeLeft(15)
+                .splineToLinearHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
-        // spline through the middle truss to drop off at backdrop
+        // move towards backdrop
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
-                .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
-                .splineToConstantHeading(new Vector2d(59, -25), Math.toRadians(0))
+                .back(90)
                 .build();
 
-        Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
-                // new Pose2d(57, -30, Math.toRadians(0));
-                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
+        // arrive at backdrop
+        Trajectory left5 = drive.trajectoryBuilder(left4.end())
+                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
                 .build();
 
-        // RIGHT goes through the edge truss to drop off at backdrop
-        Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .forward(11)
-                .splineTo(new Vector2d(-26, -35), Math.toRadians(0))
-                .build();
-
-        Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .back(9)
-                .build();
-
-        // go to pixel stack
-        Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .lineToSplineHeading(new Pose2d(-50, -34, Math.toRadians(180)))
-                .build();
-
-        // spline through edge truss to get to backdrop
-        Trajectory right4 = drive.trajectoryBuilder(right3.end())
-                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
-                .build();
-
-        Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
-                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
+        Trajectory cornerLeft = drive.trajectoryBuilder(left5.end())
+                .splineToConstantHeading(new Vector2d(50, 10), Math.toRadians(0))
                 .build();
 
         // VisionPortal
@@ -166,44 +179,54 @@ public class FarPixelDropoffBlue extends LinearOpMode {
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center1);
             drive.followTrajectory(center2);
-            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-            autoUtil.moveArm(ARM_GROUND); // PICKUP
-            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-            sleep(500);
-            autoUtil.moveArm(ARM_HOME);
             drive.followTrajectory(center3);
-            autoUtil.moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
-            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
-            autoUtil.moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(100);
-            autoUtil.moveArm(ARM_HOME);
-            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
-            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+            autoUtil.pixelPickup(1);
+
+            drive.followTrajectory(center4);
+            while(opModeIsActive() && drive.isBusy()) {
+                autoUtil.asyncMoveArm(ARM_HOME);
+            }
+            drive.followTrajectory(center5);
+
+            autoUtil.pixelDropoff();
+
             drive.followTrajectory(cornerCenter);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            autoUtil.moveArm(ARM_FORWARDS_SCORE);
-            sleep(500);
-            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            autoUtil.moveArm(ARM_FORWARDS_SCORE - 100);
-            sleep(500);
-            autoUtil.moveArm(ARM_HOME);
-            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(left3);
+
+            autoUtil.pixelPickup(1);
+
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+            drive.followTrajectory(left4);
+            while(opModeIsActive() && drive.isBusy()) {
+                autoUtil.asyncMoveArm(ARM_HOME);
+            }
+            drive.followTrajectory(left5);
+
+            autoUtil.pixelDropoff();
+
             drive.followTrajectory(cornerLeft);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(right1);
-            autoUtil.moveArm(ARM_FORWARDS_SCORE);
-            sleep(500);
-            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            autoUtil.moveArm(ARM_FORWARDS_SCORE - 100);
-            sleep(500);
-            autoUtil.moveArm(ARM_HOME);
-            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(right2);
+            drive.followTrajectory(right3);
+
+            autoUtil.pixelPickup(1);
+
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+            drive.followTrajectory(right4);
+            while(opModeIsActive() && drive.isBusy()) {
+                autoUtil.asyncMoveArm(ARM_HOME);
+            }
+            drive.followTrajectory(right5);
+
+            autoUtil.pixelDropoff();
+
             drive.followTrajectory(cornerRight);
         }
     }

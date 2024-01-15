@@ -41,8 +41,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
-    public static double armPower = 0.0;
-
     @Override
     public void runOpMode() throws InterruptedException {
         arm = hardwareMap.get(DcMotor.class, "arm");
@@ -131,19 +129,19 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .back(9)
+                .back(13)
                 .build();
 
         // go to pixel stack
         Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .lineToSplineHeading(new Pose2d(-50, -34, Math.toRadians(180)))
+                .lineToSplineHeading(new Pose2d(-57, -34, Math.toRadians(180)))
                 .build();
 
-        // spline through edge truss to get to backdrop
+        // spline through middle truss to get to backdrop
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
-                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
+                .strafeRight(6)
+                .splineTo(new Vector2d(34, -10), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
@@ -167,49 +165,57 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        moveLeftFinger(CLAW_LEFT_CLOSED);
+        autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(center1);
             drive.followTrajectory(center2);
-            moveRightFinger(CLAW_RIGHT_OPEN);
-            moveArm(ARM_GROUND); // PICKUP
-            moveRightFinger(CLAW_RIGHT_CLOSED);
-            sleep(500);
-            moveArm(ARM_HOME);
+
+            autoUtil.pixelPickup(1);
+
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(center3);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
-            moveRightFinger(CLAW_RIGHT_OPEN);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(100);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            moveRightFinger(CLAW_RIGHT_CLOSED);
+            while (opModeIsActive() && drive.isBusy()) {
+                autoUtil.asyncMoveArm(ARM_HOME);
+            }
+
+            autoUtil.pixelDropoff();
+
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            moveArm(ARM_FORWARDS_SCORE);
-            sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(left3);
+
+            autoUtil.pixelPickup(1);
+
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+            drive.followTrajectory(left4);
+            while (opModeIsActive() && drive.isBusy()) {
+                autoUtil.asyncMoveArm(ARM_HOME);
+            }
+
+            autoUtil.pixelDropoff();
+
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(right1);
-            moveArm(ARM_FORWARDS_SCORE);
-            sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(right2);
+            drive.followTrajectory(right3);
+
+            autoUtil.pixelPickup(1);
+
+            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+            drive.followTrajectory(right4);
+            while (opModeIsActive() && drive.isBusy()) {
+                autoUtil.asyncMoveArm(ARM_HOME);
+            }
+
+            autoUtil.pixelDropoff();
+
             drive.followTrajectory(cornerRight);
         }
     }
@@ -224,42 +230,4 @@ public class FarPixelDropoffRed extends LinearOpMode {
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
-
-    private void moveArm(double target) {
-        PIDController armPID = new PIDController(armP, armI, armD);
-        double error = target - arm.getCurrentPosition();
-
-        while (opModeIsActive() && Math.abs(error) > 10) {
-            // calculate angles of joint & arm (in degrees) to account for torque
-            double joint_angle = 193;
-            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
-            double arm_angle = 270 - relative_arm_angle - joint_angle;
-
-            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
-
-            error = target - arm.getCurrentPosition();
-
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
-
-            double arm_power = arm_ff + arm_out;
-
-            arm.setPower(arm_power);
-
-            motorTelemetry(arm, "Arm");
-            telemetry.addData("Error", error);
-            telemetry.addData("Power", arm_power);
-            telemetry.update();
-            sleep(100);
-        }
-
-    }
-
-    private void moveLeftFinger(double target) {
-        ClawServoLeft.setPosition(target);
-    }
-
-    private void moveRightFinger(double target) {
-        ClawServoRight.setPosition(target);
-    }
-
 }

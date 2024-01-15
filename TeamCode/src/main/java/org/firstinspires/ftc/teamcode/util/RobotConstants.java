@@ -28,6 +28,14 @@ public class RobotConstants {
     public static Integer ARM_FORWARDS_LOW_SCORE = 780;
     public static Integer ARM_AIRPLANE = 2160;
 
+    // for auto mainly
+    public static Integer ARM_PIXEL_DEPTH_1 = 1000;
+    public static Integer ARM_PIXEL_DEPTH_2 = 1050;
+    public static Integer ARM_PIXEL_DEPTH_3 = 1100;
+    public static Integer ARM_PIXEL_DEPTH_4 = 1150;
+    public static Integer ARM_PIXEL_DEPTH_5 = ARM_GROUND;
+
+
     public static double JOINT_SPEED = 1.0;
 
     // tune...

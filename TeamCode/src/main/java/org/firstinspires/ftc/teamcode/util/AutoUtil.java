@@ -19,13 +19,9 @@ public class AutoUtil {
 
     public enum RobotState {
         IDLE,
-        MOVING_FORWARD,
-        STRAFING_LEFT,
-        STRAFING_RIGHT,
-        TURNING,
-        ARTICULATING_ARM,
-        ARTICULATING_JOINT,
-        ARTICULATING_CLAW,
+        FOLLOWING_TRAJECTORY,
+        PIXEL_STACK,
+        PIXEL_DROPOFF,
         ERROR
     }
 
@@ -47,13 +43,12 @@ public class AutoUtil {
         opMode.telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    public void moveArm(double target) {
-        PIDController armPID = new PIDController(armP, armI, armD);
+    public void syncMoveArm(double target) {
         double error = target - arm.getCurrentPosition();
 
         while (opMode.opModeIsActive() && Math.abs(error) > 10) {
             // calculate angles of joint & arm (in degrees) to account for torque
-            double joint_angle = 193;
+            double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
             double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
             double arm_angle = 270 - relative_arm_angle - joint_angle;
 
@@ -73,7 +68,64 @@ public class AutoUtil {
             opMode.telemetry.update();
             sleep(100);
         }
+    }
 
+    public void asyncMoveArm(double target) {
+        double error = target - arm.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+        double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+        error = target - arm.getCurrentPosition();
+
+        double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+
+        double arm_power = arm_ff + arm_out;
+
+        arm.setPower(arm_power);
+
+        motorTelemetry(arm, "Arm");
+        opMode.telemetry.addData("Error", error);
+        opMode.telemetry.addData("Power", arm_power);
+        opMode.telemetry.update();
+    }
+
+    public void pixelPickup(Integer pixelDepth) {
+        currentState = AutoUtil.RobotState.PIXEL_STACK;
+        moveRightFinger(CLAW_RIGHT_OPEN);
+        if (pixelDepth == 1) {
+            syncMoveArm(ARM_PIXEL_DEPTH_1);
+        } else if (pixelDepth == 2) {
+            syncMoveArm(ARM_PIXEL_DEPTH_2);
+        } else if (pixelDepth == 3) {
+            syncMoveArm(ARM_PIXEL_DEPTH_3);
+        } else if (pixelDepth == 4) {
+            syncMoveArm(ARM_PIXEL_DEPTH_4);
+        } else if (pixelDepth == 5) {
+            syncMoveArm(ARM_PIXEL_DEPTH_5);
+        } else {
+            syncMoveArm(ARM_PIXEL_DEPTH_1);
+        }
+        moveRightFinger(CLAW_RIGHT_CLOSED);
+        currentState = AutoUtil.RobotState.IDLE;
+    }
+
+    public void pixelDropoff() {
+        currentState = AutoUtil.RobotState.PIXEL_DROPOFF;
+        syncMoveArm(ARM_FORWARDS_SCORE);
+        sleep(500);
+        moveLeftFinger(CLAW_LEFT_OPEN);
+        moveRightFinger(CLAW_RIGHT_OPEN);
+        sleep(500);
+        syncMoveArm(ARM_FORWARDS_SCORE - 100);
+        sleep(500);
+        syncMoveArm(ARM_HOME);
+        moveLeftFinger(CLAW_LEFT_CLOSED);
+        moveRightFinger(CLAW_RIGHT_CLOSED);
+        currentState = AutoUtil.RobotState.IDLE;
     }
 
     public void moveLeftFinger(double target) {
