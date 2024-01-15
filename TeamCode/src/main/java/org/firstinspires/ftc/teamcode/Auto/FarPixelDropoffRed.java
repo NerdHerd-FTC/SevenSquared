@@ -73,7 +73,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(36)
+                .forward(34)
                 .back(19)
                 .build();
 
@@ -96,14 +96,13 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(-47, -34), Math.toRadians(180))
+                .splineTo(new Vector2d(-46, -30), Math.toRadians(180))
                 .build();
 
         // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .back(14)
                 .build();
-
 
         // moving to pixel stack
         Trajectory left3 = drive.trajectoryBuilder(left2.end())
@@ -125,7 +124,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(startPose)
                 .forward(11)
-                .splineTo(new Vector2d(-26, -35), Math.toRadians(0))
+                .splineTo(new Vector2d(-26, -38), Math.toRadians(0))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
@@ -141,7 +140,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
                 .strafeRight(6)
                 .splineTo(new Vector2d(34, -10), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(59, -42, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
