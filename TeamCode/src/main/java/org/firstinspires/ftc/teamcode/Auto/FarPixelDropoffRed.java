@@ -30,6 +30,10 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.AutoUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.List;
 
 @Config
 @Autonomous(name="Far Dropoff - Red")
@@ -40,6 +44,51 @@ public class FarPixelDropoffRed extends LinearOpMode {
     public Servo ClawServoRight;
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
+
+    private AprilTagProcessor aprilTag;
+
+    static final double CAMERA_X_OFFSET = 0.0; // replace with your camera's x offset
+    static final double CAMERA_Y_OFFSET = 0.0; // replace with your camera's y offset
+
+    // States for the state machine
+    // Center
+    private enum centerState {
+        CENTER1,
+        CENTER2,
+        CENTER3,
+        PICK_UP,
+        CENTER4,
+        FIRST_DROP_OFF,
+        CENTER5,
+        SECOND_DROP_OFF,
+        MOVE_TO_CORNER
+    }
+
+    // Left
+    private enum leftState {
+        LEFT1,
+        LEFT2,
+        LEFT3,
+        PICK_UP,
+        LEFT4,
+        FIRST_DROP_OFF,
+        LEFT5,
+        SECOND_DROP_OFF,
+        MOVE_TO_CORNER
+    }
+
+    // Right
+    private enum rightState {
+        RIGHT1,
+        RIGHT2,
+        RIGHT3,
+        PICK_UP,
+        RIGHT4,
+        FIRST_DROP_OFF,
+        RIGHT5,
+        SECOND_DROP_OFF,
+        MOVE_TO_CORNER
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -151,6 +200,19 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(65, -10), Math.toRadians(0))
                 .build();
 
+        /*
+        <Calibration
+                size="640 480"
+        focalLength="622.001f, 622.001f"
+        principalPoint="319.803f, 241.251f"
+        distortionCoefficients="0.1208, -0.261599, 0, 0, 0.10308, 0, 0, 0"
+                />
+
+         */
+        aprilTag = new AprilTagProcessor.Builder()
+                .setLensIntrinsics(622.001f, 622.001f, 319.803f, 241.251f)
+                .build();
+
         // VisionPortal
         VisionPortal visionPortal;
 
@@ -158,6 +220,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
                 .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(aprilTag)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -169,6 +232,9 @@ public class FarPixelDropoffRed extends LinearOpMode {
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+
+        visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
+        visionPortal.setProcessorEnabled(aprilTag, true);
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
@@ -235,4 +301,60 @@ public class FarPixelDropoffRed extends LinearOpMode {
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
+
+    /**
+     * Update the robot's pose based on the detected AprilTags.
+     * @param drive The SampleMecanumDrive object for pose updates.
+     */
+    private void updateRobotPoseFromAprilTags(SampleMecanumDrive drive) {
+        List<AprilTagDetection> detections = aprilTag.getDetections();
+
+        if (!detections.isEmpty()) {
+            // Assuming the first detection is the most reliable one
+            AprilTagDetection detection = detections.get(0);
+
+            // Convert the AprilTag pose to robot pose considering the camera offsets
+            Pose2d robotPose = new Pose2d(
+                    detection.ftcPose.x - CAMERA_X_OFFSET,
+                    detection.ftcPose.y - CAMERA_Y_OFFSET,
+                    Math.toRadians(detection.ftcPose.yaw)
+            );
+
+            // Update Roadrunner's pose estimate
+            drive.setPoseEstimate(robotPose);
+
+            // Telemetry for debugging
+            telemetry.addData("AprilTag ID", detection.id);
+            telemetry.addData("Robot Pose", robotPose);
+            telemetry.update();
+        }
+    }
+
+    /**
+     * Add telemetry about AprilTag detections.
+     */
+    private void telemetryAprilTag() {
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        telemetry.addData("# AprilTags Detected", currentDetections.size());
+
+        // Step through the list of detections and display info for each one.
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+            } else {
+                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+            }
+        }   // end for() loop
+
+        // Add "key" information to telemetry
+        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        telemetry.addLine("RBE = Range, Bearing & Elevation");
+
+    }   // end method telemetryAprilTag()
 }
