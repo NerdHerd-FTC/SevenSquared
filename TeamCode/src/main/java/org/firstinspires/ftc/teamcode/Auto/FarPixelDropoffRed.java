@@ -126,28 +126,29 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .forward(11)
-                .splineTo(new Vector2d(-26, -38), Math.toRadians(0))
+                .forward(26)
+                .splineTo(new Vector2d(-20, -26.5), Math.toRadians(0))
                 .build();
 
+
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .back(13)
+                .back(15)
                 .build();
 
         // go to pixel stack
         Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .lineToSplineHeading(new Pose2d(-57, -34, Math.toRadians(180)))
+                .lineToSplineHeading(new Pose2d(-48.5, -32, Math.toRadians(180)))
                 .build();
 
         // spline through middle truss to get to backdrop
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
                 .strafeRight(6)
-                .splineTo(new Vector2d(34, -10), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(59, -42, Math.toRadians(0)), Math.toRadians(0))
+                .splineTo(new Vector2d(41, -10), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(74, -41, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
-                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(65, -10), Math.toRadians(0))
                 .build();
 
         // VisionPortal
@@ -207,9 +208,10 @@ public class FarPixelDropoffRed extends LinearOpMode {
             autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
+            autoUtil.asyncMoveArm(ARM_HOME);
             drive.followTrajectory(right3);
 
-            autoUtil.pixelPickup(1);
+            autoUtil.pixelPickup(2);
 
             autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
             drive.followTrajectory(right4);
