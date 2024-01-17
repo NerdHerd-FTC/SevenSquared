@@ -28,6 +28,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.AutoUtil;
+import org.firstinspires.ftc.teamcode.util.PoseStorage;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -231,7 +232,13 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        leftState current
+        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            currentState = centerState.CENTER1;
+        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            currentState = centerState.LEFT1;
+        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            currentState = centerState.RIGHT1;
+        }
 
         autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
@@ -240,137 +247,237 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         while (opModeIsActive()) {
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-                case (centerState.CENTER1) {
-                    drive.followTrajectory(center1);
+                switch (currentState) {
+                    case CENTER1:
+                        drive.followTrajectory(center1);
 
-                    if (drive.isBusy()) {
-                        autoUtil.asyncMoveArm(ARM_HOME);
-                    } else {
-                        currentState = centerState.CENTER2;
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER2;
+                        }
+                        break;
+                    case CENTER2:
+                        drive.followTrajectory(center2);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER3;
+                        }
+                        break;
+                    case CENTER3:
+                        drive.followTrajectory(center3);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER4;
+                        }
+                        break;
+                    case CENTER4:
+                        drive.followTrajectory(center4);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER5;
+                        }
+                        break;
+                    case CENTER5:
+                        drive.followTrajectory(cornerCenter);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER6;
+                        }
+                        break;
+                    case CENTER6:
+                        autoUtil.pixelPickup(1);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER7;
+                        }
+                        break;
+                    case CENTER7:
+                        drive.followTrajectory(center4);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER8;
+                        }
+                        break;
+                    case CENTER8:
+                        drive.followTrajectory(center3);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER9;
+                        }
+                        break;
+                    case CENTER9:
+                        drive.followTrajectory(center2);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER10;
+                        }
+                        break;
+                    case CENTER10:
+                        drive.followTrajectory(center1);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER11;
+                        }
+                        break;
+                    case CENTER11:
+                        drive.followTrajectory(startPose);
+                    case () {
+                        drive.followTrajectory(center1);
+
+                        if (drive.isBusy()) {
+                            autoUtil.asyncMoveArm(ARM_HOME);
+                        } else {
+                            currentState = centerState.CENTER2;
+                        }
                     }
                 }
             }
+
+            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+                autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+                drive.followTrajectory(center1);
+                drive.followTrajectory(center2);
+                drive.followTrajectory(center3);
+
+                autoUtil.pixelPickup(1);
+
+                autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+                drive.followTrajectory(center4);
+                while (opModeIsActive() && drive.isBusy()) {
+                    autoUtil.asyncMoveArm(ARM_HOME);
+                }
+
+                autoUtil.pixelDropoff();
+
+                drive.followTrajectory(cornerCenter);
+            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+                autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+                drive.followTrajectory(left1);
+                drive.followTrajectory(left2);
+                drive.followTrajectory(left3);
+
+                autoUtil.pixelPickup(1);
+
+                autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+                drive.followTrajectory(left4);
+                while (opModeIsActive() && drive.isBusy()) {
+                    autoUtil.asyncMoveArm(ARM_HOME);
+                }
+
+                autoUtil.pixelDropoff();
+
+                drive.followTrajectory(cornerLeft);
+            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+                autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+                drive.followTrajectory(right1);
+                drive.followTrajectory(right2);
+                autoUtil.asyncMoveArm(ARM_HOME);
+                drive.followTrajectory(right3);
+
+                autoUtil.pixelPickup(2);
+
+                autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
+                drive.followTrajectory(right4);
+                while (opModeIsActive() && drive.isBusy()) {
+                    autoUtil.asyncMoveArm(ARM_HOME);
+                }
+
+                autoUtil.pixelDropoff();
+
+                drive.followTrajectory(cornerRight);
+            }
+
+            // Read pose
+            Pose2d poseEstimate = drive.getPoseEstimate();
+
+            // Continually write pose to `PoseStorage`
+            PoseStorage.currentPose = poseEstimate;
+
         }
 
-        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(center1);
-            drive.followTrajectory(center2);
-            drive.followTrajectory(center3);
-
-            autoUtil.pixelPickup(1);
-
-            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(center4);
-            while (opModeIsActive() && drive.isBusy()) {
-                autoUtil.asyncMoveArm(ARM_HOME);
-            }
-
-            autoUtil.pixelDropoff();
-
-            drive.followTrajectory(cornerCenter);
-        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(left1);
-            drive.followTrajectory(left2);
-            drive.followTrajectory(left3);
-
-            autoUtil.pixelPickup(1);
-
-            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(left4);
-            while (opModeIsActive() && drive.isBusy()) {
-                autoUtil.asyncMoveArm(ARM_HOME);
-            }
-
-            autoUtil.pixelDropoff();
-
-            drive.followTrajectory(cornerLeft);
-        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(right1);
-            drive.followTrajectory(right2);
-            autoUtil.asyncMoveArm(ARM_HOME);
-            drive.followTrajectory(right3);
-
-            autoUtil.pixelPickup(2);
-
-            autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
-            drive.followTrajectory(right4);
-            while (opModeIsActive() && drive.isBusy()) {
-                autoUtil.asyncMoveArm(ARM_HOME);
-            }
-
-            autoUtil.pixelDropoff();
-
-            drive.followTrajectory(cornerRight);
+        public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+            return redCubeDetectionPipeline.getDetection();
         }
-    }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
-    }
-
-    private void motorTelemetry(DcMotor motor, String name) {
-        telemetry.addLine("--- " + name + " ---");
-        telemetry.addData(name + " Power", motor.getPower());
-        telemetry.addData(name + " Position", motor.getCurrentPosition());
-        telemetry.addData(name + " Target Position", motor.getTargetPosition());
-    }
-
-    /**
-     * Update the robot's pose based on the detected AprilTags.
-     * @param drive The SampleMecanumDrive object for pose updates.
-     */
-    private void updateRobotPoseFromAprilTags(SampleMecanumDrive drive) {
-        List<AprilTagDetection> detections = aprilTag.getDetections();
-
-        if (!detections.isEmpty()) {
-            // Assuming the first detection is the most reliable one
-            AprilTagDetection detection = detections.get(0);
-
-            // Convert the AprilTag pose to robot pose considering the camera offsets
-            Pose2d robotPose = new Pose2d(
-                    detection.ftcPose.x - CAMERA_X_OFFSET,
-                    detection.ftcPose.y - CAMERA_Y_OFFSET,
-                    Math.toRadians(detection.ftcPose.yaw)
-            );
-
-            // Update Roadrunner's pose estimate
-            drive.setPoseEstimate(robotPose);
-
-            // Telemetry for debugging
-            telemetry.addData("AprilTag ID", detection.id);
-            telemetry.addData("Robot Pose", robotPose);
-            telemetry.update();
+        private void motorTelemetry (DcMotor motor, String name){
+            telemetry.addLine("--- " + name + " ---");
+            telemetry.addData(name + " Power", motor.getPower());
+            telemetry.addData(name + " Position", motor.getCurrentPosition());
+            telemetry.addData(name + " Target Position", motor.getTargetPosition());
         }
-    }
 
-    /**
-     * Add telemetry about AprilTag detections.
-     */
-    private void telemetryAprilTag() {
+        /**
+         * Update the robot's pose based on the detected AprilTags.
+         * @param drive The SampleMecanumDrive object for pose updates.
+         */
+        private void updateRobotPoseFromAprilTags (SampleMecanumDrive drive){
+            List<AprilTagDetection> detections = aprilTag.getDetections();
 
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        telemetry.addData("# AprilTags Detected", currentDetections.size());
+            if (!detections.isEmpty()) {
+                // Assuming the first detection is the most reliable one
+                AprilTagDetection detection = detections.get(0);
 
-        // Step through the list of detections and display info for each one.
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+                // Convert the AprilTag pose to robot pose considering the camera offsets
+                Pose2d robotPose = new Pose2d(
+                        detection.ftcPose.x - CAMERA_X_OFFSET,
+                        detection.ftcPose.y - CAMERA_Y_OFFSET,
+                        Math.toRadians(detection.ftcPose.yaw)
+                );
+
+                // Update Roadrunner's pose estimate
+                drive.setPoseEstimate(robotPose);
+
+                // Telemetry for debugging
+                telemetry.addData("AprilTag ID", detection.id);
+                telemetry.addData("Robot Pose", robotPose);
+                telemetry.update();
             }
-        }   // end for() loop
+        }
 
-        // Add "key" information to telemetry
-        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-        telemetry.addLine("RBE = Range, Bearing & Elevation");
+        /**
+         * Add telemetry about AprilTag detections.
+         */
+        private void telemetryAprilTag () {
 
-    }   // end method telemetryAprilTag()
-}
+            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+            telemetry.addData("# AprilTags Detected", currentDetections.size());
+
+            // Step through the list of detections and display info for each one.
+            for (AprilTagDetection detection : currentDetections) {
+                if (detection.metadata != null) {
+                    telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                    telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                    telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                    telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+                } else {
+                    telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                    telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+                }
+            }   // end for() loop
+
+            // Add "key" information to telemetry
+            telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+            telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+            telemetry.addLine("RBE = Range, Bearing & Elevation");
+
+        }   // end method telemetryAprilTag()
+    }
