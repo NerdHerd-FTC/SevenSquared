@@ -231,10 +231,26 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
+        leftState current
+
         autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
         visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
         visionPortal.setProcessorEnabled(aprilTag, true);
+
+        while (opModeIsActive()) {
+            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+                case (centerState.CENTER1) {
+                    drive.followTrajectory(center1);
+
+                    if (drive.isBusy()) {
+                        autoUtil.asyncMoveArm(ARM_HOME);
+                    } else {
+                        currentState = centerState.CENTER2;
+                    }
+                }
+            }
+        }
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             autoUtil.currentState = AutoUtil.RobotState.FOLLOWING_TRAJECTORY;
