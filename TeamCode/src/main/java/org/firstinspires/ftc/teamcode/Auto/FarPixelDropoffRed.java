@@ -251,7 +251,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER1:
-                        drive.followTrajectory(center1);
+                        drive.followTrajectoryAsync(center1);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -260,7 +260,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case CENTER2:
-                        drive.followTrajectory(center2);
+                        drive.followTrajectoryAsync(center2);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -269,7 +269,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case CENTER3:
-                        drive.followTrajectory(center3);
+                        drive.followTrajectoryAsync(center3);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -282,7 +282,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         centerCurrentState = centerState.CENTER4;
                         break;
                     case CENTER4:
-                        drive.followTrajectory(center4);
+                        drive.followTrajectoryAsync(center4);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -295,7 +295,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         centerCurrentState = centerState.CENTER5;
                         break;
                     case CENTER5:
-                        drive.followTrajectory(cornerCenter);
+                        drive.followTrajectoryAsync(cornerCenter);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -308,7 +308,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         centerCurrentState = centerState.MOVE_TO_CORNER;
                         break;
                     case MOVE_TO_CORNER:
-                        drive.followTrajectory(cornerCenter);
+                        drive.followTrajectoryAsync(cornerCenter);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -320,7 +320,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 switch (leftCurrentState) {
                     case LEFT1:
-                        drive.followTrajectory(left1);
+                        drive.followTrajectoryAsync(left1);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -329,7 +329,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case LEFT2:
-                        drive.followTrajectory(left2);
+                        drive.followTrajectoryAsync(left2);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -338,7 +338,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case LEFT3:
-                        drive.followTrajectory(left3);
+                        drive.followTrajectoryAsync(left3);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -351,7 +351,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         leftCurrentState = leftState.LEFT4;
                         break;
                     case LEFT4:
-                        drive.followTrajectory(left4);
+                        drive.followTrajectoryAsync(left4);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -364,7 +364,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         leftCurrentState = leftState.LEFT5;
                         break;
                     case LEFT5:
-                        drive.followTrajectory(cornerLeft);
+                        drive.followTrajectoryAsync(cornerLeft);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -377,7 +377,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         leftCurrentState = leftState.MOVE_TO_CORNER;
                         break;
                     case MOVE_TO_CORNER:
-                        drive.followTrajectory(cornerLeft);
+                        drive.followTrajectoryAsync(cornerLeft);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -389,7 +389,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
                 switch (rightCurrentState) {
                     case RIGHT1:
-                        drive.followTrajectory(right1);
+                        drive.followTrajectoryAsync(right1);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -398,7 +398,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RIGHT2:
-                        drive.followTrajectory(right2);
+                        drive.followTrajectoryAsync(right2);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -407,7 +407,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RIGHT3:
-                        drive.followTrajectory(right3);
+                        drive.followTrajectoryAsync(right3);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -420,7 +420,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         rightCurrentState = rightState.RIGHT4;
                         break;
                     case RIGHT4:
-                        drive.followTrajectory(right4);
+                        drive.followTrajectoryAsync(right4);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -433,7 +433,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         rightCurrentState = rightState.RIGHT5;
                         break;
                     case RIGHT5:
-                        drive.followTrajectory(cornerRight);
+                        drive.followTrajectoryAsync(cornerRight);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -446,7 +446,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         rightCurrentState = rightState.MOVE_TO_CORNER;
                         break;
                     case MOVE_TO_CORNER:
-                        drive.followTrajectory(cornerRight);
+                        drive.followTrajectoryAsync(cornerRight);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
