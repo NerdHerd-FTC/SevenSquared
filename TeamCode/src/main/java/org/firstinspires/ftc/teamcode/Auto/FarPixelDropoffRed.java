@@ -245,7 +245,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         visionPortal.setProcessorEnabled(aprilTag, true);
 
         while (opModeIsActive()) {
-
+            aprilTagRelocalization(drive, CAMERA_Y_OFFSET, CAMERA_X_OFFSET);
             telemetryAprilTag();
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
@@ -461,13 +461,16 @@ public class FarPixelDropoffRed extends LinearOpMode {
             PoseStorage.currentPose = drive.getPoseEstimate();
         }
     }
-        private void aprilTagRelocalization(SampleMecanumDrive drive) {
+        private void aprilTagRelocalization(SampleMecanumDrive drive, double camera_y_offset, double camera_x_offset) {
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
 
             // Grab first AprilTag to use as pose relocalizer
             if (!currentDetections.isEmpty()) {
                 AprilTagDetection detection = currentDetections.get(0);
-                drive.setPoseEstimate();
+
+                Pose2d currentPose = new Pose2d(detection.ftcPose.x - camera_y_offset, detection.ftcPose.y - camera_x_offset, detection.ftcPose.z);
+
+                drive.setPoseEstimate(currentPose);
             }
         }
 
