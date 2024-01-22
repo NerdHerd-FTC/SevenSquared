@@ -32,6 +32,7 @@ public class TeleUtil {
     private boolean joint_macro = false;
     private boolean fl_closed = true;
     private boolean fr_closed = true;
+    private boolean turnSlow = false;
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
 
@@ -98,10 +99,15 @@ public class TeleUtil {
         this.DroneServo = DroneServo;
     }
 
-    public void robotOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
+    public void robotOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad.left_stick_x;
         double rx_raw = gamepad.right_stick_x;
+
+        // Toggle turn slow
+        if (gamepad.right_stick_button  && gamepad.right_trigger > 0.5) {
+            turnSlow = !turnSlow;
+        }
 
         // Deadband to address controller drift
         double deadband = DEAD_BAND;
@@ -168,12 +174,18 @@ public class TeleUtil {
         motorTelemetry(motorBR, "BR");
     }
 
-    public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
+    public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
         // Read pose
         Pose2d poseEstimate = drive.getPoseEstimate();
 
         // Create a vector from the gamepad x/y inputs
         // Then, rotate that vector by the inverse of that heading
+
+
+        // Toggle turn slow
+        if (gamepad.right_stick_button && gamepad.right_trigger > 0.5) {
+            turnSlow = !turnSlow;
+        }
 
         // Exponential Drive
         double exponent = 2.0;
@@ -206,6 +218,11 @@ public class TeleUtil {
         double x_raw = gamepad.left_stick_x;
         double rx_raw = gamepad.right_stick_x;
 
+        // Toggle turn slow
+        if (gamepad.right_stick_button && gamepad.right_trigger > 0.5) {
+            turnSlow = !turnSlow;
+        }
+
         // Deadband to address controller drift
         double deadband = DEAD_BAND;
         if (Math.abs(y_raw) < deadband) {
@@ -218,15 +235,15 @@ public class TeleUtil {
             rx_raw = 0;
         }
 
-        if (turnSlow) {
-            rx_raw *= 0.5;
-        }
-
         // Exponential Drive
         double exponent = 2.0;
         double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
         double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
+
+        if (turnSlow) {
+            rx *= 0.5;
+        }
 
         // Denominator is the largest motor power (absolute value) or 1
         // This ensures all the powers maintain the same ratio,

@@ -112,7 +112,7 @@ public class FieldBlueBack extends LinearOpMode {
         matchTime.reset();
 
         while (opModeIsActive()) {
-            teleUtil.fieldOrientedDrive(drive, gamepad1, true, false, false );
+            teleUtil.fieldOrientedDrive(drive, gamepad1, true, false);
 
             // Articulation
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
