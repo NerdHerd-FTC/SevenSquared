@@ -22,6 +22,10 @@ public class RedCenterPixelPickup {
                                 .back(80)
                                 .lineToSplineHeading(new Pose2d(-50, -10, Math.toRadians(180)))
                                 .splineToConstantHeading(new Vector2d(-57, -34), Math.toRadians(180))// separate trajectory
+                                .waitSeconds(1)
+                                .back(60)
+                                .splineToConstantHeading(new Vector2d(57, -30), Math.toRadians(180))
+                                .lineToLinearHeading(new Pose2d(57, -30, Math.toRadians(90)))
                                 .build()
                 );
 

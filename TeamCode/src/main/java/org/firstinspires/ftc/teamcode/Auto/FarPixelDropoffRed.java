@@ -63,6 +63,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         CENTER5,
         SECOND_DROP_OFF,
         MOVE_TO_CORNER,
+        FOLLOWING,
         DONE
     }
 
@@ -247,12 +248,16 @@ public class FarPixelDropoffRed extends LinearOpMode {
         while (opModeIsActive()) {
             aprilTagRelocalization(drive, CAMERA_Y_OFFSET, CAMERA_X_OFFSET);
             telemetryAprilTag();
+            telemetry.addData("Center Current State", centerCurrentState);
+            telemetry.addData("Left Current State", leftCurrentState);
+            telemetry.addData("Right Current State", rightCurrentState);
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER1:
                         drive.followTrajectoryAsync(center1);
 
+                        continueFollowing(drive);
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
                         } else {
@@ -262,6 +267,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                     case CENTER2:
                         drive.followTrajectoryAsync(center2);
 
+                        continueFollowing(drive);
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
                         } else {
@@ -270,6 +276,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case CENTER3:
                         drive.followTrajectoryAsync(center3);
+                        continueFollowing(drive);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -284,6 +291,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
                     case CENTER4:
                         drive.followTrajectoryAsync(center4);
 
+                        continueFollowing(drive);
+
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
                         } else {
@@ -296,6 +305,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case CENTER5:
                         drive.followTrajectoryAsync(cornerCenter);
+
+                        continueFollowing(drive);
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -459,6 +470,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
             // Continually write pose to `PoseStorage`
             PoseStorage.currentPose = drive.getPoseEstimate();
+
+            telemetry.update();
         }
     }
         private void aprilTagRelocalization(SampleMecanumDrive drive, double camera_y_offset, double camera_x_offset) {
@@ -540,4 +553,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
             telemetry.addLine("RBE = Range, Bearing & Elevation");
 
         }   // end method telemetryAprilTag()
+
+        private void continueFollowing(SampleMecanumDrive drive) {
+            drive.update();
+        }
     }
