@@ -127,7 +127,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(34)
+                .forward(43)
                 .build();
 
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
@@ -240,6 +240,14 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
+        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            drive.followTrajectoryAsync(center1);
+        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            drive.followTrajectoryAsync(left1);
+        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            drive.followTrajectoryAsync(right1);
+        }
+
         autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
         visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
@@ -255,28 +263,27 @@ public class FarPixelDropoffRed extends LinearOpMode {
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER1:
-                        drive.followTrajectoryAsync(center1);
+                        drive.update();
 
-                        continueFollowing(drive);
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
                         } else {
                             centerCurrentState = centerState.CENTER2;
+                            drive.followTrajectoryAsync(center2);
                         }
                         break;
                     case CENTER2:
-                        drive.followTrajectoryAsync(center2);
+                        drive.update();
 
-                        continueFollowing(drive);
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
                         } else {
                             centerCurrentState = centerState.CENTER3;
+                            drive.followTrajectoryAsync(center3);
                         }
                         break;
                     case CENTER3:
-                        drive.followTrajectoryAsync(center3);
-                        continueFollowing(drive);
+                        drive.update();
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -285,13 +292,13 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case PICK_UP:
+                        // synchronous
                         autoUtil.pixelPickup(1);
                         centerCurrentState = centerState.CENTER4;
+                        drive.followTrajectory(center4);
                         break;
                     case CENTER4:
-                        drive.followTrajectoryAsync(center4);
-
-                        continueFollowing(drive);
+                        drive.update();
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -300,13 +307,13 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case FIRST_DROP_OFF:
+                        //Synchronous
                         autoUtil.pixelDropoff();
                         centerCurrentState = centerState.CENTER5;
+                        drive.followTrajectoryAsync(cornerCenter);
                         break;
                     case CENTER5:
-                        drive.followTrajectoryAsync(cornerCenter);
-
-                        continueFollowing(drive);
+                        drive.update();
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
@@ -315,11 +322,13 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case SECOND_DROP_OFF:
+                        //Synchronous
                         autoUtil.pixelDropoff();
                         centerCurrentState = centerState.MOVE_TO_CORNER;
+                        drive.followTrajectory(cornerCenter);
                         break;
                     case MOVE_TO_CORNER:
-                        drive.followTrajectoryAsync(cornerCenter);
+                        drive.update();
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);

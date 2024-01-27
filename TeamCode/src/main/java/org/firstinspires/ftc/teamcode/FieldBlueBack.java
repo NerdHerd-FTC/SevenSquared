@@ -25,7 +25,7 @@ public class FieldBlueBack extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
     public static double leftOpen = 0.7;
-    public static double leftClosed = 1.0;
+    public static double leftClosed = 0.95;
 
     public static double rightOpen = 0.75;
     public static double rightClosed = 1.0;
