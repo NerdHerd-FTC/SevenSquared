@@ -138,12 +138,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         // Move to pixel stack
-        Trajectory center3 = drive.trajectoryBuilder(center1.end())
-                .splineToLinearHeading(new Pose2d(-37, -36, Math.toRadians(0)), Math.toRadians(90))
+        Trajectory center3 = drive.trajectoryBuilder(center2.end())
+                .splineToLinearHeading(new Pose2d(-37, -30, Math.toRadians(0)), Math.toRadians(90))
                 .build();
 
         // Spline under the edge truss to drop off at backdrop
-        Trajectory center4 = drive.trajectoryBuilder(center2.end())
+        Trajectory center4 = drive.trajectoryBuilder(center3.end())
                 .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
                 .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(55, -31.5, Math.toRadians(0)), Math.toRadians(0))
