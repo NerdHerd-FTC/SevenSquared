@@ -41,6 +41,9 @@ import java.util.List;
 public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
+    public static double insane_joint = -2654;
+    public static double insane_arm = 1273;
+
     public Servo ClawServoLeft;
     public Servo ClawServoRight;
 
@@ -131,12 +134,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
-                .back(19)
+                .back(33)
                 .build();
 
         // Move to pixel stack
         Trajectory center3 = drive.trajectoryBuilder(center1.end())
-                .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-37, -36, Math.toRadians(0)), Math.toRadians(90))
                 .build();
 
         // Spline under the edge truss to drop off at backdrop
@@ -293,48 +296,9 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case PICK_UP:
                         // synchronous
-                        autoUtil.pixelPickup(1);
+                        autoUtil.insanePixelPickup();
                         centerCurrentState = centerState.CENTER4;
                         drive.followTrajectory(center4);
-                        break;
-                    case CENTER4:
-                        drive.update();
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            centerCurrentState = centerState.FIRST_DROP_OFF;
-                        }
-                        break;
-                    case FIRST_DROP_OFF:
-                        //Synchronous
-                        autoUtil.pixelDropoff();
-                        centerCurrentState = centerState.CENTER5;
-                        drive.followTrajectoryAsync(cornerCenter);
-                        break;
-                    case CENTER5:
-                        drive.update();
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            centerCurrentState = centerState.SECOND_DROP_OFF;
-                        }
-                        break;
-                    case SECOND_DROP_OFF:
-                        //Synchronous
-                        autoUtil.pixelDropoff();
-                        centerCurrentState = centerState.MOVE_TO_CORNER;
-                        drive.followTrajectory(cornerCenter);
-                        break;
-                    case MOVE_TO_CORNER:
-                        drive.update();
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            centerCurrentState = centerState.DONE;
-                        }
                         break;
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {

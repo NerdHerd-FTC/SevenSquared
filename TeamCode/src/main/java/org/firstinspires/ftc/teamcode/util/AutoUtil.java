@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import static android.os.SystemClock.sleep;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,10 +10,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 
+@Config
 public class AutoUtil {
     public LinearOpMode opMode;
     public DcMotor frontLeft, frontRight, backLeft, backRight, arm, joint;
     public Servo ClawServoLeft, ClawServoRight;
+    public static double insane_joint = -2654;
+    public static double insane_arm = 1273;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -70,7 +74,54 @@ public class AutoUtil {
         }
     }
 
-    public void asyncMoveArm(double target) {
+    public void syncMoveJoint(double target) {
+        double error = target -joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        while (opMode.opModeIsActive() && Math.abs(error) > 10) {
+            error = target - joint.getCurrentPosition();
+
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+            double joint_power = joint_ff + joint_out;
+
+            joint.setPower(joint_power);
+
+            motorTelemetry(joint, "Joint");
+            opMode.telemetry.addData("Error", error);
+            opMode.telemetry.addData("Power", joint_power);
+            opMode.telemetry.update();
+            sleep(100);
+        }
+    }
+
+    public double  asyncMoveJoint(double target) {
+        double error = target -joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        error = target - joint.getCurrentPosition();
+
+        double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+        double joint_power = joint_ff + joint_out;
+
+        joint.setPower(joint_power);
+
+        motorTelemetry(joint, "Joint");
+        opMode.telemetry.addData("Error", error);
+        opMode.telemetry.addData("Power", joint_power);
+        opMode.telemetry.update();
+
+        return error;
+    }
+
+    public double asyncMoveArm(double target) {
         double error = target - arm.getCurrentPosition();
 
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
@@ -91,6 +142,8 @@ public class AutoUtil {
         opMode.telemetry.addData("Error", error);
         opMode.telemetry.addData("Power", arm_power);
         opMode.telemetry.update();
+
+        return error;
     }
 
     public void pixelPickup(Integer pixelDepth) {
@@ -111,6 +164,19 @@ public class AutoUtil {
         }
         moveRightFinger(CLAW_RIGHT_CLOSED);
         currentState = AutoUtil.RobotState.IDLE;
+    }
+
+    public void insanePixelPickup() {
+        currentState = RobotState.PIXEL_STACK;
+        moveRightFinger(CLAW_RIGHT_OPEN);
+        while (opMode.opModeIsActive() && asyncMoveArm(insane_arm) < 10 && asyncMoveJoint(insane_joint) < 10) {
+            opMode.telemetry.addData("Arm Error", asyncMoveArm(insane_arm));
+            opMode.telemetry.addData("Joint Error", asyncMoveJoint(insane_joint));
+            opMode.telemetry.update();
+        }
+
+        moveRightFinger(CLAW_RIGHT_CLOSED);
+        currentState = RobotState.IDLE;
     }
 
     public void pixelDropoff() {
