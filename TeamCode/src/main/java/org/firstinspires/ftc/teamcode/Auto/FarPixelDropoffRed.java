@@ -4,10 +4,12 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LO
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_GROUND;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -139,14 +141,29 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // Move to pixel stack
         Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .splineToLinearHeading(new Pose2d(-37, -30, Math.toRadians(0)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-57, -36, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // Spline under the edge truss to drop off at backdrop
         Trajectory center4 = drive.trajectoryBuilder(center3.end())
-                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(55, -31.5, Math.toRadians(0)), Math.toRadians(0))
+                .strafeRight(6)
+                .build();
+
+        /*
+        .splineTo(new Vector2d(34, -10), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
+                .strafeRight(30)
+         */
+        Trajectory center5 = drive.trajectoryBuilder(center4.end())
+                .splineTo(new Vector2d(34, -10), Math.toRadians(0))
+                .build();
+
+        Trajectory center6 = drive.trajectoryBuilder(center5.end())
+                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        Trajectory center7 = drive.trajectoryBuilder(center6.end())
+                .strafeRight(30)
                 .build();
 
         // move to left corner
@@ -287,18 +304,23 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case CENTER3:
                         drive.update();
+                        drive.waitForIdle();
 
                         if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
+                            autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                            autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         } else {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
                             centerCurrentState = centerState.PICK_UP;
                         }
                         break;
                     case PICK_UP:
                         // synchronous
-                        autoUtil.insanePixelPickup();
-                        centerCurrentState = centerState.CENTER4;
-                        drive.followTrajectory(center4);
+                        autoUtil.syncMoveJoint(ARM_PIXEL_DEPTH_1);
+                        autoUtil.syncMoveArm(JOINT_PIXEL_DEPTH_1);
+                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                        //centerCurrentState = centerState.CENTER4;
+                        //drive.followTrajectory(center4);
                         break;
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {

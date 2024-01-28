@@ -99,7 +99,7 @@ public class DriveConstants {
      */
     public static double MAX_VEL = 52.48291908330528; // theoretical max velocity: 61.743303783697616
     public static double MAX_ACCEL = 52.48291908330528;
-    public static double MAX_ANG_VEL = 3.114857287413855; // MAX: 3.893571609267319 rad. or 223.08522044297743 deg.; theoretical: 190.94804165608335 deg.
+    public static double MAX_ANG_VEL = 3.096191764726285; // MAX: 3.893571609267319 rad. or 223.08522044297743 deg.; theoretical: 190.94804165608335 deg.
     public static double MAX_ANG_ACCEL = Math.toRadians(190.94804165608335);
 
 

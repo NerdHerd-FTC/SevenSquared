@@ -85,6 +85,8 @@ public class TeleUtil {
     private ArmState armState = ArmState.DRIVER_CONTROL;
     private JointState jointState = JointState.DRIVER_CONTROL;
 
+    private double driveMult = 1.0;
+
     // Constructor
     public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo) {
         this.opMode = opMode;

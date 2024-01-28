@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
@@ -56,13 +57,13 @@ public class PixelDropoffBlue extends LinearOpMode {
         Trajectory center = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(12, 28), Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
-                .splineTo(new Vector2d(57, 28), Math.toRadians(0))
+                .splineTo(new Vector2d(49, 28), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(28, 30), Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
-                .splineToSplineHeading(new Pose2d(57, 36, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(49, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
@@ -74,7 +75,7 @@ public class PixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .splineToSplineHeading(new Pose2d(58, 17), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(49, 17), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
@@ -108,22 +109,22 @@ public class PixelDropoffBlue extends LinearOpMode {
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_SCORE);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerCenter);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
-            moveArm(ARM_FORWARDS_SCORE);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
@@ -132,11 +133,11 @@ public class PixelDropoffBlue extends LinearOpMode {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
             drive.followTrajectory(right3);
-            moveArm(ARM_FORWARDS_SCORE);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);

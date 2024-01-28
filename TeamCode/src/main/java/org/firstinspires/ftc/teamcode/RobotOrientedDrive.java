@@ -25,11 +25,11 @@ import org.firstinspires.ftc.teamcode.util.TeleUtil;
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
-    public static double leftOpen = 0.7;
-    public static double leftClosed = 1.0;
+    public static double rightClosed=0.47;
+    public static double rightOpen = 0.25;
 
-    public static double rightOpen = 0.75;
-    public static double rightClosed = 1.0;
+    public static double leftOpen = 0.4;
+    public static double leftClosed =0.66;
 
     @Override
     public void runOpMode() throws InterruptedException {

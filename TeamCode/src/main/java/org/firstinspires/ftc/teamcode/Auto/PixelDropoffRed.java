@@ -71,9 +71,9 @@ public class PixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
-        Vector2d centerEnd = new Vector2d(55, -31.5);
-        Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(59, -42, Math.toRadians(0));
+        Vector2d centerEnd = new Vector2d(51, -31.5);
+        Pose2d leftEnd = new Pose2d(51, -25, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(51, -42, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
@@ -104,11 +104,11 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
                 // new Pose2d(57, -30, Math.toRadians(0));
-                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
+                .strafeRight(37)
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
+                .strafeRight(20)
                 .build();
 
         // VisionPortal
@@ -143,22 +143,22 @@ public class PixelDropoffRed extends LinearOpMode {
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            moveArm(ARM_FORWARDS_SCORE);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
-            moveArm(ARM_FORWARDS_SCORE);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
             sleep(500);
-            moveArm(ARM_FORWARDS_SCORE - 100);
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);

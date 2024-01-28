@@ -7,11 +7,11 @@ public class RobotConstants {
     public static double WRIST_UPPER_LIMIT = 1.0;
     public static double WRIST_GROUND = 0.55; // TUNE THIS FOR MACRO
 
-    public static double CLAW_RIGHT_CLOSED = 1.0;
+    public static double CLAW_RIGHT_CLOSED =0.64;
     public static double CLAW_RIGHT_OPEN = 0.75;
 
-    public static double CLAW_LEFT_OPEN = 0.7;
-    public static double CLAW_LEFT_CLOSED = 1.0;
+    public static double CLAW_LEFT_OPEN = 0.4;
+    public static double CLAW_LEFT_CLOSED =0.66;
 
     // tune...
     public static double ARM_LOWER_LIMIT = 0.0;
@@ -25,16 +25,17 @@ public class RobotConstants {
     public static Integer ARM_BACKWARDS_SCORE = 1100;
     public static Integer ARM_GROUND = 1200; // TUNE THIS FOR MACRO
     public static Integer ARM_FORWARDS_SCORE = 730;
-    public static Integer ARM_FORWARDS_LOW_SCORE = 780;
+    public static Integer ARM_FORWARDS_LOW_SCORE = 800;
     public static Integer ARM_AIRPLANE = 2160;
 
     // for auto mainly
-    public static Integer ARM_PIXEL_DEPTH_1 = 1000;
+    public static Integer ARM_PIXEL_DEPTH_1 = 1241;
     public static Integer ARM_PIXEL_DEPTH_2 = 1050;
     public static Integer ARM_PIXEL_DEPTH_3 = 1100;
     public static Integer ARM_PIXEL_DEPTH_4 = 1150;
     public static Integer ARM_PIXEL_DEPTH_5 = ARM_GROUND;
 
+    public static Integer JOINT_PIXEL_DEPTH_1 = -240;
 
     public static double JOINT_SPEED = 1.0;
 
