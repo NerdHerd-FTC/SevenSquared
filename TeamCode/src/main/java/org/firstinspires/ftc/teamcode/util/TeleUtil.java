@@ -101,81 +101,6 @@ public class TeleUtil {
         this.DroneServo = DroneServo;
     }
 
-    public void robotOrientedDrive(double heading, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
-        double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
-        double x_raw = gamepad.left_stick_x;
-        double rx_raw = gamepad.right_stick_x;
-
-        // Toggle turn slow
-        if (gamepad.right_stick_button  && gamepad.right_trigger > 0.5) {
-            turnSlow = !turnSlow;
-        }
-
-        // Deadband to address controller drift
-        double deadband = DEAD_BAND;
-        if (Math.abs(y_raw) < deadband) {
-            y_raw = 0;
-        }
-        if (Math.abs(x_raw) < deadband) {
-            x_raw = 0;
-        }
-        if (Math.abs(rx_raw) < deadband) {
-            rx_raw = 0;
-        }
-
-        if (turnSlow) {
-            rx_raw *= SLOW_TURN;
-        }
-
-        // Exponential Drive
-        double exponent = 2.0;
-        double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
-        double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
-        double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
-
-        // Slowdown
-        if (slowdown) {
-            y *= 0.75;
-            x *= 0.75;
-            rx *= 0.75;
-        }
-
-        // get heading from IMU
-        double botHeading;
-
-        // restrict range to [0, 360]
-        if (heading <= 0) {
-            botHeading = heading + 2 * Math.PI;
-        } else {
-            botHeading = heading;
-        }
-
-        // Rotate the movement direction counter to the bot's rotation
-        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-
-        rotX = rotX * 1.1;  // Counteract imperfect strafing
-
-        // Denominator is the largest motor power (absolute value) or 1
-        // This ensures all the powers maintain the same ratio,
-        // but only if at least one is out of the range [-1, 1]
-        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-        double frontLeftPower = (rotY + rotX + rx) / denominator;
-        double backLeftPower = (rotY - rotX + rx) / denominator;
-        double frontRightPower = (rotY - rotX - rx) / denominator;
-        double backRightPower = (rotY + rotX - rx) / denominator;
-
-        motorFL.setPower(frontLeftPower);
-        motorBL.setPower(backLeftPower);
-        motorFR.setPower(frontRightPower);
-        motorBR.setPower(backRightPower);
-
-        motorTelemetry(motorFL, "FL");
-        motorTelemetry(motorBL, "BL");
-        motorTelemetry(motorFR, "FR");
-        motorTelemetry(motorBR, "BR");
-    }
-
     public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
         // Read pose
         Pose2d poseEstimate = drive.getPoseEstimate();
@@ -243,6 +168,7 @@ public class TeleUtil {
         double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
 
+
         if (turnSlow) {
             rx *= 0.5;
         }
@@ -255,6 +181,18 @@ public class TeleUtil {
         double backLeftPower = (y - x + rx) / denominator;
         double frontRightPower = (y - x - rx) / denominator;
         double backRightPower = (y + x - rx) / denominator;
+        if(gamepad.dpad_down){
+            frontLeftPower = frontLeftPower * 0.5;
+            backLeftPower = backLeftPower * 0.5;
+            frontRightPower = frontRightPower * 0.5;
+            backRightPower = backRightPower * 0.5;
+        }
+        if(gamepad.dpad_up){
+            frontLeftPower = frontLeftPower * 2;
+            backLeftPower = backLeftPower * 2;
+            frontRightPower = frontRightPower * 2;
+            backRightPower = backRightPower * 2;
+        }
 
         motorFL.setPower(frontLeftPower);
         motorBL.setPower(backLeftPower);
