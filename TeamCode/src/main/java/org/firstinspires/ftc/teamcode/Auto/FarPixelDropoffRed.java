@@ -260,6 +260,11 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
+        autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+
+        visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
+        visionPortal.setProcessorEnabled(aprilTag, true);
+
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectoryAsync(center1);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
@@ -268,13 +273,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
             drive.followTrajectoryAsync(right1);
         }
 
-        autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
-
-        visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
-        visionPortal.setProcessorEnabled(aprilTag, true);
-
         while (opModeIsActive()) {
-            aprilTagRelocalization(drive, CAMERA_Y_OFFSET, CAMERA_X_OFFSET);
+            // aprilTagRelocalization(drive, CAMERA_Y_OFFSET, CAMERA_X_OFFSET);
             telemetryAprilTag();
             telemetry.addData("Center Current State", centerCurrentState);
             telemetry.addData("Left Current State", leftCurrentState);
@@ -304,7 +304,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case CENTER3:
                         drive.update();
-                        drive.waitForIdle();
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
