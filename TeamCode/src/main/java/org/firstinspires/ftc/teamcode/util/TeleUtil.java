@@ -28,19 +28,33 @@ public class TeleUtil {
     public Servo ClawServoRight, ClawServoLeft;
     public CRServo DroneServo;
 
+    public static double joint_error = 0;
+    public static double arm_error = 0;
+
     private boolean arm_macro = false;
     private boolean joint_macro = false;
     private boolean fl_closed = true;
     private boolean fr_closed = true;
     private boolean turnSlow = false;
+    private boolean moveSlow = false;
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
+    private ElapsedTime TSC = new ElapsedTime();
+    private ElapsedTime FSC = new ElapsedTime();
+
+    private double turnSlowMult = 0.5;
+    private double driveSlowMult = 0.25;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     public static double joint_hold = 0;
     public static double arm_hold = 0;
+
+    // drive slow
+    // pid arm - kill power
+    //
+
 
 
     private enum ArmState {
@@ -146,8 +160,19 @@ public class TeleUtil {
         double rx_raw = gamepad.right_stick_x;
 
         // Toggle turn slow
-        if (gamepad.right_stick_button && gamepad.right_trigger > 0.5) {
+        if (gamepad.right_stick_button && TSC.milliseconds() > 500) {
             turnSlow = !turnSlow;
+            TSC.reset();
+        }
+
+        // Toggle move slow
+        if (gamepad.left_stick_button && FSC.milliseconds() > 500) {
+            moveSlow = !moveSlow;
+            FSC.reset();
+
+            if (moveSlow) {
+                turnSlow = true;
+            }
         }
 
         // Deadband to address controller drift
@@ -181,18 +206,6 @@ public class TeleUtil {
         double backLeftPower = (y - x + rx) / denominator;
         double frontRightPower = (y - x - rx) / denominator;
         double backRightPower = (y + x - rx) / denominator;
-        if(gamepad.dpad_down){
-            frontLeftPower = frontLeftPower * 0.5;
-            backLeftPower = backLeftPower * 0.5;
-            frontRightPower = frontRightPower * 0.5;
-            backRightPower = backRightPower * 0.5;
-        }
-        if(gamepad.dpad_up){
-            frontLeftPower = frontLeftPower * 2;
-            backLeftPower = backLeftPower * 2;
-            frontRightPower = frontRightPower * 2;
-            backRightPower = backRightPower * 2;
-        }
 
         motorFL.setPower(frontLeftPower);
         motorBL.setPower(backLeftPower);
@@ -302,7 +315,6 @@ public class TeleUtil {
     public double setJointPower(Gamepad gamepad) {
         jointPID.setPID(jointP, jointI, jointD);
         double power = 0;
-        double mult = 1;
 
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
 
@@ -317,11 +329,13 @@ public class TeleUtil {
 
         if (gamepad.b) {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_GROUND);
+            joint_error = JOINT_GROUND - joint.getCurrentPosition();
             power = joint_out + joint_ff;
             joint_hold = JOINT_GROUND;
             jointState = JointState.GROUNDING;
         } else if (gamepad.a) {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), 0);
+            joint_error = -joint.getCurrentPosition();
             power = joint_out + joint_ff;
             joint_hold = 0;
             jointState = JointState.GROUNDING;
@@ -330,8 +344,8 @@ public class TeleUtil {
             power = joint_out + joint_ff;
             joint_hold = JOINT_BACKWARDS_SCORE;
 
-            double error = joint.getCurrentPosition() - JOINT_BACKWARDS_SCORE;
-            if (Math.abs(error) < 10) {
+            joint_error = joint.getCurrentPosition() - JOINT_BACKWARDS_SCORE;
+            if (Math.abs(joint_error) < 10) {
                 jointState = JointState.BACKWARDS_REACHED;
             } else {
                 jointState = JointState.BACKWARDS_SCORING;
@@ -342,7 +356,7 @@ public class TeleUtil {
             joint_hold = JOINT_AIRPLANE;
             jointState = JointState.PLANE_LAUNCHING;
         }  else if (Math.abs(gamepad.left_stick_y) > 0.1) {
-            power = input * mult + joint_ff;
+            power = input + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
         } else if (joint.getCurrentPosition() > -10) {
@@ -365,15 +379,11 @@ public class TeleUtil {
             power = -1.0;
         }
 
-        power = Math.tanh(power);
-
-
         return power;
     }
     public double setArmPower(Gamepad gamepad) {
         armPID.setPID(armP, armI, armD);
         double power = 0;
-        double mult = 0.7;
 
         // calculate angles of joint & arm (in degrees) to account for torque
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
@@ -424,7 +434,7 @@ public class TeleUtil {
             armState = ArmState.PLANE_LAUNCHING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
             double input = -gamepad.right_stick_y;
-            power = input*mult;
+            power = input;
             arm_hold = arm.getCurrentPosition();
             armState = ArmState.DRIVER_CONTROL;
         } else {
@@ -442,8 +452,6 @@ public class TeleUtil {
         } else if (power < -1.0) {
             power = -1.0;
         }
-
-        power = Math.tanh(power);
 
         return power;
     }
@@ -486,6 +494,12 @@ public class TeleUtil {
 
         if (gamepad.right_trigger != 0) {
             opMode.telemetry.addData("Right Trigger", gamepad.right_trigger);
+        }
+        if (gamepad.left_stick_button) {
+            opMode.telemetry.addLine("LeftStick Button Pressed");
+        }
+        if (gamepad.right_stick_button) {
+            opMode.telemetry.addLine("RightStick Button Pressed");
         }
 
         if (gamepad.dpad_up) {
