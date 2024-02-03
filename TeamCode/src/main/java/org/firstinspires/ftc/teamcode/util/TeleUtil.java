@@ -144,6 +144,11 @@ public class TeleUtil {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
         double x_raw = gamepad.left_stick_x;
         double rx_raw = gamepad.right_stick_x;
+        // notes on robot oriented drive controls : b= right, y = forward, x= left, a= back
+        // = gamepad.b;
+        // = gamepad.y;
+        // = gamepad.x;
+        // = gamepad.a;
 
         // Toggle turn slow
         if (gamepad.right_stick_button && gamepad.right_trigger > 0.5) {
@@ -167,7 +172,7 @@ public class TeleUtil {
         double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
         double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
-
+        
 
         if (turnSlow) {
             rx *= 0.5;
