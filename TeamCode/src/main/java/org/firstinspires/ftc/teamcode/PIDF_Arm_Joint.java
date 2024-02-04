@@ -1,5 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_norm_F;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -9,14 +19,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
+import org.firstinspires.ftc.teamcode.util.RobotConstants.*;
+
 @Config
 @TeleOp
 public class PIDF_Arm_Joint extends LinearOpMode {
     private PIDController jointPID;
     private PIDController armPID;
-
-    public static double jointP = 0.0009, jointI = 0.0, jointD = 0.00005, joint_norm_F = 0.0015, joint_arm_F = 0.0;
-    public static double armP = 0.003, armI = 0.0, armD = 0.00015, armF = 0.002;
 
     public static int jointTarget = 0, armTarget = 0;
 
@@ -59,8 +69,8 @@ public class PIDF_Arm_Joint extends LinearOpMode {
 
             // calculate angles of joint & arm (in degrees) to account for torque
             double joint_angle = jointMotor.getCurrentPosition() / joint_ticks_per_degree + 193;
-            double relative_arm_angle = armMotor.getCurrentPosition() / arm_ticks_per_degree + 14.8;
-            double arm_angle = 180 + joint_angle - relative_arm_angle;
+            double relative_arm_angle = armMotor.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
 
             // account for negative angles
             if (arm_angle > 360) {
@@ -79,13 +89,7 @@ public class PIDF_Arm_Joint extends LinearOpMode {
             // arm self-torque: 12.9580463969 lb. in.
 
             // calculate effective torque arm length - if arm is on the same side as the joint, use arm length with joint, otherwise use arm length as cog since it's pretty close and find additional torque...
-            double joint_ff;
-            if (arm_angle >0 ) {
-                joint_ff = joint_arm_F * Math.cos(Math.toRadians(arm_angle)) + joint_norm_F * Math.cos(Math.toRadians(joint_angle));
-            } else {
-                // will not hold, is underpowered
-                joint_ff = joint_norm_F * Math.cos(Math.toRadians(joint_angle));
-            }
+            double joint_ff = joint_norm_F * Math.cos(Math.toRadians(joint_angle));
 
             // calculate feedforward with torque weights and cosine
             double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
@@ -97,6 +101,10 @@ public class PIDF_Arm_Joint extends LinearOpMode {
             // allow for manual override for tuning purposes
             if (Math.abs(gamepad1.left_stick_y) > 0.1) {
                 joint_power = gamepad1.left_stick_y * 0.7;
+            }
+
+            if (Math.abs(gamepad1.right_stick_y) > 0.1) {
+                arm_power = gamepad1.right_stick_y * 0.7;
             }
 
             // set motor powers with tanh to normalize

@@ -51,6 +51,8 @@ public class TeleUtil {
     public static double joint_hold = 0;
     public static double arm_hold = 0;
 
+    public static double ARM_DEADBAND = 10;
+
     // drive slow
     // pid arm - kill power
     //
@@ -389,6 +391,7 @@ public class TeleUtil {
 
         double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
+        double input = -gamepad.right_stick_y;
         if (gamepad.b) {
             // ground!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_GROUND);
@@ -396,11 +399,13 @@ public class TeleUtil {
             arm_hold = ARM_GROUND;
             armState = ArmState.GROUNDING;
         } else if (gamepad.a) {
+            // score!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), 0);
             power = arm_out + arm_ff;
             arm_hold = 0;
             armState = ArmState.GROUNDING;
         } else if (gamepad.y) {
+            // backwards score!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_BACKWARDS_SCORE);
             power = arm_out + arm_ff;
             arm_hold = ARM_BACKWARDS_SCORE;
@@ -413,6 +418,7 @@ public class TeleUtil {
                 armState = ArmState.BACKWARDS_SCORING;
             }
         } else if (gamepad.x) {
+            // forwards score!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_FORWARDS_SCORE);
             power = arm_out + arm_ff;
             arm_hold = ARM_FORWARDS_SCORE;
@@ -425,30 +431,37 @@ public class TeleUtil {
                 armState = ArmState.FORWARDS_SCORING;
             }
         } else if (gamepad.left_trigger > 0.5) {
+            // airplane!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_AIRPLANE);
             power = arm_out + arm_ff;
             arm_hold = ARM_FORWARDS_SCORE;
             armState = ArmState.PLANE_LAUNCHING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
-            double input = -gamepad.right_stick_y;
+            // driver control
             power = input;
             arm_hold = arm.getCurrentPosition();
             armState = ArmState.DRIVER_CONTROL;
         } else {
+            // Transition to holding state with smooth reduction in power
             if (armState != ArmState.HOLDING) {
                 arm_hold = arm.getCurrentPosition();
+                armState = ArmState.HOLDING;
             }
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
-            power = arm_ff + arm_out;
-            armState = ArmState.HOLDING;
+
+            double error = arm_hold - arm.getCurrentPosition();
+            if (Math.abs(error) > ARM_DEADBAND) {
+                // Outside deadband, normal PID control
+                double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                power = arm_ff + arm_out;
+            } else {
+                // Inside deadband, interpolate power for a smoother stop
+                double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                double scaledPower = arm_out * (Math.abs(error) / ARM_DEADBAND);
+                power = arm_ff + Math.max(scaledPower, 0);
+            }
         }
 
-        // deadband
-        if (power > 1.0) {
-            power = 1.0;
-        } else if (power < -1.0) {
-            power = -1.0;
-        }
+        power = Math.max(-1.0, Math.min(1.0, power));
 
         return power;
     }

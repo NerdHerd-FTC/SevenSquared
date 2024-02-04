@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
-@TeleOp(name = "Robot Drive - Blue Back")
+@TeleOp(name = "Robot Drive")
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 

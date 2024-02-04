@@ -11,7 +11,9 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_PIXEL_DEP
 
 import android.util.Size;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -104,6 +106,9 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
         arm = hardwareMap.get(DcMotor.class, "arm");
 
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -111,6 +116,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         arm.setDirection(DcMotor.Direction.REVERSE);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        // how to add functionality to determine if the movement has been completed successfully for the async functions? additionally, how to implement a better state machine design
         joint = hardwareMap.get(DcMotor.class, "joint");
 
         joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -123,7 +129,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
 
-        AutoUtil autoUtil = new AutoUtil(this, arm, joint, ClawServoLeft, ClawServoRight);
+        AutoUtil autoUtil = new AutoUtil(this, arm, joint, ClawServoLeft, ClawServoRight, telemetry);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
@@ -333,10 +339,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
                         // If the arm and joint are at the correct position, move the claw to the closed position
                         if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
+                            //
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-                            waitBeforeClaw.reset();
 
                             centerCurrentState = centerState.GRAB;
+
+                            waitBeforeClaw.reset();
                         }
                         break;
                     case GRAB:
@@ -378,9 +386,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                 }
-                telemetry.addData("Current State", centerCurrentState);
-                telemetry.addData("Arm Error", armError);
-                telemetry.addData("Joint Error", jointError);
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 switch (leftCurrentState) {
                     case LEFT1:

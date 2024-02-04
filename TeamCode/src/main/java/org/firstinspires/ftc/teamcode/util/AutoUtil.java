@@ -10,6 +10,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 @Config
 public class AutoUtil {
     public LinearOpMode opMode;
@@ -17,6 +19,7 @@ public class AutoUtil {
     public Servo ClawServoLeft, ClawServoRight;
     public static double insane_joint = -2654;
     public static double insane_arm = 1273;
+    public Telemetry telemetry;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -32,19 +35,13 @@ public class AutoUtil {
     public RobotState currentState = RobotState.IDLE;
 
     // Constructor
-    public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight) {
+    public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, Telemetry telemetry) {
         this.opMode = opMode;
         this.arm = arm;
         this.joint = joint;
         this.ClawServoLeft = ClawServoLeft;
         this.ClawServoRight = ClawServoRight;
-    }
-
-    public void motorTelemetry(DcMotor motor, String name) {
-        opMode.telemetry.addLine("--- " + name + " ---");
-        opMode.telemetry.addData(name + " Power", motor.getPower());
-        opMode.telemetry.addData(name + " Position", motor.getCurrentPosition());
-        opMode.telemetry.addData(name + " Target Position", motor.getTargetPosition());
+        this.telemetry = telemetry;
     }
 
     public void syncMoveArm(double target) {
@@ -66,9 +63,7 @@ public class AutoUtil {
 
             arm.setPower(arm_power);
 
-            motorTelemetry(arm, "Arm");
-            opMode.telemetry.addData("Error", error);
-            opMode.telemetry.addData("Power", arm_power);
+            opMode.telemetry.addData("Arm Error", error);
             sleep(100);
         }
     }
@@ -89,9 +84,7 @@ public class AutoUtil {
 
             joint.setPower(joint_power);
 
-            motorTelemetry(joint, "Joint");
-            opMode.telemetry.addData("Error", error);
-            opMode.telemetry.addData("Power", joint_power);
+            opMode.telemetry.addData("Joint Error", error);
             sleep(100);
         }
     }
@@ -109,9 +102,7 @@ public class AutoUtil {
 
         joint.setPower(joint_power);
 
-        motorTelemetry(joint, "Joint");
-        opMode.telemetry.addData("Error", error);
-        opMode.telemetry.addData("Power", joint_power);
+        opMode.telemetry.addData("Joint Error", error);
 
         return error;
     }
@@ -131,9 +122,7 @@ public class AutoUtil {
 
         arm.setPower(arm_power);
 
-        motorTelemetry(arm, "Arm");
-        opMode.telemetry.addData("Error", error);
-        opMode.telemetry.addData("Power", arm_power);
+        opMode.telemetry.addData("Arm Error", error);
 
         return error;
     }
