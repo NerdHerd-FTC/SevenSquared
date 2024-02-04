@@ -9,6 +9,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
@@ -26,6 +27,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
@@ -46,8 +48,15 @@ public class FarPixelDropoffRed extends LinearOpMode {
     public static double insane_joint = -2654;
     public static double insane_arm = 1273;
 
+    public static double jointPos = 0;
+    public static double armPos = 0;
+    public static double jointError = 0;
+    public static double armError = 0;
+
     public Servo ClawServoLeft;
     public Servo ClawServoRight;
+
+    private ElapsedTime waitBeforeClaw = new ElapsedTime();
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
@@ -63,6 +72,9 @@ public class FarPixelDropoffRed extends LinearOpMode {
         CENTER2,
         CENTER3,
         PICK_UP,
+        GRAB,
+        WAITFORCLAW,
+        HOME,
         CENTER4,
         FIRST_DROP_OFF,
         CENTER5,
@@ -141,7 +153,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // Move to pixel stack
         Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .splineToLinearHeading(new Pose2d(-47, -34, Math.toRadians(180)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-45, -31, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // Spline under the edge truss to drop off at backdrop
@@ -252,7 +264,14 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
-        waitForStart();
+
+        while (opModeInInit()) {
+            if (gamepad2.left_bumper) {
+                autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+            } else if (gamepad2.right_bumper) {
+               autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+            }
+        }
 
         leftState leftCurrentState = leftState.LEFT1;
         rightState rightCurrentState = rightState.RIGHT1;
@@ -275,10 +294,11 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         while (opModeIsActive()) {
             // aprilTagRelocalization(drive, CAMERA_Y_OFFSET, CAMERA_X_OFFSET);
-            telemetryAprilTag();
+            // telemetryAprilTag();
             telemetry.addData("Center Current State", centerCurrentState);
             telemetry.addData("Left Current State", leftCurrentState);
             telemetry.addData("Right Current State", rightCurrentState);
+            telemetry.addData("Clock", waitBeforeClaw.milliseconds());
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
@@ -297,6 +317,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
                         if (drive.isBusy()) {
                             autoUtil.asyncMoveArm(ARM_HOME);
+                            autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         } else {
                             centerCurrentState = centerState.CENTER3;
                             drive.followTrajectoryAsync(center3);
@@ -306,22 +327,63 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         drive.update();
 
                         if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
-                            autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
-                        } else {
                             autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
+                        } else {
                             centerCurrentState = centerState.PICK_UP;
                         }
                         break;
                     case PICK_UP:
-                        // synchronous
-                        autoUtil.syncMoveJoint(ARM_PIXEL_DEPTH_1);
-                        autoUtil.syncMoveArm(JOINT_PIXEL_DEPTH_1);
+                        jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
+                            jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                            waitBeforeClaw.reset();
+
+                            centerCurrentState = centerState.GRAB;
+                        }
+                        break;
+                    case GRAB:
+                        jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (waitBeforeClaw.milliseconds() > 750) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                            waitBeforeClaw.reset();
+
+                            centerCurrentState = centerState.WAITFORCLAW;
+                        }
+                        break;
+                    case WAITFORCLAW:
+                        jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-                        //centerCurrentState = centerState.CENTER4;
-                        //drive.followTrajectory(center4);
+
+                        if (waitBeforeClaw.seconds() > 5) {
+                            centerCurrentState = centerState.CENTER4;
+                            drive.followTrajectory(center4);
+                        }
+                    case CENTER4:
+                        drive.update();
+
+                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+
+                        if (drive.isBusy()) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                        } else {
+                            centerCurrentState = centerState.CENTER5;
+                        }
                         break;
                 }
+                telemetry.addData("Current State", centerCurrentState);
+                telemetry.addData("Arm Error", armError);
+                telemetry.addData("Joint Error", jointError);
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 switch (leftCurrentState) {
                     case LEFT1:

@@ -69,7 +69,6 @@ public class AutoUtil {
             motorTelemetry(arm, "Arm");
             opMode.telemetry.addData("Error", error);
             opMode.telemetry.addData("Power", arm_power);
-            opMode.telemetry.update();
             sleep(100);
         }
     }
@@ -93,7 +92,6 @@ public class AutoUtil {
             motorTelemetry(joint, "Joint");
             opMode.telemetry.addData("Error", error);
             opMode.telemetry.addData("Power", joint_power);
-            opMode.telemetry.update();
             sleep(100);
         }
     }
@@ -105,8 +103,6 @@ public class AutoUtil {
 
         double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
 
-        error = target - joint.getCurrentPosition();
-
         double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
 
         double joint_power = joint_ff + joint_out;
@@ -116,7 +112,6 @@ public class AutoUtil {
         motorTelemetry(joint, "Joint");
         opMode.telemetry.addData("Error", error);
         opMode.telemetry.addData("Power", joint_power);
-        opMode.telemetry.update();
 
         return error;
     }
@@ -130,8 +125,6 @@ public class AutoUtil {
 
         double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
-        error = target - arm.getCurrentPosition();
-
         double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
 
         double arm_power = arm_ff + arm_out;
@@ -141,7 +134,6 @@ public class AutoUtil {
         motorTelemetry(arm, "Arm");
         opMode.telemetry.addData("Error", error);
         opMode.telemetry.addData("Power", arm_power);
-        opMode.telemetry.update();
 
         return error;
     }
@@ -172,7 +164,6 @@ public class AutoUtil {
         while (opMode.opModeIsActive() && asyncMoveArm(insane_arm) < 10 && asyncMoveJoint(insane_joint) < 10) {
             opMode.telemetry.addData("Arm Error", asyncMoveArm(insane_arm));
             opMode.telemetry.addData("Joint Error", asyncMoveJoint(insane_joint));
-            opMode.telemetry.update();
         }
 
         moveRightFinger(CLAW_RIGHT_CLOSED);
@@ -202,4 +193,29 @@ public class AutoUtil {
         ClawServoRight.setPosition(target);
     }
 
+    public void holdArm() {
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+        double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+        arm.setPower(arm_ff);
+    }
+
+    public void holdJoint() {
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        joint.setPower(joint_ff);
+    }
+
+    public void killArm() {
+        arm.setPower(0);
+    }
+
+    public void killJoint() {
+        joint.setPower(0);
+    }
 }

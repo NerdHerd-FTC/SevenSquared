@@ -164,20 +164,10 @@ public class TeleUtil {
         // = gamepad.x;
         // = gamepad.a;
 
-        // Toggle turn slow
-        if (gamepad.right_stick_button && TSC.milliseconds() > 500) {
-            turnSlow = !turnSlow;
-            TSC.reset();
-        }
-
         // Toggle move slow
-        if (gamepad.left_stick_button && FSC.milliseconds() > 500) {
+        if (gamepad.a && FSC.milliseconds() > 500) {
             moveSlow = !moveSlow;
             FSC.reset();
-
-            if (moveSlow) {
-                turnSlow = true;
-            }
         }
 
         // Deadband to address controller drift
@@ -199,8 +189,10 @@ public class TeleUtil {
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
         
 
-        if (turnSlow) {
-            rx *= 0.5;
+        if (moveSlow) {
+            y *= 0.25;
+            x *= 0.25;
+            rx *= 0.25;
         }
 
         // Denominator is the largest motor power (absolute value) or 1

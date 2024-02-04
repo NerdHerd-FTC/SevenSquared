@@ -22,26 +22,26 @@ public class RobotConstants {
     // tune...
     public static Integer ARM_HOME = 0;
     public static Integer ARM_SCORE = 500; // TUNE THIS FOR MACRO
-    public static Integer ARM_BACKWARDS_SCORE = 1100;
+    public static Integer ARM_BACKWARDS_SCORE = 1200;
     public static Integer ARM_GROUND = 1200; // TUNE THIS FOR MACRO
     public static Integer ARM_FORWARDS_SCORE = 730;
     public static Integer ARM_FORWARDS_LOW_SCORE = 800;
     public static Integer ARM_AIRPLANE = 2160;
 
     // for auto mainly
-    public static Integer ARM_PIXEL_DEPTH_1 = 1241;
+    public static Integer ARM_PIXEL_DEPTH_1 = 1221;
     public static Integer ARM_PIXEL_DEPTH_2 = 1050;
     public static Integer ARM_PIXEL_DEPTH_3 = 1100;
     public static Integer ARM_PIXEL_DEPTH_4 = 1150;
     public static Integer ARM_PIXEL_DEPTH_5 = ARM_GROUND;
 
-    public static Integer JOINT_PIXEL_DEPTH_1 = -240;
+    public static Integer JOINT_PIXEL_DEPTH_1 = -205;
 
     public static double JOINT_SPEED = 1.0;
 
     // tune...
     public static Integer JOINT_HOME = 0;
-    public static Integer JOINT_BACKWARDS_SCORE = -2000;
+    public static Integer JOINT_BACKWARDS_SCORE = -2200;
     public static Integer JOINT_FORWARDS_SCORE = 0;
     public static Integer JOINT_GROUND = 0;
     public static Integer JOINT_AIRPLANE = -1430;
