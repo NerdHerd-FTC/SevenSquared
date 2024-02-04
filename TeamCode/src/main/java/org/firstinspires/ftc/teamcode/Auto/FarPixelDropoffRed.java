@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_GROUND;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
@@ -11,10 +8,6 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOS
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_PIXEL_DEPTH_1;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
 
 import android.util.Size;
 
@@ -22,7 +15,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -33,7 +25,6 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.AutoUtil;
 import org.firstinspires.ftc.teamcode.util.PoseStorage;
-import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -73,7 +64,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
         CENTER3,
         PICK_UP,
         GRAB,
-        WAITFORCLAW,
         HOME,
         CENTER4,
         FIRST_DROP_OFF,
@@ -303,20 +293,19 @@ public class FarPixelDropoffRed extends LinearOpMode {
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER1:
+                        // Move forward to spike mark
                         drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
+                        if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER2;
                             drive.followTrajectoryAsync(center2);
                         }
                         break;
                     case CENTER2:
+                        // Move backwards
                         drive.update();
 
                         if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
                             autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         } else {
                             centerCurrentState = centerState.CENTER3;
@@ -324,52 +313,60 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case CENTER3:
+                        // Move to the pixel stack
                         drive.update();
 
                         if (drive.isBusy()) {
+                            // Move the claw to the open position
                             autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                            // Ready the joint
                             jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         } else {
                             centerCurrentState = centerState.PICK_UP;
                         }
                         break;
                     case PICK_UP:
+                        // Move the arm to the pixel stack height
                         jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
 
+                        // If the arm and joint are at the correct position, move the claw to the closed position
                         if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
-                            jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
-                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
-
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
                             waitBeforeClaw.reset();
 
                             centerCurrentState = centerState.GRAB;
                         }
                         break;
                     case GRAB:
-                        jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
-
-                        if (waitBeforeClaw.milliseconds() > 750) {
-                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-
-                            waitBeforeClaw.reset();
-
-                            centerCurrentState = centerState.WAITFORCLAW;
-                        }
-                        break;
-                    case WAITFORCLAW:
+                        // Hold the position of the arm and joint and close the claw
                         jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
-                        if (waitBeforeClaw.seconds() > 5) {
-                            centerCurrentState = centerState.CENTER4;
-                            drive.followTrajectory(center4);
+                        // If the claw has been closed for 1500 milliseconds, move to the next state
+                        if (waitBeforeClaw.milliseconds() > 1500) {
+                            waitBeforeClaw.reset();
+                            centerCurrentState = centerState.HOME;
                         }
+                        break;
+                    case HOME:
+                        // Move the arm and joint to the home position
+                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+
+                        // If the arm and joint are at the home position, move to the next state
+                        if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
+                            centerCurrentState = centerState.CENTER4;
+                            // drive.followTrajectory(center4);
+                        }
+                        break;
                     case CENTER4:
+                        // Move to the second pixel stack
                         drive.update();
 
+                        // Keep the claw closed and the arm and joint at the home position
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
                         jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
                         armError = autoUtil.asyncMoveArm(ARM_HOME);
