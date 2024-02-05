@@ -42,7 +42,6 @@ public class TeleUtil {
     private ElapsedTime TSC = new ElapsedTime();
     private ElapsedTime FSC = new ElapsedTime();
 
-    private double turnSlowMult = 0.5;
     private double driveSlowMult = 0.25;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
@@ -51,7 +50,7 @@ public class TeleUtil {
     public static double joint_hold = 0;
     public static double arm_hold = 0;
 
-    public static double ARM_DEADBAND = 10;
+    public static double ARM_DEADBAND = 20;
 
     // drive slow
     // pid arm - kill power
@@ -487,6 +486,7 @@ public class TeleUtil {
     // TELEMETRY METHODS
     public void checkGamepadParameters(Gamepad gamepad, String position) {
         opMode.telemetry.addLine("--- " + position + " ---");
+        
         if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
             opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
             opMode.telemetry.addData("Left Stick Y", gamepad.left_stick_y);
@@ -545,11 +545,15 @@ public class TeleUtil {
             opMode.telemetry.addLine("Right bumper clicked");
         }
 
+        opMode.telemetry.addLine("\n");
         opMode.telemetry.addData("Joint Hold", joint_hold);
         opMode.telemetry.addData("Joint Current", joint.getCurrentPosition());
-        opMode.telemetry.addData("Joint Current Hold Error", joint_hold - joint.getCurrentPosition());
         opMode.telemetry.addData("Joint Power", joint.getPower());
 
+        opMode.telemetry.addLine("\n");
+        opMode.telemetry.addData("Arm Hold", arm_hold);
+        opMode.telemetry.addData("Arm Position", arm.getCurrentPosition());
+        opMode.telemetry.addData("Arm Power", arm.getPower());
     }
 
     public void logGamepad(Telemetry telemetry, Gamepad gamepad, String position) {

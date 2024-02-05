@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -21,6 +22,7 @@ import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
 @TeleOp(name = "Field Drive - Blue Back")
+@Disabled
 public class FieldBlueBack extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 

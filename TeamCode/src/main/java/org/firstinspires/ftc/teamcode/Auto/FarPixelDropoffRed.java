@@ -319,6 +319,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         // Move to the pixel stack
                         drive.update();
 
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1 - 200);
+
                         if (drive.isBusy()) {
                             // Move the claw to the open position
                             autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
@@ -331,7 +333,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
 
                         // If the arm and joint are at the correct position, move the claw to the closed position
-                        if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
+                        if (Math.abs(armError) <= 10) {
                             //
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
@@ -345,7 +347,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
-                        // If the claw has been closed for 1500 milliseconds, move to the next state
+                        // If the claw has been closed for 1000 milliseconds, move to the next state
                         if (waitBeforeClaw.milliseconds() > 1500) {
                             waitBeforeClaw.reset();
                             centerCurrentState = centerState.HOME;
@@ -376,6 +378,10 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         } else {
                             centerCurrentState = centerState.CENTER5;
                         }
+                        break;
+                    case CENTER5:
+                        autoUtil.killArm();
+                        autoUtil.killJoint();
                         break;
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {

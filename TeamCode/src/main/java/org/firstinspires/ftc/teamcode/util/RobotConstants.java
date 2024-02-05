@@ -28,7 +28,7 @@ public class RobotConstants {
     public static Integer ARM_AIRPLANE = 2160;
 
     // for auto mainly
-    public static Integer ARM_PIXEL_DEPTH_1 = 1040;
+    public static Integer ARM_PIXEL_DEPTH_1 = 1035;
     public static Integer ARM_PIXEL_DEPTH_2 = 1050;
     public static Integer ARM_PIXEL_DEPTH_3 = 1100;
     public static Integer ARM_PIXEL_DEPTH_4 = 1150;
@@ -44,7 +44,7 @@ public class RobotConstants {
     public static Integer JOINT_AIRPLANE = -1430;
 
     public static double jointP = 0.002, jointI = 0.0, jointD = 0.000018, joint_norm_F = 0.0015;
-    public static double armP = 0.0032, armI = 0.0, armD = 0.0002, armF = 0.0037;
+    public static double armP = 0.0032, armI = 0.0, armD = 0.00007, armF = 0.0037;
 
     // Drive
     public static double DRIVE_SPEED = 1.0;
