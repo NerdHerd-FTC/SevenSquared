@@ -10,7 +10,6 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSE
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_HOME;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -86,7 +85,6 @@ public class JointArmTesting extends LinearOpMode {
 
         while (opModeIsActive()) {
             if (gamepad1.a) {
-                jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                 armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
             }
 

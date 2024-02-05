@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.Archive;
 
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_SCORE;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
@@ -148,7 +148,7 @@ public class PixelDropoffBlueDR extends LinearOpMode {
 
         }
             stopMotors();
-            setArmPower(ARM_SCORE);
+            setArmPower(ARM_FORWARDS_SCORE);
             stopArticulation();
             setClawServoLeft(ClawServoLeft, CLAW_LEFT_OPEN);
             sleep(50);

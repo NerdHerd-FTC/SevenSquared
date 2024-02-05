@@ -7,7 +7,6 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSE
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_HOME;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_PIXEL_DEPTH_1;
 
 import android.util.Size;
 
@@ -311,9 +310,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         // Move backwards
                         drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
-                        } else {
+                        if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER3;
                             drive.followTrajectoryAsync(center3);
                         }
@@ -325,16 +322,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         if (drive.isBusy()) {
                             // Move the claw to the open position
                             autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-
-                            // Ready the joint
-                            jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         } else {
                             centerCurrentState = centerState.PICK_UP;
                         }
                         break;
                     case PICK_UP:
                         // Move the arm to the pixel stack height
-                        jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
 
                         // If the arm and joint are at the correct position, move the claw to the closed position
@@ -349,7 +342,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case GRAB:
                         // Hold the position of the arm and joint and close the claw
-                        jointError = autoUtil.asyncMoveJoint(JOINT_PIXEL_DEPTH_1);
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 

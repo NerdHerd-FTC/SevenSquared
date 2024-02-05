@@ -40,7 +40,7 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
     public float center_y = 62;
 
     // Adjust the HSV range for red
-    public Scalar lowerRed1 = new Scalar(0, 100, 100);
+    public Scalar lowerRed1 = new Scalar(0, 100, 24);
     public Scalar upperRed1 = new Scalar(10, 255, 255);
     public Scalar lowerRed2 = new Scalar(160, 100, 100);
     public Scalar upperRed2 = new Scalar(180, 255, 255);

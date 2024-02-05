@@ -171,7 +171,7 @@ public class SuperAutoBlue extends LinearOpMode {
         // tune offsets
         precisionAprilTag(aprilTag, decision, 3.5, 8);
 
-        runArm(arm, RobotConstants.ARM_SCORE, 0.7);
+        runArm(arm, RobotConstants.ARM_FORWARDS_SCORE, 0.7);
         setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_CLOSED);
         sleep(1000);
         setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);

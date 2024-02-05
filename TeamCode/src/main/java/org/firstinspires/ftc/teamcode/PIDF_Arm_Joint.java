@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -17,7 +21,9 @@ import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.RobotConstants.*;
@@ -29,6 +35,8 @@ public class PIDF_Arm_Joint extends LinearOpMode {
     private PIDController armPID;
 
     public static int jointTarget = 0, armTarget = 0;
+
+    public static boolean leftClawOpen = false, rightClawOpen = false;
 
     private final double joint_ticks_per_degree = ((((1+(46.0/17))) * (1+(46.0/17))) * (1+(46.0/17)) * 28 * 10.0/3) / 360.0;
     private final double arm_ticks_per_degree = ((((1+(46.0/17))) * (1+(46.0/11))) * 28 * 5)/360.0;
@@ -56,12 +64,26 @@ public class PIDF_Arm_Joint extends LinearOpMode {
         armMotor.setDirection(DcMotor.Direction.REVERSE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        // Get claw fingers
+        Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
+        Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+
+        // Reverse if opposite directions are seen
+        ClawServoRight.setDirection(Servo.Direction.FORWARD);
+        ClawServoLeft.setDirection(Servo.Direction.REVERSE);
+
         waitForStart();
 
         while (opModeIsActive()) {
             // set PID values every loop to account for dashboard changes
             armPID.setPID(armP, armI, armD); // working values: 0.0035, 0.0, 0.0003 w/ f = 0.002
             jointPID.setPID(jointP, jointI, jointD);
+
+            if (armTarget > 1300) {
+                jointTarget = 1300;
+            } else if (armTarget < 0) {
+                jointTarget = 0;
+            }
 
             // calculate PID power
             double joint_out = jointPID.calculate(jointMotor.getCurrentPosition(), jointTarget);
@@ -107,6 +129,18 @@ public class PIDF_Arm_Joint extends LinearOpMode {
                 arm_power = gamepad1.right_stick_y * 0.7;
             }
 
+            if (leftClawOpen) {
+                ClawServoLeft.setPosition(CLAW_LEFT_OPEN);
+            } else {
+                ClawServoLeft.setPosition(CLAW_LEFT_CLOSED);
+            }
+
+            if (rightClawOpen) {
+                ClawServoRight.setPosition(CLAW_RIGHT_OPEN);
+            } else {
+                ClawServoRight.setPosition(CLAW_RIGHT_CLOSED);
+            }
+
             // set motor powers with tanh to normalize
             jointMotor.setPower(Math.tanh(joint_power));
             armMotor.setPower(Math.tanh(arm_power));
@@ -120,6 +154,8 @@ public class PIDF_Arm_Joint extends LinearOpMode {
 
             telemetry.addData("Arm Position", armMotor.getCurrentPosition());
             telemetry.addData("Arm Target", armTarget);
+            telemetry.addData("Arm Power", armMotor.getPower());
+            telemetry.addData("Arm FF", arm_ff);
 
             telemetry.addLine("\n");
 
