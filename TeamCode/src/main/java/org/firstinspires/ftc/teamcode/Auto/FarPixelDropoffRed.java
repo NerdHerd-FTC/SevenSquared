@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_DROP_2;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
@@ -24,6 +25,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoUtil;
 import org.firstinspires.ftc.teamcode.util.PoseStorage;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -67,11 +69,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
         GRAB,
         HOME,
         CENTER4,
-        FIRST_DROP_OFF,
         CENTER5,
-        SECOND_DROP_OFF,
+        FIRST_DROP_OFF,
+        RELEASE,
+        HOME2,
         MOVE_TO_CORNER,
-        FOLLOWING,
+        ROTATE,
         DONE
     }
 
@@ -151,31 +154,24 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(-45, -31, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
-        // Spline under the edge truss to drop off at backdrop
+        // Spline away from pixel stack and move toward dropoff - prepare to drop
         Trajectory center4 = drive.trajectoryBuilder(center3.end())
-                .strafeRight(6)
-                .build();
-
-        /*
-        .splineTo(new Vector2d(34, -10), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
-                .strafeRight(30)
-         */
-        Trajectory center5 = drive.trajectoryBuilder(center4.end())
+                .splineTo(new Vector2d(-46, -10), Math.toRadians(0))
                 .splineTo(new Vector2d(34, -10), Math.toRadians(0))
                 .build();
 
-        Trajectory center6 = drive.trajectoryBuilder(center5.end())
-                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
-                .build();
-
-        Trajectory center7 = drive.trajectoryBuilder(center6.end())
-                .strafeRight(30)
+        // Move to dropoff
+        Trajectory center5 = drive.trajectoryBuilder(center4.end())
+                .splineToSplineHeading(new Pose2d(51, -31.5, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         // move to left corner
-        Trajectory cornerCenter = drive.trajectoryBuilder(center3.end())
+        Trajectory cornerCenter = drive.trajectoryBuilder(center5.end())
                 .strafeLeft(28)
+                .build();
+
+        TrajectorySequence rotateCenter = drive.trajectorySequenceBuilder(cornerCenter.end())
+                .turn(Math.toRadians(180)) // Turns 45 degrees counter-clockwise
                 .build();
 
         // push to spike
@@ -287,7 +283,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
             drive.followTrajectoryAsync(right1);
         }
 
-        while (opModeIsActive()) {
+        while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
             // aprilTagRelocalization(drive, CAMERA_Y_OFFSET, CAMERA_X_OFFSET);
             // telemetryAprilTag();
             telemetry.addData("Center Current State", centerCurrentState);
@@ -361,7 +357,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         // If the arm and joint are at the home position, move to the next state
                         if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
                             centerCurrentState = centerState.CENTER4;
-                            // drive.followTrajectory(center4);
+                            drive.followTrajectory(center4);
                         }
                         break;
                     case CENTER4:
@@ -373,15 +369,58 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
                         armError = autoUtil.asyncMoveArm(ARM_HOME);
 
-                        if (drive.isBusy()) {
-                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-                        } else {
+                        if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER5;
+                            drive.followTrajectory(center5);
                         }
                         break;
                     case CENTER5:
-                        autoUtil.killArm();
-                        autoUtil.killJoint();
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.FIRST_DROP_OFF;
+                            waitBeforeClaw.reset();
+                        }
+                        break;
+                    case FIRST_DROP_OFF:
+                        armError = autoUtil.asyncMoveArm(ARM_DROP_2);
+
+                        if (Math.abs(armError) <= 10) {
+                            centerCurrentState = centerState.RELEASE;
+                            waitBeforeClaw.reset();
+                        }
+                    case RELEASE:
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                        if (waitBeforeClaw.milliseconds() > 1000) {
+                            centerCurrentState = centerState.HOME2;
+                        }
+                        break;
+                    case HOME2:
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                        if (Math.abs(armError) <= 10) {
+                            centerCurrentState = centerState.MOVE_TO_CORNER;
+                            drive.followTrajectory(cornerCenter);
+                        }
+                        break;
+                    case MOVE_TO_CORNER:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.ROTATE;
+                            drive.followTrajectorySequence(rotateCenter);
+                        }
+                        break;
+                    case ROTATE:
+                        drive.update();
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.killArm();
+                            autoUtil.killJoint();
+                            centerCurrentState = centerState.DONE;
+                        }
                         break;
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {

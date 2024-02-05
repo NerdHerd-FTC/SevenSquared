@@ -3,9 +3,11 @@ import com.acmerobotics.dashboard.config.Config;
 
 @Config
 public class RobotConstants {
+    /*
     public static double WRIST_LOWER_LIMIT = 0.0;
     public static double WRIST_UPPER_LIMIT = 1.0;
     public static double WRIST_GROUND = 0.55; // TUNE THIS FOR MACRO
+     */
 
     public static double CLAW_RIGHT_CLOSED =0.52;
     public static double CLAW_RIGHT_OPEN = 0.25;
@@ -17,8 +19,6 @@ public class RobotConstants {
     public static double ARM_LOWER_LIMIT = 0.0;
     public static double ARM_UPPER_LIMIT = 1000;
 
-    public static double ARM_SPEED = 0.8;
-
     // tune...
     public static Integer ARM_HOME = 0;
     public static Integer ARM_BACKWARDS_SCORE = 1275;
@@ -26,6 +26,9 @@ public class RobotConstants {
     public static Integer ARM_FORWARDS_SCORE = 730;
     public static Integer ARM_FORWARDS_LOW_SCORE = 800;
     public static Integer ARM_AIRPLANE = 2160;
+    public static Integer ARM_DROP_1 = 800;
+    public static Integer ARM_DROP_2 = 760;
+
 
     // for auto mainly
     public static Integer ARM_PIXEL_DEPTH_1 = 1035;

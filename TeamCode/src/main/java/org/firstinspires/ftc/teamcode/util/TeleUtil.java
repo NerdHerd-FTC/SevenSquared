@@ -486,7 +486,7 @@ public class TeleUtil {
     // TELEMETRY METHODS
     public void checkGamepadParameters(Gamepad gamepad, String position) {
         opMode.telemetry.addLine("--- " + position + " ---");
-        
+
         if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
             opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
             opMode.telemetry.addData("Left Stick Y", gamepad.left_stick_y);

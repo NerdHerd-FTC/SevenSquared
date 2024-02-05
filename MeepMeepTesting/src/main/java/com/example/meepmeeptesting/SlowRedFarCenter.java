@@ -17,14 +17,12 @@ public class SlowRedFarCenter {
                         drive.trajectorySequenceBuilder(new Pose2d(-34, -63, Math.toRadians(90)))
                                 .forward(43)
                                 .back(33)
-                                .splineToLinearHeading(new Pose2d(-57, -36, Math.toRadians(180)), Math.toRadians(180))
-                                .strafeRight(6)
+                                .splineToLinearHeading(new Pose2d(-45, -31, Math.toRadians(180)), Math.toRadians(180))
+                                .splineTo(new Vector2d(-46, -10), Math.toRadians(0))
                                 .splineTo(new Vector2d(34, -10), Math.toRadians(0))
-                                .splineToSplineHeading(new Pose2d(55, -37, Math.toRadians(0)), Math.toRadians(0))
-                                .strafeRight(30)
-
-                                .waitSeconds(1)
-
+                                .splineToSplineHeading(new Pose2d(51, -31.5, Math.toRadians(0)), Math.toRadians(0))
+                                .strafeLeft(28)
+                                .turn(Math.toRadians(180)) // Turns 45 degrees counter-clockwise
                                 .build()
                 );
 
