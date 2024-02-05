@@ -188,12 +188,105 @@ public class TeleUtil {
         double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
         double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
-        
 
         if (moveSlow) {
             y *= 0.25;
             x *= 0.25;
             rx *= 0.25;
+        }
+
+        // Denominator is the largest motor power (absolute value) or 1
+        // This ensures all the powers maintain the same ratio,
+        // but only if at least one is out of the range [-1, 1]
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+        double frontLeftPower = (y + x + rx) / denominator;
+        double backLeftPower = (y - x + rx) / denominator;
+        double frontRightPower = (y - x - rx) / denominator;
+        double backRightPower = (y + x - rx) / denominator;
+
+        motorFL.setPower(frontLeftPower);
+        motorBL.setPower(backLeftPower);
+        motorFR.setPower(frontRightPower);
+        motorBR.setPower(backRightPower);
+
+        motorTelemetry(motorFL, "FL");
+        motorTelemetry(motorBL, "BL");
+        motorTelemetry(motorFR, "FR");
+        motorTelemetry(motorBR, "BR");
+    }
+
+    public void dpadSupportedRobotDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow, Pose2d pose) {
+        double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
+        double x_raw = gamepad.left_stick_x;
+        double rx_raw = gamepad.right_stick_x;
+
+        // Toggle move slow
+        if (gamepad.a && FSC.milliseconds() > 500) {
+            moveSlow = !moveSlow;
+            FSC.reset();
+        }
+
+        // Deadband to address controller drift
+        double deadband = DEAD_BAND;
+        if (Math.abs(y_raw) < deadband) {
+            y_raw = 0;
+        }
+        if (Math.abs(x_raw) < deadband) {
+            x_raw = 0;
+        }
+        if (Math.abs(rx_raw) < deadband) {
+            rx_raw = 0;
+        }
+
+        // Exponential Drive
+        double exponent = 2.0;
+        double y = exponential_drive ? Math.signum(y_raw) * Math.pow(Math.abs(y_raw), exponent) : y_raw;
+        double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
+        double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
+
+        if (moveSlow) {
+            y *= 0.25;
+            x *= 0.25;
+            rx *= 0.25;
+        }
+
+        // Strafe with dpad
+        if (gamepad.dpad_right) {
+            // Strafe right
+            double botHeading = pose.getHeading();
+
+            // Rotate the movement direction counter to the bot's rotation
+            x = -1 * Math.cos(-botHeading);
+            y = -1 * Math.sin(-botHeading);
+
+            x = x * 1.1;  // Counteract imperfect strafing
+        } else if (gamepad.dpad_left) {
+            // Strafe left
+            double botHeading = pose.getHeading();
+
+            // Rotate the movement direction counter to the bot's rotation
+            x = Math.cos(-botHeading);
+            y = Math.sin(-botHeading);
+
+            x = x * 1.1;  // Counteract imperfect strafing
+        } else if (gamepad.dpad_up) {
+            // Strafe forward
+            double botHeading = pose.getHeading();
+
+            // Rotate the movement direction counter to the bot's rotation
+            x = Math.sin(botHeading);
+            y = Math.cos(botHeading);
+
+            y = y * 1.1;  // Counteract imperfect strafing
+        } else if (gamepad.dpad_down) {
+            // Strafe backward
+            double botHeading = pose.getHeading();
+
+            // Rotate the movement direction counter to the bot's rotation
+            x = -1 * Math.sin(botHeading);
+            y = -1 * Math.cos(botHeading);
+
+            y = y * 1.1;  // Counteract imperfect strafing
         }
 
         // Denominator is the largest motor power (absolute value) or 1

@@ -1,4 +1,3 @@
-// Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -16,20 +15,17 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.util.PoseStorage;
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
-@TeleOp(name = "Robot Drive")
-public class RobotOrientedDrive extends LinearOpMode {
+@TeleOp(name = "Modern Robot Drive")
+public class NewRobotDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
-
-    public static double rightClosed=0.52;
-    public static double rightOpen = 0.25;
-
-    public static double leftOpen = 0.4;
-    public static double leftClosed =0.66;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -86,38 +82,33 @@ public class RobotOrientedDrive extends LinearOpMode {
         // TeleUtil instance
         TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
 
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        drive.setPoseEstimate(PoseStorage.currentPose);
+
         waitForStart();
 
         if (isStopRequested()) return;
 
         matchTime.reset();
 
-
         while (opModeIsActive()) {
+            drive.update();
+
+            // Retrieve your pose
+            Pose2d myPose = drive.getPoseEstimate();
+
             // Drive
-            teleUtil.robotOrientedDrive(gamepad1, true, false, false);
+            teleUtil.dpadSupportedRobotDrive(gamepad1, true, false, false, myPose);
 
             // Articulation
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
             armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
-            teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
-            teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
+            teleUtil.setClawServoRight(gamepad2, RobotConstants.CLAW_RIGHT_CLOSED , RobotConstants.CLAW_RIGHT_OPEN);
+            teleUtil.setClawServoLeft(gamepad2, RobotConstants.CLAW_LEFT_CLOSED, RobotConstants.CLAW_LEFT_OPEN);
 
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
-
-            // telemetry.addLine("\n");
-
-            // Gamepad Telemetry
-            // teleUtil.checkGamepadParameters(gamepad1, "Driver");
-            // teleUtil.checkGamepadParameters(gamepad2, "Operator");
-            telemetry.addLine("\n");
-
-            // Motor Telemetry
-            // teleUtil.motorTelemetry(jointMotor, "Joint");
-            // telemetry.addLine("\n");
-            // teleUtil.motorTelemetry(armMotor, "Arm");
-            telemetry.addLine("\n");
 
             // Servo Telemetry
             teleUtil.servoTelemetry(ClawServoLeft, "Left Claw");
@@ -125,6 +116,10 @@ public class RobotOrientedDrive extends LinearOpMode {
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
+
+            telemetry.addData("x", myPose.getX());
+            telemetry.addData("y", myPose.getY());
+            telemetry.addData("heading", myPose.getHeading());
             telemetry.update();
         }
     }

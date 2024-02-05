@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.PoseStorage;
 
 /**
@@ -17,7 +18,7 @@ import org.firstinspires.ftc.teamcode.util.PoseStorage;
  * <p>
  * See lines 42-57.
  */
-@TeleOp(name = "FC - Must Run Auto")
+@TeleOp(group = "advanced")
 public class TeleOpFieldCentric extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
