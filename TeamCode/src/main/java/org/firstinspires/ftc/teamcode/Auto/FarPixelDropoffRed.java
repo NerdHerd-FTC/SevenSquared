@@ -156,18 +156,18 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // Spline away from pixel stack and move toward dropoff - prepare to drop
         Trajectory center4 = drive.trajectoryBuilder(center3.end())
-                .splineTo(new Vector2d(-46, -10), Math.toRadians(0))
-                .splineTo(new Vector2d(34, -10), Math.toRadians(0))
+                .strafeRight(3)
                 .build();
 
         // Move to dropoff
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
-                .splineToSplineHeading(new Pose2d(51, -31.5, Math.toRadians(0)), Math.toRadians(0))
+                .forward(-75)
+                .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         // move to left corner
         Trajectory cornerCenter = drive.trajectoryBuilder(center5.end())
-                .strafeLeft(28)
+                .splineToConstantHeading(new Vector2d(70, -3), Math.toRadians(0))
                 .build();
 
         TrajectorySequence rotateCenter = drive.trajectorySequenceBuilder(cornerCenter.end())
@@ -329,8 +329,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
 
                         // If the arm and joint are at the correct position, move the claw to the closed position
-                        if (Math.abs(armError) <= 10) {
-                            //
+                        if (Math.abs(armError) <= 5) {
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
                             centerCurrentState = centerState.GRAB;
@@ -339,9 +338,10 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case GRAB:
-                        // Hold the position of the arm and joint and close the claw
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                        // Hold the position of the arm and joint and close the claw
+                        autoUtil.holdArm();
 
                         // If the claw has been closed for 1000 milliseconds, move to the next state
                         if (waitBeforeClaw.milliseconds() > 1500) {
@@ -351,23 +351,18 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         break;
                     case HOME:
                         // Move the arm and joint to the home position
-                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
                         armError = autoUtil.asyncMoveArm(ARM_HOME);
 
                         // If the arm and joint are at the home position, move to the next state
-                        if (Math.abs(jointError) <= 10 && Math.abs(armError) <= 10) {
+                        if (Math.abs(armError) <= 10) {
                             centerCurrentState = centerState.CENTER4;
                             drive.followTrajectory(center4);
+                            autoUtil.killArm();
                         }
                         break;
                     case CENTER4:
                         // Move to the second pixel stack
                         drive.update();
-
-                        // Keep the claw closed and the arm and joint at the home position
-                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
-                        armError = autoUtil.asyncMoveArm(ARM_HOME);
 
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER5;
@@ -390,17 +385,28 @@ public class FarPixelDropoffRed extends LinearOpMode {
                             waitBeforeClaw.reset();
                         }
                     case RELEASE:
-                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                        armError = autoUtil.asyncMoveArm(ARM_DROP_2);
+
                         if (waitBeforeClaw.milliseconds() > 1000) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                            waitBeforeClaw.reset();
                             centerCurrentState = centerState.HOME2;
                         }
                         break;
                     case HOME2:
-                        armError = autoUtil.asyncMoveArm(ARM_HOME);
-                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-                        if (Math.abs(armError) <= 10) {
-                            centerCurrentState = centerState.MOVE_TO_CORNER;
-                            drive.followTrajectory(cornerCenter);
+                        if (waitBeforeClaw.milliseconds() < 1000) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                        } else {
+                            armError = autoUtil.asyncMoveArm(ARM_HOME);
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+                            if (Math.abs(armError) <= 10) {
+                                centerCurrentState = centerState.MOVE_TO_CORNER;
+                                drive.followTrajectory(cornerCenter);
+                                autoUtil.killArm();
+                            }
                         }
                         break;
                     case MOVE_TO_CORNER:

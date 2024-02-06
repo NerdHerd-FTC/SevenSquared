@@ -39,7 +39,6 @@ public class TeleUtil {
     private boolean moveSlow = false;
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
-    private ElapsedTime TSC = new ElapsedTime();
     private ElapsedTime FSC = new ElapsedTime();
 
     private double driveSlowMult = 0.25;
@@ -543,12 +542,14 @@ public class TeleUtil {
             double error = arm_hold - arm.getCurrentPosition();
             if (Math.abs(error) > ARM_DEADBAND) {
                 // Outside deadband, normal PID control
-                double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                //double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                double arm_out = 0;
                 power = arm_ff + arm_out;
             } else {
                 // Inside deadband, interpolate power for a smoother stop
-                double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
-                double scaledPower = arm_out * (Math.abs(error) / ARM_DEADBAND);
+                //double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                //double scaledPower = arm_out * (Math.abs(error) / ARM_DEADBAND);
+                double scaledPower = 0;
                 power = arm_ff + Math.max(scaledPower, 0);
             }
         }

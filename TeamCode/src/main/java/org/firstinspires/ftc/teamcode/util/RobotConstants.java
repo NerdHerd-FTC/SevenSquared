@@ -27,7 +27,7 @@ public class RobotConstants {
     public static Integer ARM_FORWARDS_LOW_SCORE = 800;
     public static Integer ARM_AIRPLANE = 2160;
     public static Integer ARM_DROP_1 = 800;
-    public static Integer ARM_DROP_2 = 760;
+    public static Integer ARM_DROP_2 = 780;
 
 
     // for auto mainly

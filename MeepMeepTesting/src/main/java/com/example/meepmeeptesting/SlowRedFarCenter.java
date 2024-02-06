@@ -18,9 +18,9 @@ public class SlowRedFarCenter {
                                 .forward(43)
                                 .back(33)
                                 .splineToLinearHeading(new Pose2d(-45, -31, Math.toRadians(180)), Math.toRadians(180))
-                                .splineTo(new Vector2d(-46, -10), Math.toRadians(0))
-                                .splineTo(new Vector2d(34, -10), Math.toRadians(0))
-                                .splineToSplineHeading(new Pose2d(51, -31.5, Math.toRadians(0)), Math.toRadians(0))
+                                .strafeRight(3)
+                                .forward(-75)
+                                .splineToSplineHeading(new Pose2d(66, -31.5,  Math.toRadians(0)), Math.toRadians(0))
                                 .strafeLeft(28)
                                 .turn(Math.toRadians(180)) // Turns 45 degrees counter-clockwise
                                 .build()
