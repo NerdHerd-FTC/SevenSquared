@@ -124,7 +124,13 @@ public class PixelDropoffRed extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
-        waitForStart();
+        while (opModeInInit()) {
+            if (gamepad2.left_bumper) {
+                moveLeftFinger(CLAW_LEFT_OPEN);
+            } else if (gamepad2.right_bumper) {
+                moveLeftFinger(CLAW_LEFT_CLOSED);
+            }
+        }
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 

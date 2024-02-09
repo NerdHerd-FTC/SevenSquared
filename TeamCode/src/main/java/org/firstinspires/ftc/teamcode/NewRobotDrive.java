@@ -1,4 +1,3 @@
-// Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -6,50 +5,32 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.util.PoseStorage;
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
-@TeleOp(name = "Field Drive - Blue Back")
-@Disabled
-public class FieldBlueBack extends LinearOpMode {
+@TeleOp(name = "Modern Robot Drive")
+public class NewRobotDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
-
-    public static double leftOpen = 0.7;
-    public static double leftClosed = 0.95;
-
-    public static double rightOpen = 0.75;
-    public static double rightClosed = 1.0;
 
     @Override
     public void runOpMode() throws InterruptedException {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-
-        // Retrieve the IMU from the hardware map
-        IMU imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters imuParams;
-
-        imuParams = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                )
-        );
-        // Technically this is the default, however specifying it is clearer
-        // Without this, data retrieving from the IMU throws an exception
-        imu.initialize(imuParams);
 
         // Get motors
         DcMotor jointMotor = hardwareMap.dcMotor.get("joint");
@@ -74,10 +55,11 @@ public class FieldBlueBack extends LinearOpMode {
         DcMotor motorFR = hardwareMap.dcMotor.get("frontRight");
         DcMotor motorBR = hardwareMap.dcMotor.get("backRight");
 
-        motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // Unlock full speed of drive motors
+        motorFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorFR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorBR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Left motors should move in reverse
         motorFL.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -102,10 +84,7 @@ public class FieldBlueBack extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // TEMPORARY - FIX LATER by pulling from auto
-        Pose2d startPose = new Pose2d(-12, 60, Math.toRadians(0));
-
-        drive.setPoseEstimate(startPose);
+        drive.setPoseEstimate(PoseStorage.currentPose);
 
         waitForStart();
 
@@ -114,29 +93,22 @@ public class FieldBlueBack extends LinearOpMode {
         matchTime.reset();
 
         while (opModeIsActive()) {
-            teleUtil.fieldOrientedDrive(drive, gamepad1, true, false);
+            drive.update();
+
+            // Retrieve your pose
+            Pose2d myPose = drive.getPoseEstimate();
+
+            // Drive
+            teleUtil.dpadSupportedRobotDrive(gamepad1, true, false, false, myPose);
 
             // Articulation
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
             armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
-            teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
-            teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
+            teleUtil.setClawServoRight(gamepad2, RobotConstants.CLAW_RIGHT_CLOSED , RobotConstants.CLAW_RIGHT_OPEN);
+            teleUtil.setClawServoLeft(gamepad2, RobotConstants.CLAW_LEFT_CLOSED, RobotConstants.CLAW_LEFT_OPEN);
 
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
-
-            telemetry.addLine("\n");
-
-            // Gamepad Telemetry
-            teleUtil.checkGamepadParameters(gamepad1, "Driver");
-            teleUtil.checkGamepadParameters(gamepad2, "Operator");
-            telemetry.addLine("\n");
-
-            // Motor Telemetry
-            teleUtil.motorTelemetry(jointMotor, "Joint");
-            telemetry.addLine("\n");
-            teleUtil.motorTelemetry(armMotor, "Arm");
-            telemetry.addLine("\n");
 
             // Servo Telemetry
             teleUtil.servoTelemetry(ClawServoLeft, "Left Claw");
@@ -144,9 +116,11 @@ public class FieldBlueBack extends LinearOpMode {
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
-            telemetry.addData("IMU Heading", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+
+            telemetry.addData("x", myPose.getX());
+            telemetry.addData("y", myPose.getY());
+            telemetry.addData("heading", myPose.getHeading());
             telemetry.update();
-            sleep(10);
         }
     }
 }

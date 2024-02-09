@@ -21,11 +21,11 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
-@TeleOp(name = "Robot Drive - Blue Back")
+@TeleOp(name = "Robot Drive")
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
-    public static double rightClosed=0.47;
+    public static double rightClosed=0.52;
     public static double rightOpen = 0.25;
 
     public static double leftOpen = 0.4;
@@ -58,11 +58,6 @@ public class RobotOrientedDrive extends LinearOpMode {
         DcMotor motorBL = hardwareMap.dcMotor.get("backLeft");
         DcMotor motorFR = hardwareMap.dcMotor.get("frontRight");
         DcMotor motorBR = hardwareMap.dcMotor.get("backRight");
-
-        motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Unlock full speed of drive motors
         motorFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -111,17 +106,17 @@ public class RobotOrientedDrive extends LinearOpMode {
 
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
 
-            telemetry.addLine("\n");
+            // telemetry.addLine("\n");
 
             // Gamepad Telemetry
-            teleUtil.checkGamepadParameters(gamepad1, "Driver");
-            teleUtil.checkGamepadParameters(gamepad2, "Operator");
+            // teleUtil.checkGamepadParameters(gamepad1, "Driver");
+            // teleUtil.checkGamepadParameters(gamepad2, "Operator");
             telemetry.addLine("\n");
 
             // Motor Telemetry
-            teleUtil.motorTelemetry(jointMotor, "Joint");
-            telemetry.addLine("\n");
-            teleUtil.motorTelemetry(armMotor, "Arm");
+            // teleUtil.motorTelemetry(jointMotor, "Joint");
+            // telemetry.addLine("\n");
+            // teleUtil.motorTelemetry(armMotor, "Arm");
             telemetry.addLine("\n");
 
             // Servo Telemetry
@@ -131,7 +126,6 @@ public class RobotOrientedDrive extends LinearOpMode {
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
             telemetry.update();
-            sleep(10);
         }
     }
 }
