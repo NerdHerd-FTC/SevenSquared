@@ -26,8 +26,6 @@ import org.firstinspires.ftc.teamcode.util.TeleUtil;
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
-
-
     public static double rightClosed=0.52;
     public static double rightOpen = 0.25;
 
@@ -35,9 +33,6 @@ public class RobotOrientedDrive extends LinearOpMode {
     public static double leftClosed =0.66;
 
     @Override
-
-
-
     public void runOpMode() throws InterruptedException {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
@@ -89,7 +84,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        TouchSensor TouchSensor = hardwareMap.get(com.qualcomm.robotcore.hardware.TouchSensor.class, "touchSensor");
+        TouchSensor armTouch = hardwareMap.get(com.qualcomm.robotcore.hardware.TouchSensor.class, "armTouch");
         
         // TeleUtil instance
         TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);

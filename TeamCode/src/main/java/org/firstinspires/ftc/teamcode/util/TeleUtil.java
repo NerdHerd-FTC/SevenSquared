@@ -44,6 +44,7 @@ public class TeleUtil {
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
     private ElapsedTime FSC = new ElapsedTime();
+    private ElapsedTime ARM_TIME_TO_HOLD = new ElapsedTime();
 
     private double driveSlowMult = 0.25;
 
@@ -59,8 +60,6 @@ public class TeleUtil {
     // pid arm - kill power
     //
 
-
-
     private enum ArmState {
         DRIVER_CONTROL(null),
         HOMING(ARM_HOME),
@@ -70,6 +69,7 @@ public class TeleUtil {
         FORWARDS_SCORING(ARM_FORWARDS_SCORE - 1),
         FORWARDS_REACHED(ARM_FORWARDS_SCORE),
         PLANE_LAUNCHING(ARM_AIRPLANE),
+        WAITING_TO_HOLD(null),
         HOLDING(null);
 
         private Integer target;
@@ -546,23 +546,22 @@ public class TeleUtil {
             armState = ArmState.DRIVER_CONTROL;
         } else {
             // Transition to holding state with smooth reduction in power
-            if (armState != ArmState.HOLDING) {
-                arm_hold = arm.getCurrentPosition();
-                armState = ArmState.HOLDING;
+            if (armState != ArmState.HOLDING && armState != ArmState.WAITING_TO_HOLD) {
+                ARM_TIME_TO_HOLD.reset();
             }
 
-            double error = arm_hold - arm.getCurrentPosition();
-            if (Math.abs(error) > ARM_DEADBAND) {
-                // Outside deadband, normal PID control
-                //double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
-                double arm_out = 0;
-                power = arm_ff + arm_out;
+            // Wait for 500ms before setting hold - allowing some time for the arm to settle
+            if (armState == ArmState.WAITING_TO_HOLD && ARM_TIME_TO_HOLD.milliseconds() < 500) {
+                arm_hold = arm.getCurrentPosition();
+                armState = ArmState.HOLDING;
             } else {
-                // Inside deadband, interpolate power for a smoother stop
-                //double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
-                //double scaledPower = arm_out * (Math.abs(error) / ARM_DEADBAND);
-                double scaledPower = 0;
-                power = arm_ff + Math.max(scaledPower, 0);
+                power = arm_ff;
+            }
+
+            if (armState == ArmState.HOLDING) {
+                // Use PIDF to hold the arm position
+                double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                power = arm_out + arm_ff;
             }
         }
 
@@ -591,9 +590,7 @@ public class TeleUtil {
 
     // TELEMETRY METHODS
     public void checkGamepadParameters(Gamepad gamepad, String position) {
-
         opMode.telemetry.addLine("--- " + position + " ---");
-
 
         if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
             opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
@@ -606,6 +603,7 @@ public class TeleUtil {
 
         }
 
+        /*
         if (touchSensorPressed || joint.getCurrentPosition() - 10 > 0 || arm.getCurrentPosition() - 10 > 0){
             opMode.telemetry.addData("touchSensorPressed", touchSensorPressed);
             DcMotor.RunMode JstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
@@ -613,6 +611,7 @@ public class TeleUtil {
             DcMotor.RunMode AstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
             arm.setMode(AstopAndResetEncoder);
         }
+         */
 
         if (gamepad.left_trigger != 0) {
             opMode.telemetry.addData("Left Trigger", gamepad.left_trigger);
@@ -660,7 +659,6 @@ public class TeleUtil {
         if (gamepad.right_bumper) {
             opMode.telemetry.addLine("Right bumper clicked");
         }
-
 
         opMode.telemetry.addLine("\n");
         opMode.telemetry.addData("Joint Hold", joint_hold);
