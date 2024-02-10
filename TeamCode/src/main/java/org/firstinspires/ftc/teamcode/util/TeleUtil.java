@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
@@ -37,6 +38,9 @@ public class TeleUtil {
     private boolean fr_closed = true;
     private boolean turnSlow = false;
     private boolean moveSlow = false;
+    private TouchSensor touchSensor;
+    private boolean touchSensorPressed = false;
+    private double touchSensorValue;
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
     private ElapsedTime FSC = new ElapsedTime();
@@ -113,7 +117,9 @@ public class TeleUtil {
         this.ClawServoRight = ClawServoRight;
         this.ClawServoLeft = ClawServoLeft;
         this.DroneServo = DroneServo;
+
     }
+
 
     public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
         // Read pose
@@ -153,6 +159,7 @@ public class TeleUtil {
 
         opMode.telemetry.addData("Heading", poseEstimate.getHeading() * 180 / Math.PI);
     }
+
 
     public void robotOrientedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
@@ -350,6 +357,11 @@ public class TeleUtil {
         }
 
         ClawServoLeft.setPosition(position);
+    }
+
+    public void GettouchSensorValue(TouchSensor touchSensor) {
+        touchSensorPressed = touchSensor.isPressed();
+        touchSensorValue = touchSensor.getValue();
     }
 
     public void setClawServoRight(Gamepad gamepad, double closed_position, double open_position) {
@@ -579,7 +591,9 @@ public class TeleUtil {
 
     // TELEMETRY METHODS
     public void checkGamepadParameters(Gamepad gamepad, String position) {
+
         opMode.telemetry.addLine("--- " + position + " ---");
+
 
         if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
             opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
@@ -590,6 +604,14 @@ public class TeleUtil {
             opMode.telemetry.addData("Right Stick X", gamepad.right_stick_x);
             opMode.telemetry.addData("Right Stick Y", gamepad.right_stick_y);
 
+        }
+
+        if (touchSensorPressed || joint.getCurrentPosition() - 10 > 0 || arm.getCurrentPosition() - 10 > 0){
+            opMode.telemetry.addData("touchSensorPressed", touchSensorPressed);
+            DcMotor.RunMode JstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+            joint.setMode(JstopAndResetEncoder);
+            DcMotor.RunMode AstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+            arm.setMode(AstopAndResetEncoder);
         }
 
         if (gamepad.left_trigger != 0) {
@@ -638,6 +660,7 @@ public class TeleUtil {
         if (gamepad.right_bumper) {
             opMode.telemetry.addLine("Right bumper clicked");
         }
+
 
         opMode.telemetry.addLine("\n");
         opMode.telemetry.addData("Joint Hold", joint_hold);
