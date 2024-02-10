@@ -74,6 +74,12 @@ public class RobotOrientedDrive extends LinearOpMode {
         motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        // Set drive motors to brake when power is set to 0
+        motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         // Get servos
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
@@ -94,7 +100,6 @@ public class RobotOrientedDrive extends LinearOpMode {
         if (isStopRequested()) return;
 
         matchTime.reset();
-
 
         while (opModeIsActive()) {
             // Drive
@@ -117,9 +122,9 @@ public class RobotOrientedDrive extends LinearOpMode {
             telemetry.addLine("\n");
 
             // Motor Telemetry
-            // teleUtil.motorTelemetry(jointMotor, "Joint");
-            // telemetry.addLine("\n");
-            // teleUtil.motorTelemetry(armMotor, "Arm");
+            teleUtil.motorTelemetry(jointMotor, "Joint");
+            telemetry.addLine("\n");
+            teleUtil.motorTelemetry(armMotor, "Arm");
             telemetry.addLine("\n");
 
             // Servo Telemetry

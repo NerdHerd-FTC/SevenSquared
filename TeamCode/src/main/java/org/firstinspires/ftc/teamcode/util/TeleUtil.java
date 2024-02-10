@@ -32,6 +32,8 @@ public class TeleUtil {
     public static double joint_error = 0;
     public static double arm_error = 0;
 
+    public static boolean debug = false;
+
     private boolean arm_macro = false;
     private boolean joint_macro = false;
     private boolean fl_closed = true;
@@ -120,8 +122,7 @@ public class TeleUtil {
 
     }
 
-
-    public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
+    /*public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
         // Read pose
         Pose2d poseEstimate = drive.getPoseEstimate();
 
@@ -159,7 +160,7 @@ public class TeleUtil {
 
         opMode.telemetry.addData("Heading", poseEstimate.getHeading() * 180 / Math.PI);
     }
-
+     */
 
     public void robotOrientedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed

@@ -328,8 +328,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         // Move the arm to the pixel stack height
                         armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
 
-                        // If the arm and joint are at the correct position, move the claw to the closed position
-                        if (Math.abs(armError) <= 5) {
+                        // If the arm is at the pixel stack height, move to the next state
+                        if (autoUtil.lockOntoPixel() > 500) {
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
                             centerCurrentState = centerState.GRAB;

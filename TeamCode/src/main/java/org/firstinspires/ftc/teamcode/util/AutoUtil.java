@@ -5,8 +5,10 @@ import static android.os.SystemClock.sleep;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 
@@ -17,9 +19,15 @@ public class AutoUtil {
     public LinearOpMode opMode;
     public DcMotor frontLeft, frontRight, backLeft, backRight, arm, joint;
     public Servo ClawServoLeft, ClawServoRight;
+    public ColorSensor topColorSensor, bottomColorSensor;
     public static double insane_joint = -2654;
     public static double insane_arm = 1273;
     public Telemetry telemetry;
+    public static boolean debug = true;
+
+    public static int whiteThreshold = 1000;
+
+    public ElapsedTime pixelLock = new ElapsedTime();
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -32,7 +40,15 @@ public class AutoUtil {
         ERROR
     }
 
+    public enum ARM_DEMANDS {
+        IDLE,
+        MOVE_UP,
+        MOVE_DOWN,
+        HOLD
+    }
+
     public RobotState currentState = RobotState.IDLE;
+    public ARM_DEMANDS armDemands = ARM_DEMANDS.IDLE;
 
     // Constructor
     public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, Telemetry telemetry) {
@@ -42,6 +58,63 @@ public class AutoUtil {
         this.ClawServoLeft = ClawServoLeft;
         this.ClawServoRight = ClawServoRight;
         this.telemetry = telemetry;
+    }
+
+    private boolean isWhite(ColorSensor sensor, int threshold) {
+        // get rgba and normalize
+        int red = sensor.red();
+        int green = sensor.green();
+        int blue = sensor.blue();
+
+        telemetry.addData("Color Sensor", sensor.toString());
+        telemetry.addData("Red", red);
+        telemetry.addData("Green", green);
+        telemetry.addData("Blue", blue);
+
+        return red > threshold && green > threshold && blue > threshold &&
+                Math.abs(red - green) < threshold * 0.2 &&
+                Math.abs(green - blue) < threshold * 0.2 &&
+                Math.abs(blue - red) < threshold * 0.2;
+    }
+
+    public void updateStateBasedOnColor() {
+        // Check if top and bottom sensors detect white
+        boolean topDetectsWhite = topColorSensor.alpha() > whiteThreshold;
+        boolean bottomDetectsWhite = bottomColorSensor.alpha() > whiteThreshold;
+
+        if (topDetectsWhite && bottomDetectsWhite) {
+            // If both sensors detect white
+            armDemands = ARM_DEMANDS.MOVE_UP;
+        } else if (!topDetectsWhite && bottomDetectsWhite) {
+            // If only the bottom sensor detects white
+            armDemands = ARM_DEMANDS.HOLD;
+        } else if (topDetectsWhite) {
+            // Assuming this condition is meant to be if only the top sensor detects white
+            armDemands = ARM_DEMANDS.MOVE_DOWN;
+        } else {
+            telemetry.addData("Scuffed", "Scuffed");
+            // If none of the conditions above are met, you can either set it to IDLE or keep the current state
+            // currentState = RobotState.IDLE;
+        }
+
+        // Log the current state to telemetry for debugging
+        telemetry.addData("Current State", currentState.toString());
+    }
+
+    public double lockOntoPixel() {
+        updateStateBasedOnColor();
+        if (armDemands == ARM_DEMANDS.MOVE_UP) {
+            asyncMoveArm(arm.getCurrentPosition() - 2);
+            pixelLock.reset();
+        } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
+            asyncMoveArm(arm.getCurrentPosition() + 2);
+            pixelLock.reset();
+        } else if (armDemands == ARM_DEMANDS.HOLD) {
+            asyncMoveArm(arm.getCurrentPosition());
+        }
+
+        telemetry.addData("Pixel Lock", pixelLock.milliseconds());
+        return pixelLock.milliseconds();
     }
 
     public void syncMoveArm(double target) {
@@ -89,7 +162,7 @@ public class AutoUtil {
         }
     }
 
-    public double  asyncMoveJoint(double target) {
+    public double asyncMoveJoint(double target) {
         double error = target -joint.getCurrentPosition();
 
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
