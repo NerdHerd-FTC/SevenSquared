@@ -9,6 +9,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -90,8 +91,12 @@ public class RobotOrientedDrive extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        TouchSensor armTouch = hardwareMap.get(com.qualcomm.robotcore.hardware.TouchSensor.class, "armTouch");
-        
+        ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
+        ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
+
+        topColor.enableLed(false);
+        bottomColor.enableLed(false);
+
         // TeleUtil instance
         TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
 
