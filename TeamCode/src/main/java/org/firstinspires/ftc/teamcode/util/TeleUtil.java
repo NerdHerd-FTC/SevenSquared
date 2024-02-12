@@ -56,7 +56,8 @@ public class TeleUtil {
     public static double joint_hold = 0;
     public static double arm_hold = 0;
 
-    public static double ARM_DEADBAND = 20;
+    private double lastArmPosition = 0;
+
 
     // drive slow
     // pid arm - kill power
@@ -473,8 +474,11 @@ public class TeleUtil {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
             power = joint_out + joint_ff;
             jointState = JointState.HOLDING;
-        }
 
+            if (joint.getCurrentPosition() > -20) {
+                power = 0;
+            }
+        }
 
         if (power > 1.0) {
             power = 1.0;
@@ -488,11 +492,13 @@ public class TeleUtil {
         armPID.setPID(armP, armI, armD);
         double power = 0;
 
-        // calculate angles of joint & arm (in degrees) to account for torque
-        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
-        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
-        double arm_angle = 270 - relative_arm_angle - joint_angle;
+        double currentArmPosition = arm.getCurrentPosition();
+        double armVelocity = currentArmPosition - lastArmPosition; // Positive if increasing, negative if decreasing
 
+        // Calculate angles and feedforward
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double relative_arm_angle = currentArmPosition / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
         double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
         double input = -gamepad.right_stick_y;
@@ -541,18 +547,30 @@ public class TeleUtil {
             arm_hold = ARM_FORWARDS_SCORE;
             armState = ArmState.PLANE_LAUNCHING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
-            // driver control
-            power = input;
-            arm_hold = arm.getCurrentPosition();
+            double distanceToZero = Math.abs(currentArmPosition);
+            if (currentArmPosition < 0) {
+                distanceToZero = 0.0;
+            }
+            double maxThreshold = 100;
+            double scalingFactor = 1.0;
+
+            // Apply dynamic scaling based on arm's movement direction and position
+            if (distanceToZero <= maxThreshold && armVelocity < 0) { // Apply only when moving towards zero
+                scalingFactor = Math.max(0.1, distanceToZero / maxThreshold);
+            }
+
+            power = input * scalingFactor;
+            arm_hold = currentArmPosition;
             armState = ArmState.DRIVER_CONTROL;
         } else {
             // Transition to holding state with smooth reduction in power
             if (armState != ArmState.HOLDING && armState != ArmState.WAITING_TO_HOLD) {
                 ARM_TIME_TO_HOLD.reset();
+                armState = ArmState.WAITING_TO_HOLD;
             }
 
             // Wait for 500ms before setting hold - allowing some time for the arm to settle
-            if (armState == ArmState.WAITING_TO_HOLD && ARM_TIME_TO_HOLD.milliseconds() < 500) {
+            if (armState == ArmState.WAITING_TO_HOLD && ARM_TIME_TO_HOLD.milliseconds() > 1000) {
                 arm_hold = arm.getCurrentPosition();
                 armState = ArmState.HOLDING;
             } else {
@@ -564,9 +582,15 @@ public class TeleUtil {
                 double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
                 power = arm_out + arm_ff;
             }
+
+            if (Math.abs(arm.getCurrentPosition()) < 20) {
+                power = 0;
+            }
         }
 
         power = Math.max(-1.0, Math.min(1.0, power));
+
+        lastArmPosition = currentArmPosition;
 
         return power;
     }

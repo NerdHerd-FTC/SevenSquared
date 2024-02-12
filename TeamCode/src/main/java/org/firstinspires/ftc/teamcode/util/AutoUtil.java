@@ -12,6 +12,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 
+import android.graphics.Color;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config
@@ -24,8 +26,13 @@ public class AutoUtil {
     public static double insane_arm = 1273;
     public Telemetry telemetry;
     public static boolean debug = true;
+    private ElapsedTime callGap = new ElapsedTime();
+    private int callsToColor = 0;
 
-    public static int whiteThreshold = 1000;
+    public static int armUpperLimit = 1270;
+    public static int armLowerLimit = 1220;
+
+    public static int whiteThreshold = 300;
 
     public ElapsedTime pixelLock = new ElapsedTime();
 
@@ -51,17 +58,18 @@ public class AutoUtil {
     public ARM_DEMANDS armDemands = ARM_DEMANDS.IDLE;
 
     // Constructor
-    public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, Telemetry telemetry) {
+    public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, ColorSensor topColorSensor, ColorSensor bottomColorSensor, Telemetry telemetry) {
         this.opMode = opMode;
         this.arm = arm;
         this.joint = joint;
         this.ClawServoLeft = ClawServoLeft;
         this.ClawServoRight = ClawServoRight;
+        this.topColorSensor = topColorSensor;
+        this.bottomColorSensor = bottomColorSensor;
         this.telemetry = telemetry;
     }
 
     private boolean isWhite(ColorSensor sensor, int threshold) {
-        // get rgba and normalize
         int red = sensor.red();
         int green = sensor.green();
         int blue = sensor.blue();
@@ -71,49 +79,63 @@ public class AutoUtil {
         telemetry.addData("Green", green);
         telemetry.addData("Blue", blue);
 
-        return red > threshold && green > threshold && blue > threshold &&
-                Math.abs(red - green) < threshold * 0.2 &&
-                Math.abs(green - blue) < threshold * 0.2 &&
-                Math.abs(blue - red) < threshold * 0.2;
-    }
-
-    public void updateStateBasedOnColor() {
-        // Check if top and bottom sensors detect white
-        boolean topDetectsWhite = topColorSensor.alpha() > whiteThreshold;
-        boolean bottomDetectsWhite = bottomColorSensor.alpha() > whiteThreshold;
-
-        if (topDetectsWhite && bottomDetectsWhite) {
-            // If both sensors detect white
-            armDemands = ARM_DEMANDS.MOVE_UP;
-        } else if (!topDetectsWhite && bottomDetectsWhite) {
-            // If only the bottom sensor detects white
-            armDemands = ARM_DEMANDS.HOLD;
-        } else if (topDetectsWhite) {
-            // Assuming this condition is meant to be if only the top sensor detects white
-            armDemands = ARM_DEMANDS.MOVE_DOWN;
-        } else {
-            telemetry.addData("Scuffed", "Scuffed");
-            // If none of the conditions above are met, you can either set it to IDLE or keep the current state
-            // currentState = RobotState.IDLE;
-        }
-
-        // Log the current state to telemetry for debugging
-        telemetry.addData("Current State", currentState.toString());
+        return red > threshold && green > threshold && blue > threshold;
     }
 
     public double lockOntoPixel() {
-        updateStateBasedOnColor();
-        if (armDemands == ARM_DEMANDS.MOVE_UP) {
-            asyncMoveArm(arm.getCurrentPosition() - 2);
-            pixelLock.reset();
-        } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
-            asyncMoveArm(arm.getCurrentPosition() + 2);
-            pixelLock.reset();
-        } else if (armDemands == ARM_DEMANDS.HOLD) {
-            asyncMoveArm(arm.getCurrentPosition());
+        if (callGap.milliseconds() > 300) {
+            callGap.reset();
+            // Check if top and bottom sensors detect white
+            boolean topDetectsWhite = isWhite(topColorSensor, whiteThreshold);
+            boolean bottomDetectsWhite = isWhite(bottomColorSensor, whiteThreshold);
+            if (topDetectsWhite && bottomDetectsWhite) {
+                // If both sensors detect white
+                armDemands = ARM_DEMANDS.MOVE_UP;
+            } else if (!topDetectsWhite && bottomDetectsWhite) {
+                // If only the bottom sensor detects white
+                armDemands = ARM_DEMANDS.HOLD;
+            } else if (!(topDetectsWhite && bottomDetectsWhite)) {
+                // Assuming this condition is meant to be if neither sensor detects white
+                armDemands = ARM_DEMANDS.MOVE_DOWN;
+            } else if (topDetectsWhite && !bottomDetectsWhite) {
+                telemetry.addData("Scuffed Readings", "Top but not bottom...");
+            }
+
+            // Log the current state to telemetry for debugging
+            telemetry.addData("Current State", currentState.toString());
+
+            if (armDemands == ARM_DEMANDS.MOVE_UP) {
+                pixelLock.reset();
+                double target = arm.getCurrentPosition() - 2;
+
+                if (target > armUpperLimit) {
+                    target = armUpperLimit;
+                } else if (target < armLowerLimit) {
+                    target = armLowerLimit;
+                }
+
+                asyncMoveArm(target);
+            } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
+                pixelLock.reset();
+                double target = arm.getCurrentPosition() - 2;
+
+                if (target > armUpperLimit) {
+                    target = armUpperLimit;
+                } else if (target < armLowerLimit) {
+                    target = armLowerLimit;
+                }
+                asyncMoveArm(arm.getCurrentPosition() + 2);
+            } else if (armDemands == ARM_DEMANDS.HOLD) {
+                asyncMoveArm(arm.getCurrentPosition());
+                moveRightFinger(CLAW_RIGHT_CLOSED);
+            }
+
+            callsToColor += 1;
         }
 
         telemetry.addData("Pixel Lock", pixelLock.milliseconds());
+        telemetry.addData("Calls to Color", callsToColor);
+
         return pixelLock.milliseconds();
     }
 

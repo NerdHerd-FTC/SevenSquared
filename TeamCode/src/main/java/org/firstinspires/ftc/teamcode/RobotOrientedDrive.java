@@ -1,5 +1,7 @@
 // Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
+import android.graphics.Color;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -93,6 +95,7 @@ public class RobotOrientedDrive extends LinearOpMode {
 
         ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
         ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
+        ColorSensor floorColor = hardwareMap.get(ColorSensor.class, "colorV3");
 
         topColor.enableLed(false);
         bottomColor.enableLed(false);
@@ -138,7 +141,21 @@ public class RobotOrientedDrive extends LinearOpMode {
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
+
+            if (gamepad2.dpad_right) {
+                getColors(topColor, "top");
+                getColors(bottomColor, "bottom");
+                getColors(floorColor, "floor");
+
+            }
             telemetry.update();
         }
+    }
+
+    public void getColors(ColorSensor sensor, String name) {
+        telemetry.addData("Color Sensor", name);
+        telemetry.addData("Red", sensor.red());
+        telemetry.addData("Green", sensor.green());
+        telemetry.addData("Blue", sensor.blue());
     }
 }

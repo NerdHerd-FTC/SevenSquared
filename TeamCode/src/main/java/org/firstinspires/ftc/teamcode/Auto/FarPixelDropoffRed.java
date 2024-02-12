@@ -19,6 +19,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -39,11 +40,9 @@ import java.util.List;
 public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double insane_joint = -2654;
-    public static double insane_arm = 1273;
+    public static double x_end = -46.5;
+    public static double y_end = -29.5;
 
-    public static double jointPos = 0;
-    public static double armPos = 0;
     public static double jointError = 0;
     public static double armError = 0;
 
@@ -64,6 +63,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
     private enum centerState {
         CENTER1,
         CENTER2,
+        CENTER2_1,
+        CENTER2_2,
         CENTER3,
         PICK_UP,
         GRAB,
@@ -131,7 +132,10 @@ public class FarPixelDropoffRed extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
 
-        AutoUtil autoUtil = new AutoUtil(this, arm, joint, ClawServoLeft, ClawServoRight, telemetry);
+        ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
+        ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
+
+        AutoUtil autoUtil = new AutoUtil(this, arm, joint, ClawServoLeft, ClawServoRight, topColor, bottomColor, telemetry);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
@@ -149,9 +153,17 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .back(33)
                 .build();
 
-        // Move to pixel stack
-        Trajectory center3 = drive.trajectoryBuilder(center2.end())
-                .splineToLinearHeading(new Pose2d(-45, -31, Math.toRadians(180)), Math.toRadians(180))
+        TrajectorySequence center2_turn = drive.trajectorySequenceBuilder(center2.end())
+            .turn(Math.toRadians(90))
+            .build();
+
+        Trajectory center2_strafeToX = drive.trajectoryBuilder(center2_turn.end())
+                .lineToConstantHeading(new Vector2d(-34, -31))
+                .build();
+
+        // Spline to pixel stack
+        Trajectory center3 = drive.trajectoryBuilder(center2_strafeToX.end())
+                .lineToConstantHeading(new Vector2d(x_end, y_end))
                 .build();
 
         // Spline away from pixel stack and move toward dropoff - prepare to drop
@@ -307,6 +319,23 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         drive.update();
 
                         if (!drive.isBusy()) {
+                            centerCurrentState = centerState.CENTER2_1;
+                            drive.followTrajectorySequenceAsync(center2_turn);
+                        }
+                        break;
+                    case CENTER2_1:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.CENTER2_2;
+                            drive.followTrajectoryAsync(center2_strafeToX);
+                        }
+                        break;
+                    case CENTER2_2:
+                        drive.update();
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER3;
                             drive.followTrajectoryAsync(center3);
                         }
@@ -315,21 +344,21 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         // Move to the pixel stack
                         drive.update();
 
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1 - 200);
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
 
-                        if (drive.isBusy()) {
-                            // Move the claw to the open position
-                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-                        } else {
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.pixelLock.reset();
                             centerCurrentState = centerState.PICK_UP;
                         }
                         break;
                     case PICK_UP:
                         // Move the arm to the pixel stack height
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        double timeLock = autoUtil.lockOntoPixel();
 
                         // If the arm is at the pixel stack height, move to the next state
-                        if (autoUtil.lockOntoPixel() > 500) {
+                        if (timeLock > 3000) {
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
                             centerCurrentState = centerState.GRAB;
