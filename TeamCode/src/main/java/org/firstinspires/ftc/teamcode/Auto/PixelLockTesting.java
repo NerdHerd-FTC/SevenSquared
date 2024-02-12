@@ -49,7 +49,7 @@ public class PixelLockTesting extends LinearOpMode {
     private ElapsedTime callGap = new ElapsedTime();
     private int callsToColor = 0;
 
-    public static int whiteRedThresholdBottom = 130;
+    public static int whiteRedThresholdBottom = 200;
     public static int whiteRedThresholdTop = 350;
     public ElapsedTime pixelLock = new ElapsedTime();
 

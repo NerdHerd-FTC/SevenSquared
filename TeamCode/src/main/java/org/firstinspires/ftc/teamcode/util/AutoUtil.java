@@ -29,7 +29,7 @@ public class AutoUtil {
     private ElapsedTime callGap = new ElapsedTime();
     private int callsToColor = 0;
 
-    public static int armUpperLimit = 1050;
+    public static int armUpperLimit = 1070;
     public static int armLowerLimit = 1020;
 
     public Integer bottomRed;
@@ -165,6 +165,12 @@ public class AutoUtil {
         telemetry.addData("Calls to Color", callsToColor);
 
         return pixelLock.milliseconds();
+    }
+
+    public boolean pixelLockVerification() {
+        boolean bottomDetects = isWhite(bottomColorSensor, 1000, "Bottom");
+
+        return bottomDetects;
     }
 
     public void syncMoveArm(double target) {
