@@ -38,31 +38,33 @@ import org.firstinspires.ftc.teamcode.util.AutoUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
+import java.util.Objects;
+
 @Config
 @TeleOp(name = "Pixel Lock!")
 public class PixelLockTesting extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
-
-    public static double rightClosed=0.52;
-    public static double rightOpen = 0.25;
-
-    public static double leftOpen = 0.4;
-    public static double leftClosed =0.66;
-
     public ColorSensor topColorSensor, bottomColorSensor;
 
     private ElapsedTime callGap = new ElapsedTime();
     private int callsToColor = 0;
 
-    public static int whiteThreshold = 600;
+    public static int whiteRedThresholdBottom = 130;
+    public static int whiteRedThresholdTop = 350;
     public ElapsedTime pixelLock = new ElapsedTime();
-
-
 
     public DcMotor jointMotor, armMotor;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
+
+    public Integer bottomRed;
+    public Integer bottomGreen;
+    public Integer bottomBlue;
+
+    public Integer topRed;
+    public Integer topGreen;
+    public Integer topBlue;
 
     public Servo ClawServoRight;
 
@@ -144,17 +146,10 @@ public class PixelLockTesting extends LinearOpMode {
             // Pixel lock
             lockOntoPixel();
 
-            // Motor Telemetry
             teleUtil.motorTelemetry(armMotor, "Arm");
-            telemetry.addLine("\n");
-
-            // Servo Telemetry
-            teleUtil.servoTelemetry(ClawServoLeft, "Left Claw");
-            teleUtil.servoTelemetry(ClawServoRight, " Right Claw");
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
-
 
             telemetry.update();
         }
@@ -165,10 +160,15 @@ public class PixelLockTesting extends LinearOpMode {
         int green = sensor.green();
         int blue = sensor.blue();
 
-        telemetry.addData("Color Sensor",name);
-        telemetry.addData("Red", red);
-        telemetry.addData("Green", green);
-        telemetry.addData("Blue", blue);
+        if (Objects.equals(name, "TOP")) {
+            topBlue = blue;
+            topRed = red;
+            topGreen = green;
+        } else if (Objects.equals(name, "BOTTOM")) {
+            bottomBlue = blue;
+            bottomRed = red;
+            bottomGreen = green;
+        }
 
         return red > threshold && green > threshold && blue > threshold;
     }
@@ -177,8 +177,8 @@ public class PixelLockTesting extends LinearOpMode {
         if (callGap.milliseconds() > 300) {
             callGap.reset();
             // Check if top and bottom sensors detect white
-            boolean topDetectsWhite = isWhite(topColorSensor, whiteThreshold, "TOP");
-            boolean bottomDetectsWhite = isWhite(bottomColorSensor, whiteThreshold, "BOTTOM");
+            boolean topDetectsWhite = isWhite(topColorSensor, whiteRedThresholdTop, "TOP");
+            boolean bottomDetectsWhite = isWhite(bottomColorSensor, whiteRedThresholdBottom, "BOTTOM");
             if (topDetectsWhite && bottomDetectsWhite) {
                 // If both sensors detect white
                 armDemands = AutoUtil.ARM_DEMANDS.MOVE_UP;
@@ -198,13 +198,23 @@ public class PixelLockTesting extends LinearOpMode {
             } else if (armDemands == AutoUtil.ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
                 asyncMoveArm(armMotor.getCurrentPosition() + 2);
-            } else if (armDemands == AutoUtil.ARM_DEMANDS.HOLD) {
+            } else {
                 asyncMoveArm(armMotor.getCurrentPosition());
                 moveRightFinger(CLAW_RIGHT_CLOSED);
             }
 
             callsToColor += 1;
         }
+
+        telemetry.addData("Top Red", topRed);
+        telemetry.addData("Top Green", topGreen);
+        telemetry.addData("Top Blue", topBlue);
+
+        telemetry.addLine("\n");
+
+        telemetry.addData("Bottom Red", bottomRed);
+        telemetry.addData("Bottom Green", bottomGreen);
+        telemetry.addData("Bottom Blue", bottomBlue);
 
         telemetry.addData("Pixel Lock", pixelLock.milliseconds());
         telemetry.addData("Calls to Color", callsToColor);
@@ -227,7 +237,8 @@ public class PixelLockTesting extends LinearOpMode {
 
         armMotor.setPower(arm_power);
 
-        telemetry.addData("Arm Error", error);
+        //telemetry.addData("Arm Error", error);
+        telemetry.addData("Arm Position", armMotor.getCurrentPosition());
 
         return error;
     }

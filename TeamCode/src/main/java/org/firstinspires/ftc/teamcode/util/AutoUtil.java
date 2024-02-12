@@ -16,23 +16,32 @@ import android.graphics.Color;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.util.Objects;
+
 @Config
 public class AutoUtil {
     public LinearOpMode opMode;
     public DcMotor frontLeft, frontRight, backLeft, backRight, arm, joint;
     public Servo ClawServoLeft, ClawServoRight;
     public ColorSensor topColorSensor, bottomColorSensor;
-    public static double insane_joint = -2654;
-    public static double insane_arm = 1273;
     public Telemetry telemetry;
     public static boolean debug = true;
     private ElapsedTime callGap = new ElapsedTime();
     private int callsToColor = 0;
 
-    public static int armUpperLimit = 1270;
-    public static int armLowerLimit = 1220;
+    public static int armUpperLimit = 1050;
+    public static int armLowerLimit = 1020;
 
-    public static int whiteThreshold = 300;
+    public Integer bottomRed;
+    public Integer bottomGreen;
+    public Integer bottomBlue;
+
+    public Integer topRed;
+    public Integer topGreen;
+    public Integer topBlue;
+
+    public static int whiteRedThresholdBottom = 200;
+    public static int whiteRedThresholdTop = 350;
 
     public ElapsedTime pixelLock = new ElapsedTime();
 
@@ -69,25 +78,32 @@ public class AutoUtil {
         this.telemetry = telemetry;
     }
 
-    private boolean isWhite(ColorSensor sensor, int threshold) {
+    private boolean isWhite(ColorSensor sensor, int threshold, String name) {
         int red = sensor.red();
         int green = sensor.green();
         int blue = sensor.blue();
 
-        telemetry.addData("Color Sensor", sensor.toString());
-        telemetry.addData("Red", red);
-        telemetry.addData("Green", green);
-        telemetry.addData("Blue", blue);
+        if (Objects.equals(name, "TOP")) {
+            topBlue = blue;
+            topRed = red;
+            topGreen = green;
+        } else if (Objects.equals(name, "BOTTOM")) {
+            bottomBlue = blue;
+            bottomRed = red;
+            bottomGreen = green;
+        }
 
         return red > threshold && green > threshold && blue > threshold;
     }
+
+    // Add something to adjust the robot when it is stuck - strafe left/move back
 
     public double lockOntoPixel() {
         if (callGap.milliseconds() > 300) {
             callGap.reset();
             // Check if top and bottom sensors detect white
-            boolean topDetectsWhite = isWhite(topColorSensor, whiteThreshold);
-            boolean bottomDetectsWhite = isWhite(bottomColorSensor, whiteThreshold);
+            boolean topDetectsWhite = isWhite(topColorSensor, whiteRedThresholdTop, "TOP");
+            boolean bottomDetectsWhite = isWhite(bottomColorSensor, whiteRedThresholdBottom, "BOTTOM");
             if (topDetectsWhite && bottomDetectsWhite) {
                 // If both sensors detect white
                 armDemands = ARM_DEMANDS.MOVE_UP;
@@ -102,7 +118,7 @@ public class AutoUtil {
             }
 
             // Log the current state to telemetry for debugging
-            telemetry.addData("Current State", currentState.toString());
+            telemetry.addData("Arm Demands", armDemands.toString());
 
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
@@ -117,14 +133,14 @@ public class AutoUtil {
                 asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() - 2;
+                double target = arm.getCurrentPosition() + 2;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
                 } else if (target < armLowerLimit) {
                     target = armLowerLimit;
                 }
-                asyncMoveArm(arm.getCurrentPosition() + 2);
+                asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.HOLD) {
                 asyncMoveArm(arm.getCurrentPosition());
                 moveRightFinger(CLAW_RIGHT_CLOSED);
@@ -132,6 +148,18 @@ public class AutoUtil {
 
             callsToColor += 1;
         }
+
+        telemetry.addData("Arm Position", arm.getCurrentPosition());
+
+        telemetry.addData("Top Red", topRed);
+        telemetry.addData("Top Green", topGreen);
+        telemetry.addData("Top Blue", topBlue);
+
+        telemetry.addLine("\n");
+
+        telemetry.addData("Bottom Red", bottomRed);
+        telemetry.addData("Bottom Green", bottomGreen);
+        telemetry.addData("Bottom Blue", bottomBlue);
 
         telemetry.addData("Pixel Lock", pixelLock.milliseconds());
         telemetry.addData("Calls to Color", callsToColor);
@@ -158,7 +186,8 @@ public class AutoUtil {
 
             arm.setPower(arm_power);
 
-            opMode.telemetry.addData("Arm Error", error);
+            opMode.telemetry.addData("Arm Position", arm.getCurrentPosition());
+            //opMode.telemetry.addData("Arm Error", error);
             sleep(100);
         }
     }
@@ -179,7 +208,7 @@ public class AutoUtil {
 
             joint.setPower(joint_power);
 
-            opMode.telemetry.addData("Joint Error", error);
+            //opMode.telemetry.addData("Joint Error", error);
             sleep(100);
         }
     }
@@ -197,7 +226,7 @@ public class AutoUtil {
 
         joint.setPower(joint_power);
 
-        opMode.telemetry.addData("Joint Error", error);
+        //opMode.telemetry.addData("Joint Error", error);
 
         return error;
     }
@@ -217,7 +246,7 @@ public class AutoUtil {
 
         arm.setPower(arm_power);
 
-        opMode.telemetry.addData("Arm Error", error);
+        //opMode.telemetry.addData("Arm Error", error);
 
         return error;
     }
@@ -240,18 +269,6 @@ public class AutoUtil {
         }
         moveRightFinger(CLAW_RIGHT_CLOSED);
         currentState = AutoUtil.RobotState.IDLE;
-    }
-
-    public void insanePixelPickup() {
-        currentState = RobotState.PIXEL_STACK;
-        moveRightFinger(CLAW_RIGHT_OPEN);
-        while (opMode.opModeIsActive() && asyncMoveArm(insane_arm) < 10 && asyncMoveJoint(insane_joint) < 10) {
-            opMode.telemetry.addData("Arm Error", asyncMoveArm(insane_arm));
-            opMode.telemetry.addData("Joint Error", asyncMoveJoint(insane_joint));
-        }
-
-        moveRightFinger(CLAW_RIGHT_CLOSED);
-        currentState = RobotState.IDLE;
     }
 
     public void pixelDropoff() {

@@ -358,7 +358,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         double timeLock = autoUtil.lockOntoPixel();
 
                         // If the arm is at the pixel stack height, move to the next state
-                        if (timeLock > 3000) {
+                        if (timeLock > 1000) {
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
                             centerCurrentState = centerState.GRAB;
@@ -373,7 +373,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         autoUtil.holdArm();
 
                         // If the claw has been closed for 1000 milliseconds, move to the next state
-                        if (waitBeforeClaw.milliseconds() > 1500) {
+                        if (waitBeforeClaw.milliseconds() > 1000) {
                             waitBeforeClaw.reset();
                             centerCurrentState = centerState.HOME;
                         }
