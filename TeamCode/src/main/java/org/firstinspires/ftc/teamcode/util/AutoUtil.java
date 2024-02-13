@@ -27,6 +27,7 @@ public class AutoUtil {
     public Telemetry telemetry;
     public static boolean debug = true;
     private ElapsedTime callGap = new ElapsedTime();
+    private ElapsedTime lockTimeout = new ElapsedTime();
     private int callsToColor = 0;
 
     public static int armUpperLimit = 1070;
@@ -122,7 +123,7 @@ public class AutoUtil {
 
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() - 2;
+                double target = arm.getCurrentPosition() - 5;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
@@ -133,7 +134,7 @@ public class AutoUtil {
                 asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() + 2;
+                double target = arm.getCurrentPosition() + 5;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;

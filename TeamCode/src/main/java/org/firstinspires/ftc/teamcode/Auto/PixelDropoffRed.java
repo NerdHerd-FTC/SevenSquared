@@ -140,34 +140,53 @@ public class PixelDropoffRed extends LinearOpMode {
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_LOW_SCORE);
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
+            sleep(100);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(100);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(100);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
+            killArm();
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
+            sleep(50);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(50);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(50);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(50);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(50);
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
+            sleep(50);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
+            killArm();
             drive.followTrajectory(cornerLeft);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
+            sleep(100);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(100);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(100);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
+            killArm();
             drive.followTrajectory(cornerRight);
         }
     }
@@ -207,7 +226,6 @@ public class PixelDropoffRed extends LinearOpMode {
             telemetry.addData("Error", error);
             telemetry.addData("Power", arm_power);
             telemetry.update();
-            sleep(100);
         }
 
     }
@@ -216,4 +234,7 @@ public class PixelDropoffRed extends LinearOpMode {
         ClawServoLeft.setPosition(target);
     }
 
+    private void killArm() {
+        arm.setPower(0);
+    }
 }

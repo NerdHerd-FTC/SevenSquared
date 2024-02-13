@@ -198,8 +198,8 @@ public class TeleUtil {
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
 
         if (moveSlow) {
-            y *= 0.25;
-            x *= 0.25;
+            y *= 0.35;
+            x *= 0.35;
             rx *= 0.25;
         }
 
