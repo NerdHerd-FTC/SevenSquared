@@ -8,6 +8,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
 
 import android.util.Size;
 
@@ -20,18 +21,21 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
+import org.firstinspires.ftc.teamcode.util.AutoUtil;
+
 @Config
 @Autonomous(name="NEW Dropoff - Red")
 public class NEWPixelDropoffRed extends LinearOpMode {
-    DcMotor arm;
+    DcMotor arm, joint;
 
-    public Servo ClawServoLeft;
+    public Servo ClawServoLeft, ClawServoRight;
 
     // Constants
     //11 or 7.5
@@ -52,22 +56,36 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
     boolean running = false;
 
+    private PIDController armPID = new PIDController(armP, armI, armD);
+
+    private ElapsedTime waitForClaw = new ElapsedTime();
+
     private enum centerState {
         CENTER_PUSH,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
         MOVE_TO_CORNER,
-        STOP
+        DONE
     }
 
     private enum leftState {
         LEFT_PUSH,
+        LEFT_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
         MOVE_TO_CORNER,
-        STOP
+        DONE
+    }
+
+    private enum rightState {
+        RIGHT_PUSH,
+        ARM_TO_SCORE,
+        RELEASE,
+        ARM_TO_HOME,
+        MOVE_TO_CORNER,
+        DONE
     }
 
     @Override
@@ -100,10 +118,12 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                 .splineTo(centerEnd, Math.toRadians(0))
                 .build();
 
+        // Push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
                 .splineToSplineHeading(new Pose2d(2, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
                 .build();
 
+        // Bring to backdrop
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .lineToLinearHeading(new Pose2d(28, -30, Math.toRadians(180))) // Intermediate to allow for turning
                 .splineToSplineHeading(leftEnd, Math.toRadians(0)) // Move backward to (49, -36)
@@ -149,62 +169,166 @@ public class NEWPixelDropoffRed extends LinearOpMode {
             }
         }
 
-        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        leftState leftCurrentState = leftState.LEFT_PUSH;
+        rightState rightCurrentState = rightState.RIGHT_PUSH;
+        centerState centerCurrentState = centerState.CENTER_PUSH;
 
         moveLeftFinger(CLAW_LEFT_CLOSED);
 
+        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+
+        visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
+
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerCenter);
+            drive.followTrajectoryAsync(center);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-            drive.followTrajectory(left1);
-            drive.followTrajectory(left2);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(50);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerLeft);
+            drive.followTrajectoryAsync(left1);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-            drive.followTrajectory(right1);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerRight);
+            drive.followTrajectoryAsync(right1);
+        }
+
+        while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
+            telemetry.addData("Center Current State", centerCurrentState);
+            telemetry.addData("Left Current State", leftCurrentState);
+            telemetry.addData("Right Current State", rightCurrentState);
+
+            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+                switch (centerCurrentState) {
+                    case CENTER_PUSH:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.ARM_TO_SCORE;
+                        }
+                        break;
+
+                    case ARM_TO_SCORE:
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+
+                        if (Math.abs(error) < 10) {
+                            waitForClaw.reset();
+                            moveLeftFinger(CLAW_LEFT_OPEN);
+                            centerCurrentState = centerState.RELEASE;
+                        }
+                        break;
+
+                    case RELEASE:
+                        moveLeftFinger(CLAW_LEFT_OPEN);
+
+                        if (waitForClaw.milliseconds() > 500) {
+                            centerCurrentState = centerState.ARM_TO_HOME;
+                        }
+                        break;
+
+                    case ARM_TO_HOME:
+                        error = asyncMoveArm(ARM_HOME);
+
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectoryAsync(cornerCenter);
+                            centerCurrentState = centerState.MOVE_TO_CORNER;
+                            killArm();
+                        }
+                        break;
+
+                    case MOVE_TO_CORNER:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.DONE;
+                        }
+                        break;
+                }
+            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+                switch (leftCurrentState) {
+                    case LEFT_PUSH:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            drive.followTrajectoryAsync(left2);
+                            leftCurrentState = leftState.LEFT_BACKDROP;
+                        }
+                        break;
+                    case LEFT_BACKDROP:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.ARM_TO_SCORE;
+                        }
+                        break;
+                    case ARM_TO_SCORE:
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+
+                        if (Math.abs(error) < 10) {
+                            waitForClaw.reset();
+                            moveLeftFinger(CLAW_LEFT_OPEN);
+                            leftCurrentState = leftState.RELEASE;
+                        }
+                        break;
+                    case RELEASE:
+                        moveLeftFinger(CLAW_LEFT_OPEN);
+                        if (waitForClaw.milliseconds() > 500) {
+                            leftCurrentState = leftState.ARM_TO_HOME;
+                        }
+                        break;
+                    case ARM_TO_HOME:
+                        error = asyncMoveArm(ARM_HOME);
+
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectoryAsync(cornerLeft);
+                            leftCurrentState = leftState.MOVE_TO_CORNER;
+                            killArm();
+                        }
+                        break;
+                    case MOVE_TO_CORNER:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.DONE;
+                        }
+                        break;
+                }
+            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+                switch (rightCurrentState) {
+                    case RIGHT_PUSH:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            rightCurrentState =  rightState.ARM_TO_SCORE;
+                        }
+                        break;
+                    case ARM_TO_SCORE:
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        if (Math.abs(error) < 10) {
+                            waitForClaw.reset();
+                            moveLeftFinger(CLAW_LEFT_OPEN);
+                            rightCurrentState = rightState.RELEASE;
+                        }
+                        break;
+                    case RELEASE:
+                        moveLeftFinger(CLAW_LEFT_OPEN);
+
+                        if (waitForClaw.milliseconds() > 500) {
+                            rightCurrentState = rightState.ARM_TO_HOME;
+                        }
+                        break;
+                    case ARM_TO_HOME:
+                        error = asyncMoveArm(ARM_HOME);
+
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectoryAsync(cornerRight);
+                            rightCurrentState = rightState.MOVE_TO_CORNER;
+                            killArm();
+                        }
+                        break;
+                    case MOVE_TO_CORNER:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.DONE;
+                        }
+                        break;
+                }
+            }
         }
     }
 
@@ -219,32 +343,24 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
 
-    private void moveArm(double target) {
-        PIDController armPID = new PIDController(armP, armI, armD);
+    public double asyncMoveArm(double target) {
         double error = target - arm.getCurrentPosition();
 
-        while (opModeIsActive() && Math.abs(error) > 10) {
-            // calculate angles of joint & arm (in degrees) to account for torque
-            double joint_angle = 193;
-            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
-            double arm_angle = 270 - relative_arm_angle - joint_angle;
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
 
-            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+        double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
-            error = target - arm.getCurrentPosition();
+        double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
 
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+        double arm_power = arm_ff + arm_out;
 
-            double arm_power = arm_ff + arm_out;
+        arm.setPower(arm_power);
 
-            arm.setPower(arm_power);
+        //opMode.telemetry.addData("Arm Error", error);
 
-            motorTelemetry(arm, "Arm");
-            telemetry.addData("Error", error);
-            telemetry.addData("Power", arm_power);
-            telemetry.update();
-        }
-
+        return error;
     }
 
     private void moveLeftFinger(double target) {
