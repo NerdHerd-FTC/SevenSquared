@@ -54,6 +54,8 @@ public class AutoUtil {
     public static int errorThreshold = 15;
     public static int timeout = 2000;
 
+    private int stepSize = 5;
+
     // 1) back up in case side of claw is stuck
     // 2) strafe left in case front of claw is stuck
 
@@ -101,6 +103,16 @@ public class AutoUtil {
             bottomBlue = blue;
             bottomRed = red;
             bottomGreen = green;
+
+            if (Math.abs(whiteRedThresholdBottom - red) > 100) {
+                stepSize = 7;
+            } else if (Math.abs(whiteRedThresholdBottom - red) > 50) {
+                stepSize = 5;
+            } else if (Math.abs(whiteRedThresholdBottom - red) > 25) {
+                stepSize = 3;
+            } else {
+                stepSize = 2;
+            }
         }
 
         return red > threshold && green > threshold && blue > threshold;
@@ -133,7 +145,7 @@ public class AutoUtil {
             double error = 0;
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() - 3;
+                double target = arm.getCurrentPosition() - stepSize;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
@@ -144,7 +156,7 @@ public class AutoUtil {
                 error = asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() + 3;
+                double target = arm.getCurrentPosition() + stepSize;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
@@ -184,9 +196,20 @@ public class AutoUtil {
     }
 
     public boolean pixelLockVerification() {
-        boolean bottomDetects = isWhite(bottomColorSensor, 1000, "Bottom");
+        boolean pixelLockOK = false;
 
-        return bottomDetects;
+        boolean bottomDetects = isWhite(bottomColorSensor, 1000, "Bottom");
+        boolean topDetects = isWhite(topColorSensor, 1000, "Top");
+
+        if (bottomDetects && !topDetects) {
+            pixelLockOK = true;
+        }
+
+        if (!pixelLockOK) {
+            pixelLock.reset();
+        }
+
+        return pixelLockOK;
     }
 
     public void syncMoveArm(double target) {

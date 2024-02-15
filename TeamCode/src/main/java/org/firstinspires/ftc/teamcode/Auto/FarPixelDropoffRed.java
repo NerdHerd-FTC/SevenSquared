@@ -379,7 +379,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
                         autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
 
                         // If the arm is at the pixel stack height, move to the next state
-                        if (timeLock > 1000) {
+                        if (timeLock > 750) {
                             autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
 
                             centerCurrentState = centerState.GRAB;
