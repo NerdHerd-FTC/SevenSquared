@@ -49,6 +49,13 @@ public class AutoUtil {
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
+    // tune timeouts
+    public static int errorThreshold = 10;
+    public static int timeout = 2000;
+
+    // 1) back up in case side of claw is stuck
+    // 2) strafe left in case front of claw is stuck
+
     public enum RobotState {
         IDLE,
         FOLLOWING_TRAJECTORY,
@@ -61,7 +68,8 @@ public class AutoUtil {
         IDLE,
         MOVE_UP,
         MOVE_DOWN,
-        HOLD
+        HOLD,
+        STUCK
     }
 
     public RobotState currentState = RobotState.IDLE;
@@ -121,6 +129,7 @@ public class AutoUtil {
             // Log the current state to telemetry for debugging
             telemetry.addData("Arm Demands", armDemands.toString());
 
+            double error = 0;
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
                 double target = arm.getCurrentPosition() - 5;
@@ -131,7 +140,7 @@ public class AutoUtil {
                     target = armLowerLimit;
                 }
 
-                asyncMoveArm(target);
+                error = asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
                 double target = arm.getCurrentPosition() + 5;
@@ -141,11 +150,13 @@ public class AutoUtil {
                 } else if (target < armLowerLimit) {
                     target = armLowerLimit;
                 }
-                asyncMoveArm(target);
+                error = asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.HOLD) {
                 asyncMoveArm(arm.getCurrentPosition());
                 moveRightFinger(CLAW_RIGHT_CLOSED);
             }
+            
+            if ()
 
             callsToColor += 1;
         }

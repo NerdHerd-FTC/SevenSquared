@@ -166,7 +166,22 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(x_end, y_end))
                 .build();
 
+        // Raise arm up before executing 3_ series of movements - one issue may be time for later autos
+        // Calibration numbers need to be tuned
+        Trajectory center3_1 = drive.trajectoryBuilder(center3.end())
+                .forward(-1)
+                .build();
+
+        Trajectory center3_2 = drive.trajectoryBuilder(center3_1.end())
+                .strafeLeft(1)
+                .build();
+
+        Trajectory center3_3 = drive.trajectoryBuilder(center3_2.end())
+                .forward(1)
+                .build();
+
         // Spline away from pixel stack and move toward dropoff - prepare to drop
+        // May need to be changed to coordinate - absolute location - rather than relative due to calibration in 3_ series
         Trajectory center4 = drive.trajectoryBuilder(center3.end())
                 .strafeRight(3)
                 .build();
@@ -239,7 +254,6 @@ public class FarPixelDropoffRed extends LinearOpMode {
         Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
                 .splineToConstantHeading(new Vector2d(65, -10), Math.toRadians(0))
                 .build();
-
         /*
         <Calibration
                 size="640 480"
