@@ -40,7 +40,7 @@ import java.util.List;
 public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double x_end = -46.5;
+    public static double x_end = -47.5;
     public static double y_end = -29.5;
 
     public static double jointError = 0;
@@ -58,6 +58,8 @@ public class FarPixelDropoffRed extends LinearOpMode {
     static final double CAMERA_X_OFFSET = 0.0; // replace with your camera's x offset
     static final double CAMERA_Y_OFFSET = 0.0; // replace with your camera's y offset
 
+    public static int calibration_step = 0;
+
     // States for the state machine
     // Center
     private enum centerState {
@@ -67,6 +69,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         CENTER2_2,
         CENTER3,
         PICK_UP,
+        CALIBRATE_PICKUP,
         GRAB,
         HOME,
         CENTER4,
@@ -85,6 +88,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         LEFT2,
         LEFT3,
         PICK_UP,
+        CALIBRATE_PICKUP,
         LEFT4,
         FIRST_DROP_OFF,
         LEFT5,
@@ -99,6 +103,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         RIGHT2,
         RIGHT3,
         PICK_UP,
+        CALIBRATE_PICKUP,
         RIGHT4,
         FIRST_DROP_OFF,
         RIGHT5,
@@ -380,7 +385,31 @@ public class FarPixelDropoffRed extends LinearOpMode {
                             centerCurrentState = centerState.GRAB;
 
                             waitBeforeClaw.reset();
+                        } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
+                            /*
+                            calibration_step += 1;
+                            if (calibration_step == 1) {
+                                drive.followTrajectoryAsync(center3_1);
+                            } else if (calibration_step == 2) {
+                                drive.followTrajectoryAsync(center3_2);
+                            }
+                            centerCurrentState = centerState.CALIBRATE_PICKUP;
+
+                             */
                         }
+                        break;
+                    case CALIBRATE_PICKUP:
+                        drive.update();
+
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        armError = autoUtil.asyncMoveArm(1000);
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.PICK_UP;
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
+
                         break;
                     case GRAB:
                         autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);

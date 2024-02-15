@@ -41,16 +41,17 @@ public class AutoUtil {
     public Integer topGreen;
     public Integer topBlue;
 
-    public static int whiteRedThresholdBottom = 200;
+    public static int whiteRedThresholdBottom = 225;
     public static int whiteRedThresholdTop = 350;
 
     public ElapsedTime pixelLock = new ElapsedTime();
+    public ElapsedTime timeoutClock = new ElapsedTime();
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     // tune timeouts
-    public static int errorThreshold = 10;
+    public static int errorThreshold = 15;
     public static int timeout = 2000;
 
     // 1) back up in case side of claw is stuck
@@ -132,7 +133,7 @@ public class AutoUtil {
             double error = 0;
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() - 5;
+                double target = arm.getCurrentPosition() - 3;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
@@ -143,7 +144,7 @@ public class AutoUtil {
                 error = asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() + 5;
+                double target = arm.getCurrentPosition() + 3;
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
@@ -155,8 +156,11 @@ public class AutoUtil {
                 asyncMoveArm(arm.getCurrentPosition());
                 moveRightFinger(CLAW_RIGHT_CLOSED);
             }
-            
-            if ()
+
+            if (error > errorThreshold || timeoutClock.milliseconds() > timeout) {
+                currentState = RobotState.ERROR;
+                armDemands = ARM_DEMANDS.STUCK;
+            }
 
             callsToColor += 1;
         }
