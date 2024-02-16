@@ -41,7 +41,7 @@ public class AutoUtil {
     public Integer topGreen;
     public Integer topBlue;
 
-    public static int whiteRedThresholdBottom = 225;
+    public static int whiteRedThresholdBottom = 175;
     public static int whiteRedThresholdTop = 350;
 
     public ElapsedTime pixelLock = new ElapsedTime();
@@ -58,6 +58,8 @@ public class AutoUtil {
 
     // 1) back up in case side of claw is stuck
     // 2) strafe left in case front of claw is stuck
+    // record highest red color threshold --> decision on whether to strafe right
+    // if error was the issue --> go through 1) & 2)
 
     public enum RobotState {
         IDLE,

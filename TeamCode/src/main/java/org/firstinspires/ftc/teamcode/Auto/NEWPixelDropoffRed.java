@@ -187,6 +187,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
             drive.followTrajectoryAsync(right1);
         }
 
+        // exits after completing center_push - debug
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
             telemetry.addData("Center Current State", centerCurrentState);
             telemetry.addData("Left Current State", leftCurrentState);

@@ -40,7 +40,7 @@ import java.util.List;
 public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double x_end = -47.5;
+    public static double x_end = -47;
     public static double y_end = -29.5;
 
     public static double jointError = 0;
@@ -423,6 +423,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
                             if (!autoUtil.pixelLockVerification()) {
                                 autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                                autoUtil.pixelLock.reset();
                                 centerCurrentState = centerState.PICK_UP;
                             } else {
                                 centerCurrentState = centerState.HOME;
