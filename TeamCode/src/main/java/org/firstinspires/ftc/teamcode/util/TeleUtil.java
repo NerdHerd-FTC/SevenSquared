@@ -47,8 +47,10 @@ public class TeleUtil {
     private ElapsedTime CSL = new ElapsedTime();
     private ElapsedTime FSC = new ElapsedTime();
     private ElapsedTime ARM_TIME_TO_HOLD = new ElapsedTime();
+    private ElapsedTime dpadDebounce = new ElapsedTime();
 
     private double driveSlowMult = 0.25;
+    private int targetPixelLayer = 1;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -91,6 +93,14 @@ public class TeleUtil {
         BACKWARDS_SCORING(JOINT_BACKWARDS_SCORE - 1),
         BACKWARDS_REACHED(JOINT_BACKWARDS_SCORE),
         PLANE_LAUNCHING(JOINT_AIRPLANE),
+        FORWARDS_FIRST(0),
+        FORWARDS_SECOND(0),
+        FORWARDS_THIRD(0),
+        FORWARDS_FOURTH(-50),
+        FORWARDS_FIFTH(-100),
+        FORWARDS_SIXTH(-200),
+        FORWARDS_SEVENTH(-300),
+        FORWARDS_EIGHTH(-400),
         HOLDING(null);
 
         private Integer target;
@@ -463,6 +473,66 @@ public class TeleUtil {
             power = input + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
+        } else if (gamepad.dpad_up && dpadDebounce.milliseconds() > 500) {
+            dpadDebounce.reset();
+            targetPixelLayer++;
+
+            if (targetPixelLayer > 8) {
+                targetPixelLayer = 8;
+            } else if (targetPixelLayer < 1) {
+                targetPixelLayer = 1;
+            }
+
+            if (targetPixelLayer == 1) {
+                jointState = JointState.FORWARDS_FIRST;
+            } else if (targetPixelLayer == 2) {
+                jointState = JointState.FORWARDS_SECOND;
+            } else if (targetPixelLayer == 3) {
+                jointState = JointState.FORWARDS_THIRD;
+            } else if (targetPixelLayer == 4) {
+                jointState = JointState.FORWARDS_FOURTH;
+            } else if (targetPixelLayer == 5) {
+                jointState = JointState.FORWARDS_FIFTH;
+            } else if (targetPixelLayer == 6) {
+                jointState = JointState.FORWARDS_SIXTH;
+            } else if (targetPixelLayer == 7) {
+                jointState = JointState.FORWARDS_SEVENTH;
+            } else if (targetPixelLayer == 8) {
+                jointState = JointState.FORWARDS_EIGHTH;
+            }
+            joint_hold = jointState.target;
+
+            power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
+        } else if (gamepad.dpad_down && dpadDebounce.milliseconds() > 500) {
+            dpadDebounce.reset();
+            targetPixelLayer--;
+
+            if (targetPixelLayer > 8) {
+                targetPixelLayer = 8;
+            } else if (targetPixelLayer < 1) {
+                targetPixelLayer = 1;
+            }
+
+            if (targetPixelLayer == 1) {
+                jointState = JointState.FORWARDS_FIRST;
+            } else if (targetPixelLayer == 2) {
+                jointState = JointState.FORWARDS_SECOND;
+            } else if (targetPixelLayer == 3) {
+                jointState = JointState.FORWARDS_THIRD;
+            } else if (targetPixelLayer == 4) {
+                jointState = JointState.FORWARDS_FOURTH;
+            } else if (targetPixelLayer == 5) {
+                jointState = JointState.FORWARDS_FIFTH;
+            } else if (targetPixelLayer == 6) {
+                jointState = JointState.FORWARDS_SIXTH;
+            } else if (targetPixelLayer == 7) {
+                jointState = JointState.FORWARDS_SEVENTH;
+            } else if (targetPixelLayer == 8) {
+                jointState = JointState.FORWARDS_EIGHTH;
+            }
+            joint_hold = jointState.target;
+
+            power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
         } else if (joint.getCurrentPosition() > -10) {
             jointState = JointState.GROUNDING;
             power = 0.0;
