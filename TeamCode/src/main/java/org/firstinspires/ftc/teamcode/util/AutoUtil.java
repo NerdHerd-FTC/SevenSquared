@@ -121,7 +121,7 @@ public class AutoUtil {
     // Add something to adjust the robot when it is stuck - strafe left/move back
 
     public double lockOntoPixel() {
-        if (callGap.milliseconds() > 300) {
+        if (callGap.milliseconds() > 250) {
             callGap.reset();
             // Check if top and bottom sensors detect white
             boolean topDetectsWhite = isWhite(topColorSensor, whiteRedThresholdTop, "TOP");
