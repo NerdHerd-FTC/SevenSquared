@@ -17,16 +17,12 @@ public class FarSideRedCenter {
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
                                 .forward(36)
-                                .back(19)
+                                .back(33)
                                 .splineToLinearHeading(new Pose2d(-53, -36, Math.toRadians(180)), Math.toRadians(180))
-                               // .back(9)
-                               // .lineToSplineHeading(new Pose2d(-50, -36, Math.toRadians(180)))
-                                .splineToConstantHeading(new Vector2d(-18, -59.25), Math.toRadians(0))
-                                .splineToConstantHeading(new Vector2d(20, -60), Math.toRadians(0))
-                                //.splineTo(new Vector2d(-16, -58), Math.toRadians(0))
-                                //.splineToLinearHeading(new Pose2d(-65, -36, Math.toRadians(90)), Math.toRadians(0))
-                                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
-                                //.splineToLinearHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(180))
+                                .strafeRight(24)
+                                .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
+                                .splineToConstantHeading(new Vector2d(53, -37), Math.toRadians(0))
+                                .strafeRight(24)
                                 .build()
                 );
 
