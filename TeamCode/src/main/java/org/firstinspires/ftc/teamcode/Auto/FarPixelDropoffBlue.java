@@ -19,6 +19,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -61,7 +62,10 @@ public class FarPixelDropoffBlue extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
 
-        AutoUtil autoUtil = new AutoUtil(this, arm, joint, ClawServoLeft, ClawServoRight, telemetry);
+        ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
+        ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
+
+        AutoUtil autoUtil = new AutoUtil(this, arm, joint, ClawServoLeft, ClawServoRight, topColor, bottomColor, telemetry);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 

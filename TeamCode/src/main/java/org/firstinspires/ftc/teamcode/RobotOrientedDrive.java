@@ -1,5 +1,7 @@
 // Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
+import android.graphics.Color;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -9,6 +11,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -26,8 +29,6 @@ import org.firstinspires.ftc.teamcode.util.TeleUtil;
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
 
-
-
     public static double rightClosed=0.52;
     public static double rightOpen = 0.25;
 
@@ -35,9 +36,6 @@ public class RobotOrientedDrive extends LinearOpMode {
     public static double leftClosed =0.66;
 
     @Override
-
-
-
     public void runOpMode() throws InterruptedException {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
@@ -79,6 +77,12 @@ public class RobotOrientedDrive extends LinearOpMode {
         motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        // Set drive motors to brake when power is set to 0
+        motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         // Get servos
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
@@ -89,8 +93,13 @@ public class RobotOrientedDrive extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        TouchSensor TouchSensor = hardwareMap.get(com.qualcomm.robotcore.hardware.TouchSensor.class, "touchSensor");
-        
+        ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
+        ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
+        ColorSensor floorColor = hardwareMap.get(ColorSensor.class, "colorV3");
+
+        topColor.enableLed(false);
+        bottomColor.enableLed(false);
+
         // TeleUtil instance
         TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
 
@@ -99,7 +108,6 @@ public class RobotOrientedDrive extends LinearOpMode {
         if (isStopRequested()) return;
 
         matchTime.reset();
-
 
         while (opModeIsActive()) {
             // Drive
@@ -122,9 +130,9 @@ public class RobotOrientedDrive extends LinearOpMode {
             telemetry.addLine("\n");
 
             // Motor Telemetry
-            // teleUtil.motorTelemetry(jointMotor, "Joint");
-            // telemetry.addLine("\n");
-            // teleUtil.motorTelemetry(armMotor, "Arm");
+            teleUtil.motorTelemetry(jointMotor, "Joint");
+            telemetry.addLine("\n");
+            teleUtil.motorTelemetry(armMotor, "Arm");
             telemetry.addLine("\n");
 
             // Servo Telemetry
@@ -133,7 +141,21 @@ public class RobotOrientedDrive extends LinearOpMode {
 
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
+
+            if (gamepad2.dpad_right) {
+                getColors(topColor, "top");
+                getColors(bottomColor, "bottom");
+                getColors(floorColor, "floor");
+
+            }
             telemetry.update();
         }
+    }
+
+    public void getColors(ColorSensor sensor, String name) {
+        telemetry.addData("Color Sensor", name);
+        telemetry.addData("Red", sensor.red());
+        telemetry.addData("Green", sensor.green());
+        telemetry.addData("Blue", sensor.blue());
     }
 }

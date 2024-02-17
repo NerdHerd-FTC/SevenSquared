@@ -32,6 +32,8 @@ public class TeleUtil {
     public static double joint_error = 0;
     public static double arm_error = 0;
 
+    public static boolean debug = false;
+
     private boolean arm_macro = false;
     private boolean joint_macro = false;
     private boolean fl_closed = true;
@@ -44,8 +46,11 @@ public class TeleUtil {
     private ElapsedTime CSR = new ElapsedTime();
     private ElapsedTime CSL = new ElapsedTime();
     private ElapsedTime FSC = new ElapsedTime();
+    private ElapsedTime ARM_TIME_TO_HOLD = new ElapsedTime();
+    private ElapsedTime dpadDebounce = new ElapsedTime();
 
     private double driveSlowMult = 0.25;
+    private int targetPixelLayer = 1;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -53,13 +58,12 @@ public class TeleUtil {
     public static double joint_hold = 0;
     public static double arm_hold = 0;
 
-    public static double ARM_DEADBAND = 20;
+    private double lastArmPosition = 0;
+
 
     // drive slow
     // pid arm - kill power
     //
-
-
 
     private enum ArmState {
         DRIVER_CONTROL(null),
@@ -70,6 +74,7 @@ public class TeleUtil {
         FORWARDS_SCORING(ARM_FORWARDS_SCORE - 1),
         FORWARDS_REACHED(ARM_FORWARDS_SCORE),
         PLANE_LAUNCHING(ARM_AIRPLANE),
+        WAITING_TO_HOLD(null),
         HOLDING(null);
 
         private Integer target;
@@ -88,6 +93,14 @@ public class TeleUtil {
         BACKWARDS_SCORING(JOINT_BACKWARDS_SCORE - 1),
         BACKWARDS_REACHED(JOINT_BACKWARDS_SCORE),
         PLANE_LAUNCHING(JOINT_AIRPLANE),
+        FORWARDS_FIRST(0),
+        FORWARDS_SECOND(0),
+        FORWARDS_THIRD(0),
+        FORWARDS_FOURTH(-50),
+        FORWARDS_FIFTH(-100),
+        FORWARDS_SIXTH(-200),
+        FORWARDS_SEVENTH(-300),
+        FORWARDS_EIGHTH(-400),
         HOLDING(null);
 
         private Integer target;
@@ -120,8 +133,7 @@ public class TeleUtil {
 
     }
 
-
-    public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
+    /*public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
         // Read pose
         Pose2d poseEstimate = drive.getPoseEstimate();
 
@@ -159,7 +171,7 @@ public class TeleUtil {
 
         opMode.telemetry.addData("Heading", poseEstimate.getHeading() * 180 / Math.PI);
     }
-
+     */
 
     public void robotOrientedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
@@ -196,8 +208,8 @@ public class TeleUtil {
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
 
         if (moveSlow) {
-            y *= 0.25;
-            x *= 0.25;
+            y *= 0.35;
+            x *= 0.35;
             rx *= 0.25;
         }
 
@@ -461,6 +473,66 @@ public class TeleUtil {
             power = input + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
+        } else if (gamepad.dpad_up && dpadDebounce.milliseconds() > 500) {
+            dpadDebounce.reset();
+            targetPixelLayer++;
+
+            if (targetPixelLayer > 8) {
+                targetPixelLayer = 8;
+            } else if (targetPixelLayer < 1) {
+                targetPixelLayer = 1;
+            }
+
+            if (targetPixelLayer == 1) {
+                jointState = JointState.FORWARDS_FIRST;
+            } else if (targetPixelLayer == 2) {
+                jointState = JointState.FORWARDS_SECOND;
+            } else if (targetPixelLayer == 3) {
+                jointState = JointState.FORWARDS_THIRD;
+            } else if (targetPixelLayer == 4) {
+                jointState = JointState.FORWARDS_FOURTH;
+            } else if (targetPixelLayer == 5) {
+                jointState = JointState.FORWARDS_FIFTH;
+            } else if (targetPixelLayer == 6) {
+                jointState = JointState.FORWARDS_SIXTH;
+            } else if (targetPixelLayer == 7) {
+                jointState = JointState.FORWARDS_SEVENTH;
+            } else if (targetPixelLayer == 8) {
+                jointState = JointState.FORWARDS_EIGHTH;
+            }
+            joint_hold = jointState.target;
+
+            power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
+        } else if (gamepad.dpad_down && dpadDebounce.milliseconds() > 500) {
+            dpadDebounce.reset();
+            targetPixelLayer--;
+
+            if (targetPixelLayer > 8) {
+                targetPixelLayer = 8;
+            } else if (targetPixelLayer < 1) {
+                targetPixelLayer = 1;
+            }
+
+            if (targetPixelLayer == 1) {
+                jointState = JointState.FORWARDS_FIRST;
+            } else if (targetPixelLayer == 2) {
+                jointState = JointState.FORWARDS_SECOND;
+            } else if (targetPixelLayer == 3) {
+                jointState = JointState.FORWARDS_THIRD;
+            } else if (targetPixelLayer == 4) {
+                jointState = JointState.FORWARDS_FOURTH;
+            } else if (targetPixelLayer == 5) {
+                jointState = JointState.FORWARDS_FIFTH;
+            } else if (targetPixelLayer == 6) {
+                jointState = JointState.FORWARDS_SIXTH;
+            } else if (targetPixelLayer == 7) {
+                jointState = JointState.FORWARDS_SEVENTH;
+            } else if (targetPixelLayer == 8) {
+                jointState = JointState.FORWARDS_EIGHTH;
+            }
+            joint_hold = jointState.target;
+
+            power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
         } else if (joint.getCurrentPosition() > -10) {
             jointState = JointState.GROUNDING;
             power = 0.0;
@@ -472,8 +544,11 @@ public class TeleUtil {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
             power = joint_out + joint_ff;
             jointState = JointState.HOLDING;
-        }
 
+            if (joint.getCurrentPosition() > -20) {
+                power = 0;
+            }
+        }
 
         if (power > 1.0) {
             power = 1.0;
@@ -487,11 +562,13 @@ public class TeleUtil {
         armPID.setPID(armP, armI, armD);
         double power = 0;
 
-        // calculate angles of joint & arm (in degrees) to account for torque
-        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
-        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
-        double arm_angle = 270 - relative_arm_angle - joint_angle;
+        double currentArmPosition = arm.getCurrentPosition();
+        double armVelocity = currentArmPosition - lastArmPosition; // Positive if increasing, negative if decreasing
 
+        // Calculate angles and feedforward
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double relative_arm_angle = currentArmPosition / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
         double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
 
         double input = -gamepad.right_stick_y;
@@ -540,33 +617,50 @@ public class TeleUtil {
             arm_hold = ARM_FORWARDS_SCORE;
             armState = ArmState.PLANE_LAUNCHING;
         } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
-            // driver control
-            power = input;
-            arm_hold = arm.getCurrentPosition();
+            double distanceToZero = Math.abs(currentArmPosition);
+            if (currentArmPosition < 0) {
+                distanceToZero = 0.0;
+            }
+            double maxThreshold = 100;
+            double scalingFactor = 1.0;
+
+            // Apply dynamic scaling based on arm's movement direction and position
+            if (distanceToZero <= maxThreshold && armVelocity < 0) { // Apply only when moving towards zero
+                scalingFactor = Math.max(0.1, distanceToZero / maxThreshold);
+            }
+
+            power = input * scalingFactor;
+            arm_hold = currentArmPosition;
             armState = ArmState.DRIVER_CONTROL;
         } else {
             // Transition to holding state with smooth reduction in power
-            if (armState != ArmState.HOLDING) {
-                arm_hold = arm.getCurrentPosition();
-                armState = ArmState.HOLDING;
+            if (armState != ArmState.HOLDING && armState != ArmState.WAITING_TO_HOLD) {
+                ARM_TIME_TO_HOLD.reset();
+                armState = ArmState.WAITING_TO_HOLD;
             }
 
-            double error = arm_hold - arm.getCurrentPosition();
-            if (Math.abs(error) > ARM_DEADBAND) {
-                // Outside deadband, normal PID control
-                //double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
-                double arm_out = 0;
-                power = arm_ff + arm_out;
+            // Wait for 500ms before setting hold - allowing some time for the arm to settle
+            if (armState == ArmState.WAITING_TO_HOLD && ARM_TIME_TO_HOLD.milliseconds() > 1000) {
+                arm_hold = arm.getCurrentPosition();
+                armState = ArmState.HOLDING;
             } else {
-                // Inside deadband, interpolate power for a smoother stop
-                //double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
-                //double scaledPower = arm_out * (Math.abs(error) / ARM_DEADBAND);
-                double scaledPower = 0;
-                power = arm_ff + Math.max(scaledPower, 0);
+                power = arm_ff;
+            }
+
+            if (armState == ArmState.HOLDING) {
+                // Use PIDF to hold the arm position
+                double arm_out = armPID.calculate(arm.getCurrentPosition(), arm_hold);
+                power = arm_out + arm_ff;
+            }
+
+            if (Math.abs(arm.getCurrentPosition()) < 20) {
+                power = 0;
             }
         }
 
         power = Math.max(-1.0, Math.min(1.0, power));
+
+        lastArmPosition = currentArmPosition;
 
         return power;
     }
@@ -591,9 +685,7 @@ public class TeleUtil {
 
     // TELEMETRY METHODS
     public void checkGamepadParameters(Gamepad gamepad, String position) {
-
         opMode.telemetry.addLine("--- " + position + " ---");
-
 
         if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
             opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
@@ -606,6 +698,7 @@ public class TeleUtil {
 
         }
 
+        /*
         if (touchSensorPressed || joint.getCurrentPosition() - 10 > 0 || arm.getCurrentPosition() - 10 > 0){
             opMode.telemetry.addData("touchSensorPressed", touchSensorPressed);
             DcMotor.RunMode JstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
@@ -613,6 +706,7 @@ public class TeleUtil {
             DcMotor.RunMode AstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
             arm.setMode(AstopAndResetEncoder);
         }
+         */
 
         if (gamepad.left_trigger != 0) {
             opMode.telemetry.addData("Left Trigger", gamepad.left_trigger);
@@ -660,7 +754,6 @@ public class TeleUtil {
         if (gamepad.right_bumper) {
             opMode.telemetry.addLine("Right bumper clicked");
         }
-
 
         opMode.telemetry.addLine("\n");
         opMode.telemetry.addData("Joint Hold", joint_hold);
