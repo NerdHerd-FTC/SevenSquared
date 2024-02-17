@@ -14,16 +14,14 @@ public class SlowRedFarRight {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-34, -63, Math.toRadians(90)))
-                                .forward(21)
-                                .splineToLinearHeading(new Pose2d(-26, -28, Math.toRadians(90)), Math.toRadians(90))
-                                .back(9)
-                                .lineToSplineHeading(new Pose2d(-50, -36, Math.toRadians(180)))
-                                .waitSeconds(1)
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
+                                .forward(26)
+                                .splineTo(new Vector2d(-20, -26.5), Math.toRadians(0))
+                                .back(15)
+                                .lineToSplineHeading(new Pose2d(-48.5, -32, Math.toRadians(180)))
 
-                                //.splineToLinearHeading(new Pose2d(40, 40, Math.toRadians(90)), Math.toRadians(0))
-                                .splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(0))
-                                //.splineToLinearHeading(new Pose2d(53, -37, Math.toRadians(0)), Math.toRadians(180))
+
+
                                 .build()
                 );
 

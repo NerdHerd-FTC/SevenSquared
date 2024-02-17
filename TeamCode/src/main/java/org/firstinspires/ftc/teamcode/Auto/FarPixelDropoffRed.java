@@ -208,30 +208,49 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(-46, -30), Math.toRadians(180))
+                .splineTo(new Vector2d(-52, -30), Math.toRadians(90))
                 .build();
-
-        // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .back(14)
                 .build();
-
-        // moving to pixel stack
-        Trajectory left3 = drive.trajectoryBuilder(left2.end())
+        Trajectory left3 = drive.trajectoryBuilder(center2_strafeToX.end())
                 .strafeRight(15)
-                .splineToLinearHeading(new Pose2d(-55, -11, Math.toRadians(180)), Math.toRadians(0))
+                .lineToConstantHeading(new Vector2d(x_end, y_end))
                 .build();
 
-        // spline through the middle truss to drop off at backdrop
-        Trajectory left4 = drive.trajectoryBuilder(left3.end())
-                .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
-                .splineToConstantHeading(new Vector2d(59, -25), Math.toRadians(0))
+        Trajectory left3_1 = drive.trajectoryBuilder(center3.end())
+                .forward(-1)
                 .build();
 
-        Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
-                // new Pose2d(57, -30, Math.toRadians(0));
-                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
+        Trajectory left3_2 = drive.trajectoryBuilder(center3_1.end())
+                .strafeLeft(1)
                 .build();
+
+        Trajectory left3_3 = drive.trajectoryBuilder(center3_2.end())
+                .forward(1)
+                .build();
+
+        // Spline away from pixel stack and move toward dropoff - prepare to drop
+        // May need to be changed to coordinate - absolute location - rather than relative due to calibration in 3_ series
+        Trajectory left4 = drive.trajectoryBuilder(center3.end())
+                .strafeRight(3)
+                .build();
+
+        // Move to dropoff
+        Trajectory left5 = drive.trajectoryBuilder(center4.end())
+                .forward(-75)
+                .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        // move to left corner
+        Trajectory leftCenter = drive.trajectoryBuilder(center5.end())
+                .splineToConstantHeading(new Vector2d(70, -3), Math.toRadians(0))
+                .build();
+
+        TrajectorySequence  rotateRight = drive.trajectorySequenceBuilder(cornerCenter.end())
+                .turn(Math.toRadians(180)) // Turns 45 degrees counter-clockwise
+                .build();
+
 
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(startPose)
@@ -250,15 +269,39 @@ public class FarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         // spline through middle truss to get to backdrop
-        Trajectory right4 = drive.trajectoryBuilder(right3.end())
-                .strafeRight(6)
-                .splineTo(new Vector2d(41, -10), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(74, -41, Math.toRadians(0)), Math.toRadians(0))
+        Trajectory right3_1 = drive.trajectoryBuilder(center3.end())
+                .forward(-1)
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
-                .splineToConstantHeading(new Vector2d(65, -10), Math.toRadians(0))
+        Trajectory right3_2 = drive.trajectoryBuilder(center3_1.end())
+                .strafeLeft(1)
                 .build();
+
+        Trajectory right3_3 = drive.trajectoryBuilder(center3_2.end())
+                .forward(1)
+                .build();
+
+        // Spline away from pixel stack and move toward dropoff - prepare to drop
+        // May need to be changed to coordinate - absolute location - rather than relative due to calibration in 3_ series
+        Trajectory right4 = drive.trajectoryBuilder(center3.end())
+                .strafeRight(3)
+                .build();
+
+        // Move to dropoff
+        Trajectory right5 = drive.trajectoryBuilder(center4.end())
+                .forward(-75)
+                .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        // move to left corner
+        Trajectory rightCenter = drive.trajectoryBuilder(center5.end())
+                .splineToConstantHeading(new Vector2d(70, -3), Math.toRadians(0))
+                .build();
+
+        TrajectorySequence rotateRight = drive.trajectorySequenceBuilder(cornerCenter.end())
+                .turn(Math.toRadians(180)) // Turns 45 degrees counter-clockwise
+                .build();
+
         /*
         <Calibration
                 size="640 480"
@@ -513,72 +556,193 @@ public class FarPixelDropoffRed extends LinearOpMode {
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 switch (leftCurrentState) {
                     case LEFT1:
-                        drive.followTrajectoryAsync(left1);
+                        // Move forward to spike mark
+                        drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.LEFT2;
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.LEFT2;
+                            drive.followTrajectoryAsync(left1);
                         }
                         break;
                     case LEFT2:
-                        drive.followTrajectoryAsync(left2);
+                        // Move backwards
+                        drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.LEFT3;
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.LEFT2_1;
+                            drive.followTrajectorySequenceAsync(left2_turn);
+                        }
+                        break;
+                    case LEFT2_1:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.LEFT2_2;
+                            drive.followTrajectoryAsync(left2_strafeToX);
+                        }
+                        break;
+                    case LEFT2_2:
+                        drive.update();
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.LEFT3;
+                            drive.followTrajectoryAsync(left3);
                         }
                         break;
                     case LEFT3:
-                        drive.followTrajectoryAsync(left3);
+                        // Move to the pixel stack
+                        drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.PICK_UP;
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.pixelLock.reset();
+                            centerCurrentState = centerState.PICK_UP;
                         }
                         break;
                     case PICK_UP:
-                        autoUtil.pixelPickup(1);
-                        leftCurrentState = leftState.LEFT4;
+                        // Move the arm to the pixel stack height
+                        double timeLock = autoUtil.lockOntoPixel();
+
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        // If the arm is at the pixel stack height, move to the next state
+                        if (timeLock > 750) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                            centerCurrentState = centerState.GRAB;
+
+                            waitBeforeClaw.reset();
+                        } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
+                            /*
+                            calibration_step += 1;
+                            if (calibration_step == 1) {
+                                drive.followTrajectoryAsync(center3_1);
+                            } else if (calibration_step == 2) {
+                                drive.followTrajectoryAsync(center3_2);
+                            }
+                            centerCurrentState = centerState.CALIBRATE_PICKUP;
+
+                             */
+                        }
+                        break;
+                    case CALIBRATE_PICKUP:
+                        drive.update();
+
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        armError = autoUtil.asyncMoveArm(1000);
+
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.PICK_UP;
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
+
+                        break;
+                    case GRAB:
+                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                        // Hold the position of the arm and joint and close the claw
+                        autoUtil.holdArm();
+
+                        // If the claw has been closed for 1000 milliseconds, move to the next state
+                        if (waitBeforeClaw.milliseconds() > 1000) {
+                            waitBeforeClaw.reset();
+
+                            if (!autoUtil.pixelLockVerification()) {
+                                autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                                autoUtil.pixelLock.reset();
+                                centerCurrentState = centerState.PICK_UP;
+                            } else {
+                                centerCurrentState = centerState.HOME;
+                            }
+                        }
+                        break;
+                    case HOME:
+                        // Move the arm and joint to the home position
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+
+                        // If the arm and joint are at the home position, move to the next state
+                        if (Math.abs(armError) <= 10) {
+                            centerCurrentState = centerState.CENTER4;
+                            drive.followTrajectory(center4);
+                            autoUtil.killArm();
+                        }
                         break;
                     case LEFT4:
-                        drive.followTrajectoryAsync(left4);
+                        // Move to the second pixel stack
+                        drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.FIRST_DROP_OFF;
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.CENTER5;
+                            drive.followTrajectory(center5);
+                        }
+                        break;
+                    case LEFT5:
+                        drive.update();
+d
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.FIRST_DROP_OFF;
+                            waitBeforeClaw.reset();
                         }
                         break;
                     case FIRST_DROP_OFF:
-                        autoUtil.pixelDropoff();
-                        leftCurrentState = leftState.LEFT5;
-                        break;
-                    case LEFT5:
-                        drive.followTrajectoryAsync(cornerLeft);
+                        armError = autoUtil.asyncMoveArm(ARM_DROP_2);
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.SECOND_DROP_OFF;
+                        if (Math.abs(armError) <= 10) {
+                            centerCurrentState = centerState.RELEASE;
+                            waitBeforeClaw.reset();
+                        }
+                    case RELEASE:
+                        armError = autoUtil.asyncMoveArm(ARM_DROP_2);
+
+                        if (waitBeforeClaw.milliseconds() > 1000) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                            waitBeforeClaw.reset();
+                            centerCurrentState = centerState.HOME2;
                         }
                         break;
-                    case SECOND_DROP_OFF:
-                        autoUtil.pixelDropoff();
-                        leftCurrentState = leftState.MOVE_TO_CORNER;
+              da      case HOME2:
+                        if (waitBeforeClaw.milliseconds() < 1000) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                        } else {
+                            armError = autoUtil.asyncMoveArm(ARM_HOME);
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
+                            if (Math.abs(armError) <= 10) {
+                                centerCurrentState = centerState.MOVE_TO_CORNER;
+                                drive.followTrajectory(cornerCenter);
+                                autoUtil.killArm();
+                            }
+                        }
                         break;
                     case MOVE_TO_CORNER:
-                        drive.followTrajectoryAsync(cornerLeft);
+                        drive.update();
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.DONE;
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.ROTATE;
+                            drive.followTrajectorySequence(rotateCenter);
+                        }
+                        break;
+                    case ROTATE:
+                        drive.update();
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.killArm();
+                            autoUtil.killJoint();
+                            centerCurrentState = centerState.DONE;
                         }
                         break;
                 }
+                }
+
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
                 switch (rightCurrentState) {
                     case RIGHT1:
