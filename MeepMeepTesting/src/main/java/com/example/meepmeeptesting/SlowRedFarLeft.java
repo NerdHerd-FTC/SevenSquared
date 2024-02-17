@@ -14,30 +14,16 @@ public class SlowRedFarLeft {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-34, -63, Math.toRadians(90)))
-
-                                .splineTo(new Vector2d(-47, -34), Math.toRadians(180))
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
+                                .splineTo(new Vector2d(-52, -30), Math.toRadians(90))
                                 .back(14)
                                 .strafeRight(15)
-                                .splineToLinearHeading(new Pose2d(-55, -11, Math.toRadians(180)), Math.toRadians(0))
-                                .waitSeconds(1)
-                                .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
-                                //.back(60)
-                                // .splineToConstantHeading(new Vector2d(27, -16), Math.toRadians(90))
-                                .splineToConstantHeading(new Vector2d(53, -37), Math.toRadians(0))
-                                //.splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(180)), Math.toRadians(90))
-                                //.splineToLinearHeading(new Pose2d(53, -37, Math.toRadians(180)), Math.toRadians(0))
-                                // .splineToLinearHeading(new Pose2d(53, -37, Math.toRadians(180)), Math.toRadians(180))
-                                //.splineToSplineHeading(new Pose2d(53, -37, Math.toRadians(180)), Math.toRadians(180))
-                                //.splineToLinearHeading(new Pose2d(27, -16, Math.toRadians(180)), Math.toRadians(180))
-                                // .splineToSplineHeading(new Pose2d(20, -16, Math.toRadians(180)), Math.toRadians(0))
-                                //.lineToSplineHeading(new Pose2d(53, -37, Math.toRadians(0)))
+                                .lineToConstantHeading(new Vector2d(-34, -31))
+                                .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
+                                .splineToConstantHeading(new Vector2d(70, -3), Math.toRadians(0))
+                                .turn(Math.toRadians(180))
 
 
-                                //.splineToLinearHeading(new Vector2d(-55, -34), Math.toRadians(180))
-                                // .splineToConstantHeading()
-                                //.splineTo(new Vector2d(57, -30), Math.toRadians(0))
-                                //.strafeRight(48) // separate trajectory
                                 .build()
                 );
 
