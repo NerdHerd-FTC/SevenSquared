@@ -81,7 +81,18 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
         Imgproc.rectangle(frame, new Point(center_x, center_y), new Point(center_x + center_width, center_y + center_height), new Scalar(0, 255, 0), 1);
         Imgproc.rectangle(frame, new Point(left_x, left_y), new Point(left_x + side_width, left_y + side_height), new Scalar(0,255, 0), 1);
 
+        // Define rectangles for specific zones as before
+        Rect leftRect = new Rect((int)left_x, (int)left_y, (int)side_width, (int)side_height);
+        Rect centerRect = new Rect((int)center_x, (int)center_y, (int)center_width, (int)center_height);
+
         List<MatOfPoint> valid_contours = new ArrayList<>();
+
+        // Calculate area within each predefined zone
+        double leftArea = calculateAreaInZone(mask, leftRect);
+        double centerArea = calculateAreaInZone(mask, centerRect);
+
+        telemetry.addData("Left Area", leftArea);
+        telemetry.addData("Center Area", centerArea);
 
         for (MatOfPoint contour : contours) {
             Rect rect = Imgproc.boundingRect(contour);
@@ -97,10 +108,10 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
                 valid_contours.add(contour);
             }
 
-            if (centerX > center_x - center_width && centerX < center_x + center_width && centerY > center_y - center_width && centerY < center_y + center_height) {
+            if (centerX > center_x && centerX < center_x + center_width && centerY > center_y && centerY < center_y + center_height) {
                 telemetry.addData("Location", "Center");
                 detected = Detection.CENTER;
-            } else if (centerX > left_x - side_width && centerX < left_x + side_width && centerY > left_y - side_height && centerY < left_y + side_height) {
+            } else if (centerX > left_x && centerX < left_x + side_width && centerY > left_y && centerY < left_y + side_height) {
                 telemetry.addData("Location", "Left");
                 detected = Detection.LEFT;
             } else {
@@ -115,7 +126,13 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
             Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
         }
 
-        if (valid_contours.size() < 1) {
+        if (leftArea > 6000) {
+            telemetry.addData("Location", "Left (WHOLE)");
+            detected = Detection.LEFT;
+        } else if (centerArea > 6000) {
+            telemetry.addData("Location", "Center (WHOLE)");
+            detected = Detection.CENTER;
+        } else if (valid_contours.size() < 1) {
             detected = Detection.RIGHT;
             telemetry.addData("Location (Assumed)", "Right");
         }
@@ -131,5 +148,10 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
 
     public Detection getDetection() {
         return detected;
+    }
+
+    private double calculateAreaInZone(Mat mask, Rect zone) {
+        Mat zoneMask = mask.submat(zone);
+        return Core.countNonZero(zoneMask);
     }
 }

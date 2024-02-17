@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
@@ -9,6 +10,11 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_norm_F;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
 
 import android.util.Size;
 
@@ -20,20 +26,25 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Autonomous(name="Old Dropoff - Blue")
 public class PixelDropoffBlue extends LinearOpMode {
-    public DcMotor arm;
+    public DcMotor arm, joint;
     public Servo ClawServoLeft;
 
-    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
+    public ElapsedTime runCycle = new ElapsedTime();
 
-    boolean running = false;
+    public PIDController armPID = new PIDController(armP, armI, armD);
+
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -43,6 +54,13 @@ public class PixelDropoffBlue extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setDirection(DcMotor.Direction.REVERSE);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        joint = hardwareMap.get(DcMotor.class, "joint");
+
+        joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        joint.setDirection(DcMotor.Direction.REVERSE);
+        joint.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
@@ -61,7 +79,7 @@ public class PixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(28, 30), Math.toRadians(270))
+                .splineTo(new Vector2d(20, 30), Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
                 .splineToSplineHeading(new Pose2d(49, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
@@ -87,7 +105,19 @@ public class PixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
-                .splineToConstantHeading(new Vector2d(53, 60), Math.toRadians(0))
+                .lineToConstantHeading(new Vector2d(42, 5))
+                .build();
+
+        TrajectorySequence cornerRightRotate = drive.trajectorySequenceBuilder(cornerRight.end())
+                .turn(Math.toRadians(180))
+                .build();
+
+        TrajectorySequence cornerLeftRotate = drive.trajectorySequenceBuilder(cornerLeft.end())
+                .turn(Math.toRadians(180))
+                .build();
+
+        TrajectorySequence cornerCenterRotate = drive.trajectorySequenceBuilder(cornerCenter.end())
+                .turn(Math.toRadians(180))
                 .build();
 
         // VisionPortal
@@ -113,41 +143,75 @@ public class PixelDropoffBlue extends LinearOpMode {
 
         waitForStart();
 
+        moveLeftFinger(CLAW_LEFT_CLOSED);
+
         BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            }
             moveArm(ARM_HOME);
+            killArm();
             moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerCenter);
+            drive.followTrajectorySequence(cornerCenterRotate);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            }
             moveArm(ARM_HOME);
+            killArm();
             moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerLeft);
+            drive.followTrajectorySequence(cornerLeftRotate);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
             drive.followTrajectory(right3);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            }
             moveArm(ARM_HOME);
+            killArm();
             moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerRight);
         }
@@ -195,6 +259,69 @@ public class PixelDropoffBlue extends LinearOpMode {
 
     private void moveLeftFinger(double target) {
         ClawServoLeft.setPosition(target);
+    }
+
+    public double asyncMoveArm(double target) {
+        double error = target - arm.getCurrentPosition();
+
+        double joint_angle = 0 / joint_ticks_per_degree + 193;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+        double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+        double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+
+        double arm_power = arm_ff + arm_out;
+
+        arm.setPower(arm_power);
+
+        return error;
+    }
+
+    public void killArm() {
+        arm.setPower(0);
+    }
+
+    public void syncMoveJoint(double target) {
+        PIDController jointPID = new PIDController(jointP, jointI, jointD);
+        double error = target -joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        while (opModeIsActive() && Math.abs(error) > 10) {
+            error = target - joint.getCurrentPosition();
+
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+            double joint_power = joint_ff + joint_out;
+
+            joint.setPower(joint_power);
+
+            //opMode.telemetry.addData("Joint Error", error);
+            sleep(100);
+        }
+    }
+
+    public double asyncMoveJoint(double target) {
+        PIDController jointPID = new PIDController(jointP, jointI, jointD);
+        double error = target - joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+        double joint_power = joint_ff + joint_out;
+
+        joint.setPower(joint_power);
+
+        //opMode.telemetry.addData("Joint Error", error);
+
+        return error;
     }
 
 
