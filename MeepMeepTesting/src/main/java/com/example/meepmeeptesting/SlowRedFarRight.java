@@ -16,7 +16,7 @@ public class SlowRedFarRight {
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
                                 .forward(26)
-                                .splineTo(new Vector2d(-20, -26.5), Math.toRadians(0))
+                                .splineTo(new Vector2d(-20, -35), Math.toRadians(0))
                                 .back(15)
                                 .lineToSplineHeading(new Pose2d(-48.5, -32, Math.toRadians(180)))
 

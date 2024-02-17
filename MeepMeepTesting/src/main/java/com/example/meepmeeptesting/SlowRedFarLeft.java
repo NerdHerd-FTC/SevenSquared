@@ -20,7 +20,7 @@ public class SlowRedFarLeft {
                                 .strafeRight(15)
                                 .lineToConstantHeading(new Vector2d(-34, -31))
                                 .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
-                                .splineToConstantHeading(new Vector2d(70, -3), Math.toRadians(0))
+                                .strafeTo(new Vector2d(56, -16))
                                 .turn(Math.toRadians(180))
 
 
