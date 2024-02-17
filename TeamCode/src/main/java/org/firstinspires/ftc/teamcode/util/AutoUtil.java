@@ -41,7 +41,7 @@ public class AutoUtil {
     public Integer topGreen;
     public Integer topBlue;
 
-    public static int whiteRedThresholdBottom = 175;
+    public static int whiteRedThresholdBottom = 185;
     public static int whiteRedThresholdTop = 350;
 
     public ElapsedTime pixelLock = new ElapsedTime();

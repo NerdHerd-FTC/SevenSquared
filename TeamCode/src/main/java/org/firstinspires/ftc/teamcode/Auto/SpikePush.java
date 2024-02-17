@@ -26,8 +26,8 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="Old Dropoff - Blue")
-public class PixelDropoffBlue extends LinearOpMode {
+@Autonomous(name="Spike Push - Blue")
+public class SpikePush extends LinearOpMode {
     public DcMotor arm;
     public Servo ClawServoLeft;
 
@@ -50,44 +50,33 @@ public class PixelDropoffBlue extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 270 degrees
-        Pose2d startPose = new Pose2d(12, 62, Math.toRadians(270));
+        Pose2d startPose = new Pose2d(-34, 62, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, 28), Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
-                .splineTo(new Vector2d(49, 28), Math.toRadians(0))
+        Trajectory center1 = drive.trajectoryBuilder(startPose)
+                .forward(42)
+                .build();
+
+        Trajectory center2 = drive.trajectoryBuilder(center1.end())
+                .back(33)
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(28, 30), Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
-                .splineToSplineHeading(new Pose2d(49, 36, Math.toRadians(0)), Math.toRadians(0))
+                .forward(26)
+                .splineTo(new Vector2d(-24, 26.5), Math.toRadians(0))
+                .build();
+
+        Trajectory left2 = drive.trajectoryBuilder(left1.end())
+                .back(10)
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(1, 30), Math.toRadians(180))
+                .splineTo(new Vector2d(-46, 30), Math.toRadians(180))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .back(20)
-                .build();
-
-        Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .splineToSplineHeading(new Pose2d(49, 17), Math.toRadians(0))
-                .build();
-
-        Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeLeft(28)
-                .build();
-
-        Trajectory cornerLeft = drive.trajectoryBuilder(left1.end())
-                .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
-                .build();
-
-        Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
-                .splineToConstantHeading(new Vector2d(53, 60), Math.toRadians(0))
+                .back(10)
                 .build();
 
         // VisionPortal
@@ -116,40 +105,14 @@ public class PixelDropoffBlue extends LinearOpMode {
         BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            drive.followTrajectory(cornerCenter);
+            drive.followTrajectory(center1);
+            drive.followTrajectory(center2);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            drive.followTrajectory(cornerLeft);
+            drive.followTrajectory(left2);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
             drive.followTrajectory(right2);
-            drive.followTrajectory(right3);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(500);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(500);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            drive.followTrajectory(cornerRight);
         }
     }
 

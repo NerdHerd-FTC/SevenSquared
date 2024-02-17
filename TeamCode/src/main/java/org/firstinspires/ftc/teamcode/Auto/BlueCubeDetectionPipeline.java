@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Auto;
 import android.graphics.Canvas;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.VisionProcessor;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Currently only supports left camera - right camera may need to be added separately...
+@Config
 public class BlueCubeDetectionPipeline implements VisionProcessor {
     private Telemetry telemetry;  // Add Telemetry object
     Mat hsv = new Mat();
@@ -32,8 +35,17 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
 
     public float right_x = 572;
     public float right_y = 100;
-    public Scalar lowerBlue = new Scalar(100, 40, 50);
-    public Scalar upperBlue = new Scalar(130, 190, 190);
+
+    public static int lBx = 50;
+    public static int lBy  = 40;
+    public static int lBz = 50;
+
+    public static int uBx = 130;
+    public static int uBy = 190;
+    public static int uBz = 190;
+
+    public static Scalar lowerBlue = new Scalar(lBx, lBy, lBz);
+    public static Scalar upperBlue = new Scalar(uBx, uBy, uBz);
 
     public enum Detection {
         LEFT,
@@ -85,10 +97,10 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
                 valid_contours.add(contour);
             }
 
-            if (centerX > center_x && centerX < center_x + center_width && centerY > center_y && centerY < center_y + center_height) {
+            if (centerX > center_x - center_width && centerX < center_x + center_width && centerY > center_y - center_width && centerY < center_y + center_height) {
                 telemetry.addData("Location", "Center");
                 detected = Detection.CENTER;
-            } else if (centerX > left_x && centerX < left_x + side_width && centerY > left_y && centerY < left_y + side_height) {
+            } else if (centerX > left_x - side_width && centerX < left_x + side_width && centerY > left_y - side_height && centerY < left_y + side_height) {
                 telemetry.addData("Location", "Left");
                 detected = Detection.LEFT;
             } else {

@@ -40,7 +40,7 @@ import java.util.List;
 public class FarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double x_end = -47;
+    public static double x_end = -46;
     public static double y_end = -29.5;
 
     public static double jointError = 0;
@@ -112,6 +112,12 @@ public class FarPixelDropoffRed extends LinearOpMode {
         DONE
     }
 
+    private enum armIssue {
+        stuckOnPixel,
+        stuckOnWall,
+        noDetection
+    }
+
     @Override
     public void runOpMode() throws InterruptedException {
         FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -151,7 +157,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(43)
+                .forward(42)
                 .build();
 
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
@@ -194,7 +200,7 @@ public class FarPixelDropoffRed extends LinearOpMode {
         // Move to dropoff
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
                 .forward(-75)
-                .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(67, -31.5,  Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         // move to left corner
