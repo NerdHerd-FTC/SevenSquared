@@ -76,7 +76,6 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         CENTER5,
         CENTER6,
         CENTER7,
-        CENTER8,
         FIRST_DROP_OFF,
         RELEASE,
         HOME2,
@@ -200,23 +199,19 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
-                .strafeRight(20)
+                .strafeRight(30)
                 .build();
 
         Trajectory center6 = drive.trajectoryBuilder(center5.end())
-                .lineToSplineHeading(new Pose2d(30, -10, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(30, 0, Math.toRadians(0)))
                 .build();
 
         Trajectory center7 = drive.trajectoryBuilder(center6.end())
                 .splineToConstantHeading(new Vector2d(67, -31.5), Math.toRadians(0))
                 .build();
 
-        Trajectory center8 = drive.trajectoryBuilder(center7.end())
-                .strafeTo(new Vector2d(56, -16))
-                .build();
-
         // move to left corner
-        Trajectory cornerCenter = drive.trajectoryBuilder(center8.end())
+        Trajectory cornerCenter = drive.trajectoryBuilder(center7.end())
                 .strafeTo(new Vector2d(56, -16))
                 .build();
 
@@ -237,13 +232,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         // moving to pixel stack
         Trajectory left3 = drive.trajectoryBuilder(left2.end())
                 .strafeRight(15)
-                .splineToLinearHeading(new Pose2d(-55, -11, Math.toRadians(180)), Math.toRadians(0))
                 .build();
 
         // spline through the middle truss to drop off at backdrop
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
                 .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
-                .strafeTo(new Vector2d(56, -16))
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
@@ -254,9 +247,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(startPose)
                 .forward(26)
-                .splineTo(new Vector2d(-20, -26.5), Math.toRadians(0))
                 .build();
-
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
                 .back(15)
@@ -270,22 +261,12 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         // spline through middle truss to get to backdrop
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
                 .strafeRight(6)
-                .splineTo(new Vector2d(41, -10), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(74, -41, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
                 .strafeTo(new Vector2d(56, -16))
                 .build();
-        /*
-        <Calibration
-                size="640 480"
-        focalLength="622.001f, 622.001f"
-        principalPoint="319.803f, 241.251f"
-        distortionCoefficients="0.1208, -0.261599, 0, 0, 0.10308, 0, 0, 0"
-                />
 
-         */
         aprilTag = new AprilTagProcessor.Builder()
                 .setLensIntrinsics(622.001f, 622.001f, 319.803f, 241.251f)
                 .build();
@@ -346,6 +327,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         // Move forward to spike mark
                         drive.update();
 
+                        autoUtil.asyncMoveJoint(-100);
+
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER2;
                             drive.followTrajectoryAsync(center2);
@@ -354,8 +337,10 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                     case CENTER2:
                         // Move backwards
                         drive.update();
+                        autoUtil.asyncMoveJoint(-100);
 
                         if (!drive.isBusy()) {
+                            autoUtil.asyncMoveJoint(0);
                             centerCurrentState = centerState.CENTER2_1;
                             drive.followTrajectorySequenceAsync(center2_turn);
                         }
@@ -363,7 +348,10 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                     case CENTER2_1:
                         drive.update();
 
+                        autoUtil.asyncMoveJoint(0);
+
                         if (!drive.isBusy()) {
+                            autoUtil.killJoint();
                             centerCurrentState = centerState.CENTER2_2;
                             drive.followTrajectoryAsync(center2_strafeToX);
                         }
@@ -486,14 +474,6 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case CENTER7:
-                        drive.update();
-
-                        if (!drive.isBusy()) {
-                            centerCurrentState = centerState.CENTER8;
-                            drive.followTrajectory(center8);
-                        }
-                        break;
-                    case CENTER8:
                         drive.update();
 
                         if (!drive.isBusy()) {

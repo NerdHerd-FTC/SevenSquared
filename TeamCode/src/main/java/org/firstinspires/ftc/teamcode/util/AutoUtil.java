@@ -51,6 +51,8 @@ public class AutoUtil {
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     // tune timeouts
+
+    // add edge cases! - not detecting at all
     public static int errorThreshold = 15;
     public static int timeout = 2000;
 

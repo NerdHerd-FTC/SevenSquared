@@ -2,6 +2,7 @@ package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
@@ -25,8 +26,8 @@ public class FarSideRedCenterDoor {
                                 // pickup
                                 // bring arm back up
                                 .lineToConstantHeading(new Vector2d(-55, -29.5))
-                                .strafeRight(20)
-                                .lineToSplineHeading(new Pose2d(30, -10, Math.toRadians(0)))
+                                .strafeRight(29)
+                                .lineToSplineHeading(new Pose2d(30, -1, Math.toRadians(0)))
                                 .splineToConstantHeading(new Vector2d(67, -31.5), Math.toRadians(0))
                                 .strafeTo(new Vector2d(56, -16))
                                 .build()
