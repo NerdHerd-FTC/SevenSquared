@@ -1,71 +1,124 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static android.os.SystemClock.sleep;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_norm_F;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
+
 import android.util.Size;
 
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder;
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
-
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-
 
 @Autonomous(name="Old Dropoff - Blue")
 public class PixelDropoffBlue extends LinearOpMode {
+    public DcMotor arm, joint;
+    public Servo ClawServoLeft;
 
-    // Define motors
-    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    public ElapsedTime runCycle = new ElapsedTime();
 
-    // Constants
-    //11 or 7.5
-    private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
-    private static final double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
+    public PIDController armPID = new PIDController(armP, armI, armD);
 
-    // Pulled from "encoder resolution formula": https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
-    private static final double TICKS_PER_REV = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
-
-    // Pulled from strafer kit - converts mm. to in.
-    private static final double WHEEL_DIAMETER_INCH = 96/25.4;
-    private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
-
-    private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
-
-    boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // Initialize motors from hardware map
-        frontLeft = hardwareMap.dcMotor.get("frontLeft");
-        frontRight = hardwareMap.dcMotor.get("frontRight");
-        backLeft = hardwareMap.dcMotor.get("backLeft");
-        backRight = hardwareMap.dcMotor.get("backRight");
+        arm = hardwareMap.get(DcMotor.class, "arm");
 
-        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        backRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setDirection(DcMotor.Direction.REVERSE);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        joint = hardwareMap.get(DcMotor.class, "joint");
 
-        // Retrieve the IMU from the hardware map
-        IMU imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters imuParams;
+        joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        joint.setDirection(DcMotor.Direction.REVERSE);
+        joint.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        imuParams = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                )
-        );
-        // Technically this is the default, however specifying it is clearer
-        // Without this, data retrieving from the IMU throws an exception
-        imu.initialize(imuParams);
+        ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
+        ClawServoLeft.setDirection(Servo.Direction.REVERSE);
+
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        // We want to start the bot at x: 10, y: -8, heading: 270 degrees
+        Pose2d startPose = new Pose2d(12, 62, Math.toRadians(270));
+
+        drive.setPoseEstimate(startPose);
+
+        Trajectory center = drive.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(12, 28), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
+                .splineTo(new Vector2d(49, 28), Math.toRadians(0))
+                .build();
+
+        Trajectory left1 = drive.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(20, 30), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
+                .splineToSplineHeading(new Pose2d(49, 36, Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        Trajectory right1 = drive.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(1, 30), Math.toRadians(180))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(20)
+                .build();
+
+        Trajectory right3 = drive.trajectoryBuilder(right2.end())
+                .splineToSplineHeading(new Pose2d(49, 17), Math.toRadians(0))
+                .build();
+
+        Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
+                .strafeLeft(28)
+                .build();
+
+        Trajectory cornerLeft = drive.trajectoryBuilder(left1.end())
+                .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
+                .build();
+
+        Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
+                .lineToConstantHeading(new Vector2d(42, 5))
+                .build();
+
+        TrajectorySequence cornerRightRotate = drive.trajectorySequenceBuilder(cornerRight.end())
+                .turn(Math.toRadians(180))
+                .build();
+
+        TrajectorySequence cornerLeftRotate = drive.trajectorySequenceBuilder(cornerLeft.end())
+                .turn(Math.toRadians(180))
+                .build();
+
+        TrajectorySequence cornerCenterRotate = drive.trajectorySequenceBuilder(cornerCenter.end())
+                .turn(Math.toRadians(180))
+                .build();
 
         // VisionPortal
         VisionPortal visionPortal;
@@ -80,162 +133,92 @@ public class PixelDropoffBlue extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
-        setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        while (opModeInInit()) {
+            if (gamepad2.left_bumper) {
+                moveLeftFinger(CLAW_LEFT_OPEN);
+            } else if (gamepad2.right_bumper) {
+                moveLeftFinger(CLAW_LEFT_CLOSED);
+            }
+        }
 
         waitForStart();
 
-            BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        moveLeftFinger(CLAW_LEFT_CLOSED);
 
-            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-                moveForward(33);
-                moveForward(-30);
-                strafeLeft(40);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-                moveForward(24);
-                turn(180);
-                moveForward(9);
-                moveForward(-9);
-                strafeLeft(26);
-                moveForward(40);
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-                moveForward(24);
-                sleep(1500);
-                turn(-180);
-                moveForward(9);
-                moveForward(-9);
-                turn(360);
-                moveForward(40);
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            drive.followTrajectory(center);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            }
+            moveArm(ARM_HOME);
+            killArm();
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(cornerCenter);
+            drive.followTrajectorySequence(cornerCenterRotate);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            drive.followTrajectory(left1);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            }
+            moveArm(ARM_HOME);
+            killArm();
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(cornerLeft);
+            drive.followTrajectorySequence(cornerLeftRotate);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            drive.followTrajectory(right1);
+            drive.followTrajectory(right2);
+            drive.followTrajectory(right3);
+            moveArm(ARM_FORWARDS_LOW_SCORE);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            }
+            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            runCycle.reset();
+            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            }
+            moveArm(ARM_HOME);
+            killArm();
+            moveLeftFinger(CLAW_LEFT_CLOSED);
+            drive.followTrajectory(cornerRight);
         }
     }
 
     public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
         return blueCubeDetectionPipeline.getDetection();
-    }
-
-    public void moveForward(double inches) {
-        if (!running) {
-            running = true;
-            int move = (int) (inches * TICKS_PER_INCH);
-
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            frontLeft.setPower(0.5);
-            frontRight.setPower(0.5);
-            backLeft.setPower(0.5);
-            backRight.setPower(0.5);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    public void strafeLeft(double inches) {
-        if (!running) {
-            running = true;
-            int move = (int) (inches * TICKS_PER_INCH);
-
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - move);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-            backRight.setTargetPosition(backRight.getCurrentPosition() - move);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            frontLeft.setPower(0.5);
-            frontRight.setPower(0.5);
-            backLeft.setPower(0.5);
-            backRight.setPower(0.5);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    public void strafeRight(double inches) {
-        if (!running) {
-            running = true;
-            int move = (int) (inches * TICKS_PER_INCH);
-
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() - move);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() - move);
-            backRight.setTargetPosition(backRight.getCurrentPosition() + move);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            frontLeft.setPower(0.5);
-            frontRight.setPower(0.5);
-            backLeft.setPower(0.5);
-            backRight.setPower(0.5);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    // runs from -180 to 180
-    private void turn(double targetAngle) {
-        if (!running) {
-            running = true;
-
-            int turnTicks = (int) (targetAngle * TICKS_PER_DEGREE);
-
-            // For a left turn, the left motors should move backward and the right motors forward
-            frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - turnTicks);
-            frontRight.setTargetPosition(frontRight.getCurrentPosition() + turnTicks);
-            backLeft.setTargetPosition(backLeft.getCurrentPosition() - turnTicks);
-            backRight.setTargetPosition(backRight.getCurrentPosition() + turnTicks);
-
-            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // Set the power for turning, this can be adjusted as necessary
-            final double TURN_POWER = 0.5;
-            frontLeft.setPower(-TURN_POWER);
-            frontRight.setPower(TURN_POWER);
-            backLeft.setPower(-TURN_POWER);
-            backRight.setPower(TURN_POWER);
-
-            waitForMotors();
-
-            stopMotors();
-            running = false;
-        }
-    }
-
-    private void setMotorMode(DcMotor.RunMode mode) {
-        frontLeft.setMode(mode);
-        frontRight.setMode(mode);
-        backLeft.setMode(mode);
-        backRight.setMode(mode);
-    }
-
-    private void waitForMotors() {
-        while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-            motorTelemetry(frontLeft, "frontLeft");
-            motorTelemetry(frontRight, "frontRight");
-            motorTelemetry(backLeft, "backLeft");
-            motorTelemetry(backRight, "backRight");
-            idle();
-        }
-    }
-
-    private void stopMotors() {
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
     }
 
     private void motorTelemetry(DcMotor motor, String name) {
@@ -244,5 +227,102 @@ public class PixelDropoffBlue extends LinearOpMode {
         telemetry.addData(name + " Position", motor.getCurrentPosition());
         telemetry.addData(name + " Target Position", motor.getTargetPosition());
     }
+
+    private void moveArm(double target) {
+        PIDController armPID = new PIDController(armP, armI, armD);
+        double error = target - arm.getCurrentPosition();
+
+        while (opModeIsActive() && Math.abs(error) > 10) {
+            // calculate angles of joint & arm (in degrees) to account for torque
+            double joint_angle = 193;
+            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+            error = target - arm.getCurrentPosition();
+
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+
+            double arm_power = arm_ff + arm_out;
+
+            arm.setPower(arm_power);
+
+            motorTelemetry(arm, "Arm");
+            telemetry.addData("Error", error);
+            telemetry.addData("Power", arm_power);
+            telemetry.update();
+            sleep(100);
+        }
+
+    }
+
+    private void moveLeftFinger(double target) {
+        ClawServoLeft.setPosition(target);
+    }
+
+    public double asyncMoveArm(double target) {
+        double error = target - arm.getCurrentPosition();
+
+        double joint_angle = 0 / joint_ticks_per_degree + 193;
+        double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+        double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+        double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+        double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+
+        double arm_power = arm_ff + arm_out;
+
+        arm.setPower(arm_power);
+
+        return error;
+    }
+
+    public void killArm() {
+        arm.setPower(0);
+    }
+
+    public void syncMoveJoint(double target) {
+        PIDController jointPID = new PIDController(jointP, jointI, jointD);
+        double error = target -joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        while (opModeIsActive() && Math.abs(error) > 10) {
+            error = target - joint.getCurrentPosition();
+
+            double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+            double joint_power = joint_ff + joint_out;
+
+            joint.setPower(joint_power);
+
+            //opMode.telemetry.addData("Joint Error", error);
+            sleep(100);
+        }
+    }
+
+    public double asyncMoveJoint(double target) {
+        PIDController jointPID = new PIDController(jointP, jointI, jointD);
+        double error = target - joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+        double joint_power = joint_ff + joint_out;
+
+        joint.setPower(joint_power);
+
+        //opMode.telemetry.addData("Joint Error", error);
+
+        return error;
+    }
+
 
 }

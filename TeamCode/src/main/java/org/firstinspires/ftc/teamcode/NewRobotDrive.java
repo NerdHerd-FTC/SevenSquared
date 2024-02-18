@@ -1,7 +1,4 @@
-// Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
-import android.graphics.Color;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -11,29 +8,24 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.util.PoseStorage;
+import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 @Config
-@TeleOp(name = "Robot Drive")
-public class RobotOrientedDrive extends LinearOpMode {
+@TeleOp(name = "Modern Robot Drive")
+public class NewRobotDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
-
-    public static double rightClosed=0.52;
-    public static double rightOpen = 0.25;
-
-    public static double leftOpen = 0.4;
-    public static double leftClosed =0.66;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -77,12 +69,6 @@ public class RobotOrientedDrive extends LinearOpMode {
         motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        // Set drive motors to brake when power is set to 0
-        motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         // Get servos
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
@@ -93,15 +79,12 @@ public class RobotOrientedDrive extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
-        ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
-        ColorSensor floorColor = hardwareMap.get(ColorSensor.class, "colorV3");
-
-        topColor.enableLed(false);
-        bottomColor.enableLed(false);
-
         // TeleUtil instance
         TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
+
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        drive.setPoseEstimate(PoseStorage.currentPose);
 
         waitForStart();
 
@@ -110,30 +93,22 @@ public class RobotOrientedDrive extends LinearOpMode {
         matchTime.reset();
 
         while (opModeIsActive()) {
+            drive.update();
+
+            // Retrieve your pose
+            Pose2d myPose = drive.getPoseEstimate();
+
             // Drive
-            teleUtil.robotOrientedDrive(gamepad1, true, false, false);
+            teleUtil.dpadSupportedRobotDrive(gamepad1, true, false, false, myPose);
 
             // Articulation
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
             armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
-            teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
-            teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
+            teleUtil.setClawServoRight(gamepad2, RobotConstants.CLAW_RIGHT_CLOSED , RobotConstants.CLAW_RIGHT_OPEN);
+            teleUtil.setClawServoLeft(gamepad2, RobotConstants.CLAW_LEFT_CLOSED, RobotConstants.CLAW_LEFT_OPEN);
 
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
-
-            // telemetry.addLine("\n");
-
-            // Gamepad Telemetry
-            // teleUtil.checkGamepadParameters(gamepad1, "Driver");
-            // teleUtil.checkGamepadParameters(gamepad2, "Operator");
-            telemetry.addLine("\n");
-
-            // Motor Telemetry
-            teleUtil.motorTelemetry(jointMotor, "Joint");
-            telemetry.addLine("\n");
-            teleUtil.motorTelemetry(armMotor, "Arm");
-            telemetry.addLine("\n");
 
             // Servo Telemetry
             teleUtil.servoTelemetry(ClawServoLeft, "Left Claw");
@@ -142,20 +117,10 @@ public class RobotOrientedDrive extends LinearOpMode {
             // Timers
             telemetry.addData("Match Time", matchTime.seconds());
 
-            if (gamepad2.dpad_right) {
-                getColors(topColor, "top");
-                getColors(bottomColor, "bottom");
-                getColors(floorColor, "floor");
-
-            }
+            telemetry.addData("x", myPose.getX());
+            telemetry.addData("y", myPose.getY());
+            telemetry.addData("heading", myPose.getHeading());
             telemetry.update();
         }
-    }
-
-    public void getColors(ColorSensor sensor, String name) {
-        telemetry.addData("Color Sensor", name);
-        telemetry.addData("Red", sensor.red());
-        telemetry.addData("Green", sensor.green());
-        telemetry.addData("Blue", sensor.blue());
     }
 }

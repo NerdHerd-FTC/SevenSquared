@@ -40,7 +40,7 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
     public float center_y = 62;
 
     // Adjust the HSV range for red
-    public Scalar lowerRed1 = new Scalar(0, 100, 100);
+    public Scalar lowerRed1 = new Scalar(0, 100, 24);
     public Scalar upperRed1 = new Scalar(10, 255, 255);
     public Scalar lowerRed2 = new Scalar(160, 100, 100);
     public Scalar upperRed2 = new Scalar(180, 255, 255);
@@ -81,6 +81,19 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
         Imgproc.rectangle(frame, new Point(center_x, center_y), new Point(center_x + center_width, center_y + center_height), new Scalar(0, 255, 0), 1);
         Imgproc.rectangle(frame, new Point(left_x, left_y), new Point(left_x + side_width, left_y + side_height), new Scalar(0,255, 0), 1);
 
+        // Define rectangles for specific zones as before
+        Rect leftRect = new Rect((int)left_x, (int)left_y, (int)side_width, (int)side_height);
+        Rect centerRect = new Rect((int)center_x, (int)center_y, (int)center_width, (int)center_height);
+
+        List<MatOfPoint> valid_contours = new ArrayList<>();
+
+        // Calculate area within each predefined zone
+        double leftArea = calculateAreaInZone(mask, leftRect);
+        double centerArea = calculateAreaInZone(mask, centerRect);
+
+        telemetry.addData("Left Area", leftArea);
+        telemetry.addData("Center Area", centerArea);
+
         for (MatOfPoint contour : contours) {
             Rect rect = Imgproc.boundingRect(contour);
             double centerX = rect.x + rect.width / 2.0;
@@ -91,23 +104,37 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
             // detect location
             if (area < 3000) {
                 break;
+            } else {
+                valid_contours.add(contour);
             }
 
             if (centerX > center_x && centerX < center_x + center_width && centerY > center_y && centerY < center_y + center_height) {
-                telemetry.addData("Location", "Center");
                 detected = Detection.CENTER;
+                telemetry.addData("Location", "Center");
             } else if (centerX > left_x && centerX < left_x + side_width && centerY > left_y && centerY < left_y + side_height) {
-                telemetry.addData("Location", "Left");
                 detected = Detection.LEFT;
-            } else if (detected == null) {
-                telemetry.addData("Location (Assumed)", "Right");
+                telemetry.addData("Location", "Left");
+            } else {
                 detected = Detection.RIGHT;
+                telemetry.addData("Location (Assumed)", "Right");
             }
 
             // Telemetry data for the area of each blue object
             telemetry.addData("Area", area);
+            telemetry.update();
 
             Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
+        }
+
+        if (detected != Detection.RIGHT && leftArea > 6000) {
+            telemetry.addData("Location", "Left (WHOLE)");
+            detected = RedCubeDetectionPipeline.Detection.LEFT;
+        } else if (centerArea > 6000) {
+            telemetry.addData("Location", "Center (WHOLE)");
+            detected = RedCubeDetectionPipeline.Detection.CENTER;
+        } else if (valid_contours.size() < 1) {
+            detected = RedCubeDetectionPipeline.Detection.RIGHT;
+            telemetry.addData("Location (Assumed)", "Right");
         }
 
         telemetry.update();
@@ -121,5 +148,10 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
 
     public Detection getDetection() {
         return detected;
+    }
+
+    private double calculateAreaInZone(Mat mask, Rect zone) {
+        Mat zoneMask = mask.submat(zone);
+        return Core.countNonZero(zoneMask);
     }
 }

@@ -1,11 +1,13 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Archive;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp
+@Disabled
 public class ContinuousTesting extends LinearOpMode {
 
     @Override

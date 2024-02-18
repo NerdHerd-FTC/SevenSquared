@@ -1,10 +1,6 @@
-package org.firstinspires.ftc.teamcode.Auto;
-
+package org.firstinspires.ftc.teamcode.Archive;
 import android.util.Size;
-
-import java.util.ArrayList;
 import java.util.List;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -14,19 +10,15 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.apache.commons.math3.analysis.function.Add;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
-import org.firstinspires.ftc.teamcode.util.RobotConstants;
-
-
 @Disabled
-@Autonomous(name="Super Blue")
-public class SuperAutoBlue extends LinearOpMode {
+@Autonomous(name="Chase April Tag")
+public class ChaseAprilTag extends LinearOpMode {
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight, joint, arm;
     private Servo ClawServoLeft;
@@ -131,70 +123,10 @@ public class SuperAutoBlue extends LinearOpMode {
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         waitForStart();
-        visionPortal.setProcessorEnabled(aprilTag, false);
-        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, true);
-
-        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
-
-        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, false);
         visionPortal.setProcessorEnabled(aprilTag, true);
 
-        if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            tagID = 1;
-        } else if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            tagID = 2;
-        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            tagID = 3;
-        }
-
-        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            moveForward(33);
-            moveForward(-5);
-            turn(180);
-            moveForward(10);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            moveForward(24);
-            turn(180);
-            moveForward(9);
-            moveForward(-9);
-            strafeLeft(26);
-            moveForward(15);
-            strafeRight(5);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            moveForward(24);
-            turn(-180);
-            moveForward(9);
-            moveForward(-9);
-            turn(360);
-            moveForward(5);
-        }
-
-        // tune offsets
-        precisionAprilTag(aprilTag, decision, 3.5, 8);
-
-        runArm(arm, RobotConstants.ARM_SCORE, 0.7);
-        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
-        sleep(1000);
-        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_CLOSED);
-        runArm(arm, 0, 1);
-        runJoint(joint, 0, 0.7);
-
-        stopArticulation();
-
-        // tune this
-        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            strafeLeft(30);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            strafeLeft(22);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            strafeLeft(40);
-        }
-
+        advanceByAprilTag(aprilTag, 0.5, 8);
         stopMotors();
-    }
-
-    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return blueCubeDetectionPipeline.getDetection();
     }
 
     public void moveForward(double inches) {
@@ -337,10 +269,6 @@ public class SuperAutoBlue extends LinearOpMode {
         telemetry.update();
     }
 
-    private void precisionAprilTag(AprilTagProcessor aprilTag, BlueCubeDetectionPipeline.Detection detection, double horizontalOffset, double verticalOffset) {
-        advanceByAprilTag(aprilTag, 0.5, verticalOffset);
-    }
-
     private void strafeByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
         if (currentState == RobotState.IDLE) {
             currentState = RobotState.STRAFING_RIGHT;
@@ -352,7 +280,7 @@ public class SuperAutoBlue extends LinearOpMode {
                 range = tag.ftcPose.range - offset;
             } else if (aprilTag.getDetections().size() != 0) {
                 for (AprilTagDetection tag : aprilTag.getDetections()) {
-                     if (tag.id == tagID) {
+                    if (tag.id == tagID) {
                         lastDetectedTag = tag;
                     }
                 }

@@ -18,13 +18,13 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
  * and op modes themselves.
  */
 @Config
-public class DriveConstants {
+public class OLDDriveConstants {
 
     /*
      * These are motor constants that should be listed online for your motors.
      */
-    public static final double TICKS_PER_REV = 384.539792388;
-    public static final double MAX_RPM = 435;
+    public static final double TICKS_PER_REV = 537.689839572;
+    public static final double MAX_RPM = 312;
 
     /*
      * Adjust the orientations here to match your robot. See the FTC SDK documentation for details.
@@ -47,7 +47,7 @@ public class DriveConstants {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(0, 0, 0,
             getMotorVelocityF(MAX_RPM / 60 * TICKS_PER_REV));
 
-    /*f
+    /*
      * These are physical constants that can be determined from your robot (including the track
      * width; it will be tune empirically later although a rough estimate is important). Users are
      * free to chose whichever linear distance unit they would like so long as it is consistently
@@ -65,9 +65,9 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV =0.01;
-    public static double kA = 0.0016;
-    public static double kStatic = 0.052;
+    public static double kV = 0.0131;
+    public static double kA = 0.0021;
+    public static double kStatic = 0.05248;
 
     /*
      * These values are used to generate the trajectories for you robot. To ensure proper operation,
@@ -99,7 +99,7 @@ public class DriveConstants {
      */
     public static double MAX_VEL = 52.48291908330528; // theoretical max velocity: 61.743303783697616
     public static double MAX_ACCEL = 52.48291908330528;
-    public static double MAX_ANG_VEL = 4.256886827452303; // MAX: 3.893571609267319 rad. or 223.08522044297743 deg.; theoretical: 190.94804165608335 deg.
+    public static double MAX_ANG_VEL = 3.096191764726285; // MAX: 3.893571609267319 rad. or 223.08522044297743 deg.; theoretical: 190.94804165608335 deg.
     public static double MAX_ANG_ACCEL = Math.toRadians(190.94804165608335);
 
 

@@ -28,8 +28,8 @@ import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @Config
-@Autonomous(name="Old Dropoff - Red")
-public class PixelDropoffRed extends LinearOpMode {
+@Autonomous(name="PixelPickup - Red")
+public class PixelPickupRed extends LinearOpMode {
     DcMotor arm;
 
     public Servo ClawServoLeft;
@@ -37,6 +37,8 @@ public class PixelDropoffRed extends LinearOpMode {
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
     public static double armPower = 0.0;
+
+    boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -56,9 +58,9 @@ public class PixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
-        Vector2d centerEnd = new Vector2d(51, -31.5);
-        Pose2d leftEnd = new Pose2d(51, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(51, -42, Math.toRadians(0));
+        Vector2d centerEnd = new Vector2d(55, -31.5);
+        Pose2d leftEnd = new Pose2d(59, -25, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(59, -42, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
@@ -89,11 +91,11 @@ public class PixelDropoffRed extends LinearOpMode {
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
                 // new Pose2d(57, -30, Math.toRadians(0));
-                .strafeRight(37)
+                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .strafeRight(20)
+                .splineToConstantHeading(new Vector2d(50, -60), Math.toRadians(0))
                 .build();
 
         // VisionPortal
@@ -109,13 +111,7 @@ public class PixelDropoffRed extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
-        while (opModeInInit()) {
-            if (gamepad2.left_bumper) {
-                moveLeftFinger(CLAW_LEFT_OPEN);
-            } else if (gamepad2.right_bumper) {
-                moveLeftFinger(CLAW_LEFT_CLOSED);
-            }
-        }
+        waitForStart();
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
@@ -125,53 +121,34 @@ public class PixelDropoffRed extends LinearOpMode {
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_LOW_SCORE);
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
+            sleep(500);
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
             drive.followTrajectory(cornerCenter);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
             moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(50);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerLeft);
-        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-            drive.followTrajectory(right1);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
+            sleep(500);
+            moveArm(ARM_FORWARDS_SCORE - 100);
             sleep(500);
             moveArm(ARM_HOME);
             moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
+            drive.followTrajectory(cornerLeft);
+        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            drive.followTrajectory(right1);
+            moveArm(ARM_FORWARDS_SCORE);
+            sleep(500);
+            moveLeftFinger(CLAW_LEFT_OPEN);
+            sleep(500);
+            moveArm(ARM_FORWARDS_SCORE - 100);
+            sleep(500);
+            moveArm(ARM_HOME);
+            moveLeftFinger(CLAW_LEFT_CLOSED);
             drive.followTrajectory(cornerRight);
         }
     }
@@ -211,6 +188,7 @@ public class PixelDropoffRed extends LinearOpMode {
             telemetry.addData("Error", error);
             telemetry.addData("Power", arm_power);
             telemetry.update();
+            sleep(100);
         }
 
     }
@@ -219,7 +197,4 @@ public class PixelDropoffRed extends LinearOpMode {
         ClawServoLeft.setPosition(target);
     }
 
-    private void killArm() {
-        arm.setPower(0);
-    }
 }

@@ -1,19 +1,22 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Archive;
 
 import android.util.Size;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.RedCubeDetectionPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="Backdrop - Right")
-public class BackDropRight extends LinearOpMode {
+@Autonomous(name="NOT BACK Old Dropoff - Red")
+@Disabled
+public class PixelDropoffRedNotBack extends LinearOpMode {
 
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -31,7 +34,7 @@ public class BackDropRight extends LinearOpMode {
     private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
 
     private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
-    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
+    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
     boolean running = false;
 
@@ -69,7 +72,7 @@ public class BackDropRight extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(blueCubeDetectionPipeline)
+                .addProcessor(redCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -80,13 +83,26 @@ public class BackDropRight extends LinearOpMode {
 
         waitForStart();
 
-        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+            RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        strafeRight(40);
+            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+                moveForward(33);
+                moveForward(-30);
+            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+                moveForward(24);
+                turn(180);
+                moveForward(8);
+                moveForward(-8);
+            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+                moveForward(24);
+                turn(-180);
+                moveForward(8);
+                moveForward(-8);
+        }
     }
 
-    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return blueCubeDetectionPipeline.getDetection();
+    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return redCubeDetectionPipeline.getDetection();
     }
 
     public void moveForward(double inches) {

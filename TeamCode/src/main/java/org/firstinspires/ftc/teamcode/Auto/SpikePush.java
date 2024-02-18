@@ -12,7 +12,6 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
 
 import android.util.Size;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -27,16 +26,14 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Config
-@Autonomous(name="Old Dropoff - Red")
-public class PixelDropoffRed extends LinearOpMode {
-    DcMotor arm;
-
+@Autonomous(name="Spike Push - Blue")
+public class SpikePush extends LinearOpMode {
+    public DcMotor arm;
     public Servo ClawServoLeft;
 
-    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
-    public static double armPower = 0.0;
+    boolean running = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -52,48 +49,34 @@ public class PixelDropoffRed extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        // probably should be ~61 but keep this for consistency with other paths
-        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
-
-        Vector2d centerEnd = new Vector2d(51, -31.5);
-        Pose2d leftEnd = new Pose2d(51, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(51, -42, Math.toRadians(0));
+        // We want to start the bot at x: 10, y: -8, heading: 270 degrees
+        Pose2d startPose = new Pose2d(-34, 62, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -29), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(centerEnd, Math.toRadians(0))
+        Trajectory center1 = drive.trajectoryBuilder(startPose)
+                .forward(42)
+                .build();
+
+        Trajectory center2 = drive.trajectoryBuilder(center1.end())
+                .back(33)
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToSplineHeading(new Pose2d(2, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                .forward(26)
+                .splineTo(new Vector2d(-24, 26.5), Math.toRadians(0))
                 .build();
 
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .lineToLinearHeading(new Pose2d(28, -30, Math.toRadians(180))) // Intermediate to allow for turning
-                .splineToSplineHeading(leftEnd, Math.toRadians(0)) // Move backward to (49, -36)
+                .back(10)
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(22, -38), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(22, -60), Math.toRadians(90))
-                .splineToSplineHeading(rightEnd, Math.toRadians(0))
+                .splineTo(new Vector2d(-46, 30), Math.toRadians(180))
                 .build();
 
-        Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeRight(28)
-                .build();
-
-        Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
-                // new Pose2d(57, -30, Math.toRadians(0));
-                .strafeRight(37)
-                .build();
-
-        Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .strafeRight(20)
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(10)
                 .build();
 
         // VisionPortal
@@ -102,7 +85,7 @@ public class PixelDropoffRed extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -117,67 +100,24 @@ public class PixelDropoffRed extends LinearOpMode {
             }
         }
 
-        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        waitForStart();
 
-        moveLeftFinger(CLAW_LEFT_CLOSED);
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerCenter);
-        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            drive.followTrajectory(center1);
+            drive.followTrajectory(center2);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             drive.followTrajectory(left2);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(50);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(50);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerLeft);
-        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectory(right1);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            sleep(100);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            sleep(500);
-            moveArm(ARM_HOME);
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            killArm();
-            drive.followTrajectory(cornerRight);
+            drive.followTrajectory(right2);
         }
     }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
+    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return blueCubeDetectionPipeline.getDetection();
     }
 
     private void motorTelemetry(DcMotor motor, String name) {
@@ -211,6 +151,7 @@ public class PixelDropoffRed extends LinearOpMode {
             telemetry.addData("Error", error);
             telemetry.addData("Power", arm_power);
             telemetry.update();
+            sleep(100);
         }
 
     }
@@ -219,7 +160,5 @@ public class PixelDropoffRed extends LinearOpMode {
         ClawServoLeft.setPosition(target);
     }
 
-    private void killArm() {
-        arm.setPower(0);
-    }
+
 }

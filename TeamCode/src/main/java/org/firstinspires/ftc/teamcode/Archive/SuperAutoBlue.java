@@ -1,26 +1,31 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Archive;
 
 import android.util.Size;
+
 import java.util.List;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 
-/*
-@Autonomous()
-public class AprilTagTesting extends LinearOpMode {
+
+@Disabled
+@Autonomous(name="Super Blue")
+public class SuperAutoBlue extends LinearOpMode {
     // Define motors
     private DcMotor frontLeft, frontRight, backLeft, backRight, joint, arm;
     private Servo ClawServoLeft;
@@ -43,6 +48,8 @@ public class AprilTagTesting extends LinearOpMode {
     int tagID = 1;
 
     AprilTagProcessor aprilTag;
+
+    private int frontLeftTarget, frontRightTarget, backLeftTarget, backRightTarget, jointTarget, armTarget;
 
     // Create the vision portal by using a builder.
     VisionPortal.Builder builder = new VisionPortal.Builder();
@@ -72,7 +79,7 @@ public class AprilTagTesting extends LinearOpMode {
 
         joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        joint.setDirection(DcMotor.Direction.FORWARD);
+        joint.setDirection(DcMotor.Direction.REVERSE);
         joint.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -113,6 +120,7 @@ public class AprilTagTesting extends LinearOpMode {
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
                 .addProcessor(aprilTag)
+                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
@@ -121,20 +129,52 @@ public class AprilTagTesting extends LinearOpMode {
 
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-
-
         waitForStart();
+        visionPortal.setProcessorEnabled(aprilTag, false);
+        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, true);
 
-        BlueCubeDetectionPipeline.Detection decision = BlueCubeDetectionPipeline.Detection.CENTER;
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+
+        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, false);
+        visionPortal.setProcessorEnabled(aprilTag, true);
+
+        if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            tagID = 1;
+        } else if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            tagID = 2;
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            tagID = 3;
+        }
+
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+            moveForward(33);
+            moveForward(-5);
+            turn(180);
+            moveForward(10);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            moveForward(24);
+            turn(180);
+            moveForward(9);
+            moveForward(-9);
+            strafeLeft(26);
+            moveForward(15);
+            strafeRight(5);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            moveForward(24);
+            turn(-180);
+            moveForward(9);
+            moveForward(-9);
+            turn(360);
+            moveForward(5);
+        }
 
         // tune offsets
-        precisionAprilTag(aprilTag, decision, 3.5, 0.5);
+        precisionAprilTag(aprilTag, decision, 3.5, 8);
 
-        runJoint(joint, RobotConstants.JOINT_SCORE, 1);
-        runArm(arm, RobotConstants.ARM_SCORE, 0.7);
-        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
-        sleep(1000);
+        runArm(arm, RobotConstants.ARM_FORWARDS_SCORE, 0.7);
         setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_CLOSED);
+        sleep(1000);
+        setClawServoLeft(ClawServoLeft, RobotConstants.CLAW_LEFT_OPEN);
         runArm(arm, 0, 1);
         runJoint(joint, 0, 0.7);
 
@@ -297,8 +337,7 @@ public class AprilTagTesting extends LinearOpMode {
     }
 
     private void precisionAprilTag(AprilTagProcessor aprilTag, BlueCubeDetectionPipeline.Detection detection, double horizontalOffset, double verticalOffset) {
-        strafeByAprilTag(aprilTag, tagID, 0.5, horizontalOffset);
-        advanceByAprilTag(aprilTag, tagID, 0.5, verticalOffset);
+        advanceByAprilTag(aprilTag, 0.5, verticalOffset);
     }
 
     private void strafeByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
@@ -310,24 +349,24 @@ public class AprilTagTesting extends LinearOpMode {
                 // we lost sight of the tag, but we know where it is
                 AprilTagDetection tag = lastDetectedTag;
                 range = tag.ftcPose.range - offset;
-            } else if (aprilTag.getDetections().size() > 0) {
-                // go through and see if a tag is in the detections
+            } else if (aprilTag.getDetections().size() != 0) {
                 for (AprilTagDetection tag : aprilTag.getDetections()) {
-                    if (tag.id == tagID) {
-                        range = tag.ftcPose.range - offset;
+                     if (tag.id == tagID) {
                         lastDetectedTag = tag;
-                        break;
                     }
                 }
-                if (lastDetectedTag == null) {
-                    while (opModeIsActive() && aprilTag.getDetections().size() == 0) {
-                        telemetry.addLine("AprilTag Not found!");
-                    }
+
+                if (lastDetectedTag.id != tagID) {
+                    // we can't see the tag
+                    return;
                 }
+
+                // inches
+                range = lastDetectedTag.ftcPose.range - offset;
             }  else {
                 // wait until we can see the tag
                 while (opModeIsActive() && aprilTag.getDetections().size() == 0) {
-                    telemetry.addLine("AprilTag Not found!");
+                    telemetry.addLine("Tag not found....");
                 }
             }
 
@@ -358,32 +397,48 @@ public class AprilTagTesting extends LinearOpMode {
         }
     }
 
-    private void advanceByAprilTag(AprilTagProcessor aprilTag, int tagID, double power, double offset) {
+    private void advanceByAprilTag(AprilTagProcessor aprilTag, double power, double offset) {
         if (currentState == RobotState.IDLE) {
             currentState = RobotState.MOVING_FORWARD;
-            AprilTagDetection tag = getTagData(aprilTag, tagID);
 
-            double distance = tag.ftcPose.x - offset;
-            while (opModeIsActive() && Math.abs(distance) > 0.5) {
-                int move = (int) (distance * TICKS_PER_INCH);
+            if (aprilTag.getDetections().size() > 0) {
+                double range = 0.0;
+                int tags_found = aprilTag.getDetections().size();
+                for (AprilTagDetection tag : aprilTag.getDetections()) {
+                    if (tag.id == tagID) {
+                        range += tag.ftcPose.range - offset;
+                    }
+                }
+                double average_range = range / tags_found;
 
-                frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + move);
-                frontRight.setTargetPosition(frontRight.getCurrentPosition() + move);
-                backLeft.setTargetPosition(backLeft.getCurrentPosition() + move);
-                backRight.setTargetPosition(backRight.getCurrentPosition() + move);
+                moveForward(average_range);
+            } else {
+                // wait until we can see the tag
+                // clock
+                ElapsedTime timeout = new ElapsedTime();
 
-                setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+                while (opModeIsActive() && aprilTag.getDetections().size() == 0 && timeout.seconds() < 10) {
+                    telemetry.addLine("Tag not found....");
+                    moveForward(1);
+                    moveForward(-1);
+                }
 
-                frontLeft.setPower(power);
-                frontRight.setPower(power);
-                backLeft.setPower(power);
-                backRight.setPower(power);
+                if(aprilTag.getDetections().size() > 0) {
+                    double range = 0.0;
+                    int tags_found = aprilTag.getDetections().size();
+                    for (AprilTagDetection tag : aprilTag.getDetections()) {
+                        if (tag.id == tagID) {
+                            range += tag.ftcPose.range - offset;
+                        }
+                    }
+                    double average_range = range / tags_found;
 
-                waitForMotors();
-
-                tag = getTagData(aprilTag, tagID);
-                distance = tag.ftcPose.x;
+                    moveForward(average_range);
+                } else {
+                    moveForward(32);
+                }
             }
+
             stopMotors();
             currentState = RobotState.IDLE;
         }
@@ -404,8 +459,6 @@ public class AprilTagTesting extends LinearOpMode {
         return null;
     }
 
-    /**
-     * Add telemetry about AprilTag detections.
     private void aprilTagTelemetry(int tagID) {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -483,4 +536,3 @@ public class AprilTagTesting extends LinearOpMode {
         }
     }
 }
-*/

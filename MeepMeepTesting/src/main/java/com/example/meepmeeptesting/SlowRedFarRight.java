@@ -6,17 +6,22 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-public class MeepMeepTesting {
+public class SlowRedFarRight {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
-                                .splineTo(new Vector2d(12, -34), Math.toRadians(90))
-                                .splineTo(new Vector2d(12, -52), Math.toRadians(90))
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
+                                .forward(26)
+                                .splineTo(new Vector2d(-20, -35), Math.toRadians(0))
+                                .back(15)
+                                .lineToSplineHeading(new Pose2d(-48.5, -32, Math.toRadians(180)))
+
+
+
                                 .build()
                 );
 
