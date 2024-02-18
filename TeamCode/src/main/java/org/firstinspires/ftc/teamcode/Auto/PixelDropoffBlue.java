@@ -150,10 +150,6 @@ public class PixelDropoffBlue extends LinearOpMode {
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
             moveLeftFinger(CLAW_LEFT_OPEN);
             runCycle.reset();
             while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
@@ -161,7 +157,7 @@ public class PixelDropoffBlue extends LinearOpMode {
             }
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+            while (opModeIsActive() && runCycle.milliseconds() < 250) {
                 asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
             }
             moveArm(ARM_HOME);
@@ -172,10 +168,6 @@ public class PixelDropoffBlue extends LinearOpMode {
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
             moveLeftFinger(CLAW_LEFT_OPEN);
             runCycle.reset();
             while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
@@ -196,10 +188,6 @@ public class PixelDropoffBlue extends LinearOpMode {
             drive.followTrajectory(right2);
             drive.followTrajectory(right3);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
             moveLeftFinger(CLAW_LEFT_OPEN);
             runCycle.reset();
             while (opModeIsActive() && runCycle.milliseconds() < 500 ) {

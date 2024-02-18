@@ -21,6 +21,7 @@ public class FarSideRedCenterDoor {
                                 // drop arm
                                 .turn(Math.toRadians(90))
                                 .lineToConstantHeading(new Vector2d(-34, -31))
+                                .lineToConstantHeading(new Vector2d(-46, -29.5))
                                 // pickup
                                 // bring arm back up
                                 .lineToConstantHeading(new Vector2d(-55, -29.5))

@@ -36,8 +36,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 @Config
-@Autonomous(name="Far Dropoff - Red")
-public class FarPixelDropoffRed extends LinearOpMode {
+@Autonomous(name="Truss Far Dropoff - Red")
+public class TrussFarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
     public static double x_end = -46;
