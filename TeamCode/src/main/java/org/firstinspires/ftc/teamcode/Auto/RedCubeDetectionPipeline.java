@@ -81,7 +81,18 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
         Imgproc.rectangle(frame, new Point(center_x, center_y), new Point(center_x + center_width, center_y + center_height), new Scalar(0, 255, 0), 1);
         Imgproc.rectangle(frame, new Point(left_x, left_y), new Point(left_x + side_width, left_y + side_height), new Scalar(0,255, 0), 1);
 
+        // Define rectangles for specific zones as before
+        Rect leftRect = new Rect((int)left_x, (int)left_y, (int)side_width, (int)side_height);
+        Rect centerRect = new Rect((int)center_x, (int)center_y, (int)center_width, (int)center_height);
+
         List<MatOfPoint> valid_contours = new ArrayList<>();
+
+        // Calculate area within each predefined zone
+        double leftArea = calculateAreaInZone(mask, leftRect);
+        double centerArea = calculateAreaInZone(mask, centerRect);
+
+        telemetry.addData("Left Area", leftArea);
+        telemetry.addData("Center Area", centerArea);
 
         for (MatOfPoint contour : contours) {
             Rect rect = Imgproc.boundingRect(contour);
@@ -115,8 +126,14 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
             Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
         }
 
-        if (valid_contours.size() < 1) {
-            detected = Detection.RIGHT;
+        if (detected != Detection.RIGHT && leftArea > 6000) {
+            telemetry.addData("Location", "Left (WHOLE)");
+            detected = RedCubeDetectionPipeline.Detection.LEFT;
+        } else if (centerArea > 6000) {
+            telemetry.addData("Location", "Center (WHOLE)");
+            detected = RedCubeDetectionPipeline.Detection.CENTER;
+        } else if (valid_contours.size() < 1) {
+            detected = RedCubeDetectionPipeline.Detection.RIGHT;
             telemetry.addData("Location (Assumed)", "Right");
         }
 
@@ -131,5 +148,10 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
 
     public Detection getDetection() {
         return detected;
+    }
+
+    private double calculateAreaInZone(Mat mask, Rect zone) {
+        Mat zoneMask = mask.submat(zone);
+        return Core.countNonZero(zoneMask);
     }
 }
