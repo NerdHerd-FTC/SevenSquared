@@ -229,6 +229,9 @@ public class AutoUtil {
         telemetry.addData("Pixel Lock", pixelLock.milliseconds());
         telemetry.addData("Calls to Color", callsToColor);
 
+        telemetry.addData("Pixel Lock Errors", pixelLockErrors.toString());
+        telemetry.addData("Escape Reasoning", escapeReasoning);
+
         return pixelLock.milliseconds();
     }
 

@@ -392,16 +392,18 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
                             waitBeforeClaw.reset();
                         } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
-                            /*
-                            calibration_step += 1;
-                            if (calibration_step == 1) {
+                            if (drive.isBusy()) {
+                                drive.update();
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_BACK) {
                                 drive.followTrajectoryAsync(center3_1);
-                            } else if (calibration_step == 2) {
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_FORWARD) {
                                 drive.followTrajectoryAsync(center3_2);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.STRAFE_RIGHT) {
+                                drive.followTrajectoryAsync(center3_3);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
                             }
-                            centerCurrentState = centerState.CALIBRATE_PICKUP;
-
-                             */
                         }
                         break;
                     case CALIBRATE_PICKUP:
@@ -533,143 +535,9 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         break;
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-                switch (leftCurrentState) {
-                    case LEFT1:
-                        drive.followTrajectoryAsync(left1);
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.LEFT2;
-                        }
-                        break;
-                    case LEFT2:
-                        drive.followTrajectoryAsync(left2);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.LEFT3;
-                        }
-                        break;
-                    case LEFT3:
-                        drive.followTrajectoryAsync(left3);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.PICK_UP;
-                        }
-                        break;
-                    case PICK_UP:
-                        autoUtil.pixelPickup(1);
-                        leftCurrentState = leftState.LEFT4;
-                        break;
-                    case LEFT4:
-                        drive.followTrajectoryAsync(left4);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.FIRST_DROP_OFF;
-                        }
-                        break;
-                    case FIRST_DROP_OFF:
-                        autoUtil.pixelDropoff();
-                        leftCurrentState = leftState.LEFT5;
-                        break;
-                    case LEFT5:
-                        drive.followTrajectoryAsync(cornerLeft);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.SECOND_DROP_OFF;
-                        }
-                        break;
-                    case SECOND_DROP_OFF:
-                        autoUtil.pixelDropoff();
-                        leftCurrentState = leftState.MOVE_TO_CORNER;
-                        break;
-                    case MOVE_TO_CORNER:
-                        drive.followTrajectoryAsync(cornerLeft);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            leftCurrentState = leftState.DONE;
-                        }
-                        break;
-                }
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-                switch (rightCurrentState) {
-                    case RIGHT1:
-                        drive.followTrajectoryAsync(right1);
 
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            rightCurrentState = rightState.RIGHT2;
-                        }
-                        break;
-                    case RIGHT2:
-                        drive.followTrajectoryAsync(right2);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            rightCurrentState = rightState.RIGHT3;
-                        }
-                        break;
-                    case RIGHT3:
-                        drive.followTrajectoryAsync(right3);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            rightCurrentState = rightState.PICK_UP;
-                        }
-                        break;
-                    case PICK_UP:
-                        autoUtil.pixelPickup(1);
-                        rightCurrentState = rightState.RIGHT4;
-                        break;
-                    case RIGHT4:
-                        drive.followTrajectoryAsync(right4);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            rightCurrentState = rightState.FIRST_DROP_OFF;
-                        }
-                        break;
-                    case FIRST_DROP_OFF:
-                        autoUtil.pixelDropoff();
-                        rightCurrentState = rightState.RIGHT5;
-                        break;
-                    case RIGHT5:
-                        drive.followTrajectoryAsync(cornerRight);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            rightCurrentState = rightState.SECOND_DROP_OFF;
-                        }
-                        break;
-                    case SECOND_DROP_OFF:
-                        autoUtil.pixelDropoff();
-                        rightCurrentState = rightState.MOVE_TO_CORNER;
-                        break;
-                    case MOVE_TO_CORNER:
-                        drive.followTrajectoryAsync(cornerRight);
-
-                        if (drive.isBusy()) {
-                            autoUtil.asyncMoveArm(ARM_HOME);
-                        } else {
-                            rightCurrentState = rightState.DONE;
-                        }
-                        break;
-                }
             }
 
             // Continually write pose to `PoseStorage`
