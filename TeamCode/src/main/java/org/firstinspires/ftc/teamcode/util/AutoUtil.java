@@ -79,8 +79,27 @@ public class AutoUtil {
         STUCK
     }
 
+    public enum PIXEL_DEMANDS {
+        IDLE,
+        STRAFE_RIGHT,
+        MOVE_BACK,
+        MOVE_FORWARD
+    }
+
+    public enum PIXEL_LOCK_ERRORS {
+        NONE,
+        NOSE_STUCK,
+        NO_DETECTION
+    }
+
     public RobotState currentState = RobotState.IDLE;
     public ARM_DEMANDS armDemands = ARM_DEMANDS.IDLE;
+    public PIXEL_DEMANDS pixelDemands = PIXEL_DEMANDS.IDLE;
+    public PIXEL_LOCK_ERRORS pixelLockErrors = PIXEL_LOCK_ERRORS.NONE;
+    public int pixelErrorNum = 0;
+    private boolean reachedTop = false;
+    private double detected = 0;
+    public String escapeReasoning = "No escape";
 
     // Constructor
     public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, ColorSensor topColorSensor, ColorSensor bottomColorSensor, Telemetry telemetry) {
@@ -164,18 +183,32 @@ public class AutoUtil {
 
                 if (target > armUpperLimit) {
                     target = armUpperLimit;
+                    reachedTop = true;
                 } else if (target < armLowerLimit) {
                     target = armLowerLimit;
                 }
                 error = asyncMoveArm(target);
             } else if (armDemands == ARM_DEMANDS.HOLD) {
+                detected ++;
                 asyncMoveArm(arm.getCurrentPosition());
                 moveRightFinger(CLAW_RIGHT_CLOSED);
+                error = 0;
             }
 
             if (error > errorThreshold || timeoutClock.milliseconds() > timeout) {
                 currentState = RobotState.ERROR;
                 armDemands = ARM_DEMANDS.STUCK;
+
+                if (error > errorThreshold) {
+                    pixelLockErrors = PIXEL_LOCK_ERRORS.NOSE_STUCK;
+                    escapeReasoning = "Nose stuck!";
+
+                } else if (timeoutClock.milliseconds() > timeout && detected < 2) {
+                    pixelLockErrors = PIXEL_LOCK_ERRORS.NO_DETECTION;
+                    escapeReasoning = "No detection!";
+                    detected = 0;
+                    pixelErrorNum ++;
+                }
             }
 
             callsToColor += 1;
@@ -300,7 +333,7 @@ public class AutoUtil {
         return error;
     }
 
-    public void pixelPickup(Integer pixelDepth) {
+    /*public void pixelPickup(Integer pixelDepth) {
         currentState = AutoUtil.RobotState.PIXEL_STACK;
         moveRightFinger(CLAW_RIGHT_OPEN);
         if (pixelDepth == 1) {
@@ -334,6 +367,7 @@ public class AutoUtil {
         moveRightFinger(CLAW_RIGHT_CLOSED);
         currentState = AutoUtil.RobotState.IDLE;
     }
+     */
 
     public void moveLeftFinger(double target) {
         ClawServoLeft.setPosition(target);
