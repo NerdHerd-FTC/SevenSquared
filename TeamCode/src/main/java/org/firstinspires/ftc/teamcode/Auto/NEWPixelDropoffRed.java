@@ -195,7 +195,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                     case CENTER_PUSH:
                         drive.update();
 
-                        asyncMoveJoint(-100);
+                        asyncMoveJoint(-300);
 
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.ARM_TO_SCORE;
@@ -207,6 +207,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
 
                         if (Math.abs(error) < 10) {
+                            killJoint();
                             waitForClaw.reset();
                             moveLeftFinger(CLAW_LEFT_OPEN);
                             centerCurrentState = centerState.RELEASE;
@@ -244,15 +245,20 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                     case LEFT_PUSH:
                         drive.update();
 
+                        asyncMoveJoint(-300);
+
                         if (!drive.isBusy()) {
                             drive.followTrajectoryAsync(left2);
                             leftCurrentState = leftState.LEFT_BACKDROP;
+                            asyncMoveJoint(0);
                         }
                         break;
                     case LEFT_BACKDROP:
                         drive.update();
+                        asyncMoveJoint(0);
 
                         if (!drive.isBusy()) {
+                            killJoint();
                             leftCurrentState = leftState.ARM_TO_SCORE;
                         }
                         break;
@@ -293,13 +299,17 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                     case RIGHT_PUSH:
                         drive.update();
 
+                        asyncMoveJoint(-300);
+
                         if (!drive.isBusy()) {
+                            asyncMoveJoint(0);
                             rightCurrentState =  rightState.ARM_TO_SCORE;
                         }
                         break;
                     case ARM_TO_SCORE:
                         double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         if (Math.abs(error) < 10) {
+                            killJoint();
                             waitForClaw.reset();
                             moveLeftFinger(CLAW_LEFT_OPEN);
                             rightCurrentState = rightState.RELEASE;
@@ -337,11 +347,11 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         return redCubeDetectionPipeline.getDetection();
     }
 
-    private void motorTelemetry(DcMotor motor, String name) {
+    private void motorTelemetry(DcMotor motor, String name, double error) {
         telemetry.addLine("--- " + name + " ---");
         telemetry.addData(name + " Power", motor.getPower());
         telemetry.addData(name + " Position", motor.getCurrentPosition());
-        telemetry.addData(name + " Target Position", motor.getTargetPosition());
+        telemetry.addData(name + " Error", error);
     }
 
     public double asyncMoveArm(double target) {
