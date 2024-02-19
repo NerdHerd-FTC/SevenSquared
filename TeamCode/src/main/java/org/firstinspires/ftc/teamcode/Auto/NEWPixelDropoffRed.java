@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LO
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_AVOID_CUBE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -39,7 +40,7 @@ import org.firstinspires.ftc.teamcode.util.AutoUtil;
 public class NEWPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public Servo ClawServoLeft, ClawServoRight;
+    public Servo ClawServoLeft;
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
@@ -158,6 +159,8 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
+        moveLeftFinger(CLAW_LEFT_CLOSED);
+
         while (opModeInInit()) {
             if (gamepad2.left_bumper) {
                 moveLeftFinger(CLAW_LEFT_OPEN);
@@ -186,16 +189,20 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
         // exits after completing center_push - debug
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
-            telemetry.addData("Center Current State", centerCurrentState);
-            telemetry.addData("Left Current State", leftCurrentState);
-            telemetry.addData("Right Current State", rightCurrentState);
+            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+                telemetry.addData("Center State", centerCurrentState);
+            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+                telemetry.addData("Left State", leftCurrentState);
+            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+                telemetry.addData("Right State", rightCurrentState);
+            }
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER_PUSH:
                         drive.update();
 
-                        asyncMoveJoint(-300);
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.ARM_TO_SCORE;
@@ -215,6 +222,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         break;
 
                     case RELEASE:
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
 
                         if (waitForClaw.milliseconds() > 500) {
@@ -245,7 +253,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                     case LEFT_PUSH:
                         drive.update();
 
-                        asyncMoveJoint(-300);
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
                             drive.followTrajectoryAsync(left2);
@@ -272,6 +280,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
                         if (waitForClaw.milliseconds() > 500) {
                             leftCurrentState = leftState.ARM_TO_HOME;
@@ -299,7 +308,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                     case RIGHT_PUSH:
                         drive.update();
 
-                        asyncMoveJoint(-300);
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
                             asyncMoveJoint(0);
@@ -316,6 +325,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
 
                         if (waitForClaw.milliseconds() > 500) {

@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LO
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_AVOID_CUBE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -39,11 +40,41 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
     public DcMotor arm, joint;
     public Servo ClawServoLeft;
 
-    public ElapsedTime runCycle = new ElapsedTime();
-
     public PIDController armPID = new PIDController(armP, armI, armD);
+    private PIDController jointPID = new PIDController(jointP, jointI, jointD);
+
+    private ElapsedTime waitForClaw = new ElapsedTime();
 
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
+
+    private enum centerState {
+        CENTER_PUSH,
+        ARM_TO_SCORE,
+        RELEASE,
+        ARM_TO_HOME,
+        MOVE_TO_CORNER,
+        DONE
+    }
+
+    private enum leftState {
+        LEFT_PUSH,
+        ARM_TO_SCORE,
+        RELEASE,
+        ARM_TO_HOME,
+        MOVE_TO_CORNER,
+        DONE
+    }
+
+    private enum rightState {
+        RIGHT_PUSH,
+        RIGHT_BACKUP,
+        RIGHT_BACKDROP,
+        ARM_TO_SCORE,
+        RELEASE,
+        ARM_TO_HOME,
+        MOVE_TO_CORNER,
+        DONE
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -132,6 +163,12 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
+        leftState leftCurrentState = leftState.LEFT_PUSH;
+        rightState rightCurrentState = rightState.RIGHT_PUSH;
+        centerState centerCurrentState = centerState.CENTER_PUSH;
+
+        moveLeftFinger(CLAW_LEFT_CLOSED);
+
         while (opModeInInit()) {
             if (gamepad2.left_bumper) {
                 moveLeftFinger(CLAW_LEFT_OPEN);
@@ -147,60 +184,179 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectory(center);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 250) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            }
-            moveArm(ARM_HOME);
-            killArm();
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            drive.followTrajectory(cornerCenter);
-            drive.followTrajectorySequence(cornerCenterRotate);
+            drive.followTrajectoryAsync(center);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            drive.followTrajectory(left1);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            }
-            moveArm(ARM_HOME);
-            killArm();
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            drive.followTrajectory(cornerLeft);
-            drive.followTrajectorySequence(cornerLeftRotate);
+            drive.followTrajectoryAsync(left1);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
-            drive.followTrajectory(right1);
-            drive.followTrajectory(right2);
-            drive.followTrajectory(right3);
-            moveArm(ARM_FORWARDS_LOW_SCORE);
-            moveLeftFinger(CLAW_LEFT_OPEN);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+            drive.followTrajectoryAsync(right1);
+        }
+
+        while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+                telemetry.addData("Current State", centerCurrentState);
+
+                switch (centerCurrentState) {
+                    case CENTER_PUSH:
+                        drive.update();
+
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            asyncMoveJoint(0);
+                            centerCurrentState = centerState.ARM_TO_SCORE;
+                        }
+                        break;
+                    case ARM_TO_SCORE:
+                        asyncMoveJoint(0);
+
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+
+                        if (Math.abs(error) < 10) {
+                            killJoint();
+                            waitForClaw.reset();
+                            moveLeftFinger(CLAW_LEFT_OPEN);
+                            centerCurrentState = centerState.RELEASE;
+                        }
+                        break;
+                    case RELEASE:
+                        moveLeftFinger(CLAW_LEFT_OPEN);
+                        if (waitForClaw.milliseconds() > 500) {
+                            moveArm(ARM_HOME);
+                            centerCurrentState = centerState.ARM_TO_HOME;
+                        }
+                        break;
+
+                    case ARM_TO_HOME:
+                        error = asyncMoveArm(ARM_HOME);
+
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectory(cornerCenter);
+                            centerCurrentState = centerState.MOVE_TO_CORNER;
+                            killArm();
+                            killJoint();
+                        }
+                        break;
+
+                    case MOVE_TO_CORNER:
+                        drive.update();
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.DONE;
+                        }
+                        break;
+                }
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+                telemetry.addData("Current State", leftCurrentState);
+
+                switch (leftCurrentState) {
+                    case LEFT_PUSH:
+                        drive.update();
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+                        if (!drive.isBusy()) {
+                            asyncMoveJoint(0);
+                            leftCurrentState = leftState.ARM_TO_SCORE;
+                        }
+                        break;
+                    case ARM_TO_SCORE:
+                        asyncMoveJoint(0);
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        if (Math.abs(error) < 10) {
+                            killJoint();
+                            waitForClaw.reset();
+                            moveLeftFinger(CLAW_LEFT_OPEN);
+                            leftCurrentState = leftState.RELEASE;
+                        }
+                        break;
+                    case RELEASE:
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        moveLeftFinger(CLAW_LEFT_OPEN);
+                        if (waitForClaw.milliseconds() > 500) {
+                            moveArm(ARM_HOME);
+                            leftCurrentState = leftState.ARM_TO_HOME;
+                        }
+                        break;
+                    case ARM_TO_HOME:
+                        error = asyncMoveArm(ARM_HOME);
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectory(cornerLeft);
+                            leftCurrentState = leftState.MOVE_TO_CORNER;
+                            killArm();
+                            killJoint();
+                        }
+                        break;
+                    case MOVE_TO_CORNER:
+                        drive.update();
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.DONE;
+                        }
+                        break;
+                }
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+                telemetry.addData("Current State", rightCurrentState);
+
+                switch (rightCurrentState) {
+                    case RIGHT_PUSH:
+                        drive.update();
+
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+                        if (!drive.isBusy()) {
+                            drive.followTrajectory(right2);
+                            rightCurrentState = rightState.RIGHT_BACKUP;
+                        }
+                        break;
+                    case RIGHT_BACKUP:
+                        drive.update();
+
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+                        if (!drive.isBusy()) {
+                            asyncMoveJoint(0);
+                            drive.followTrajectory(right3);
+                            rightCurrentState = rightState.RIGHT_BACKDROP;
+                        }
+                        break;
+                    case RIGHT_BACKDROP:
+                        drive.update();
+
+                        asyncMoveJoint(0);
+                        if (!drive.isBusy()) {
+                            killJoint();
+                            rightCurrentState = rightState.ARM_TO_SCORE;
+                        }
+                        break;
+                    case ARM_TO_SCORE:
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        if (Math.abs(error) < 10) {
+                            waitForClaw.reset();
+                            moveLeftFinger(CLAW_LEFT_OPEN);
+                            rightCurrentState = rightState.RELEASE;
+                        }
+                        break;
+                    case RELEASE:
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        moveLeftFinger(CLAW_LEFT_OPEN);
+                        if (waitForClaw.milliseconds() > 500) {
+                            moveArm(ARM_HOME);
+                            rightCurrentState = rightState.ARM_TO_HOME;
+                        }
+                        break;
+                    case ARM_TO_HOME:
+                        error = asyncMoveArm(ARM_HOME);
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectory(cornerRight);
+                            rightCurrentState = rightState.MOVE_TO_CORNER;
+                            killArm();
+                            killJoint();
+                        }
+                        break;
+                    case MOVE_TO_CORNER:
+                        drive.update();
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.DONE;
+                        }
+                        break;
+                }
             }
-            moveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
-            }
-            moveArm(ARM_HOME);
-            killArm();
-            moveLeftFinger(CLAW_LEFT_CLOSED);
-            drive.followTrajectory(cornerRight);
+
+
         }
     }
 
@@ -270,27 +426,10 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         arm.setPower(0);
     }
 
-    public void syncMoveJoint(double target) {
-        PIDController jointPID = new PIDController(jointP, jointI, jointD);
-        double error = target -joint.getCurrentPosition();
-
-        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
-
-        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
-
-        while (opModeIsActive() && Math.abs(error) > 10) {
-            error = target - joint.getCurrentPosition();
-
-            double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
-
-            double joint_power = joint_ff + joint_out;
-
-            joint.setPower(joint_power);
-
-            //opMode.telemetry.addData("Joint Error", error);
-            sleep(100);
-        }
+    private void killJoint() {
+        joint.setPower(0);
     }
+
 
     public double asyncMoveJoint(double target) {
         PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -310,6 +449,5 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
         return error;
     }
-
 
 }

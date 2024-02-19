@@ -45,6 +45,7 @@ public class RobotConstants {
     public static Integer JOINT_FORWARDS_SCORE = 0;
     public static Integer JOINT_GROUND = 0;
     public static Integer JOINT_AIRPLANE = -1430;
+    public static Integer JOINT_AVOID_CUBE = -300;
 
     public static double jointP = 0.002, jointI = 0.0, jointD = 0.000018, joint_norm_F = 0.0015;
     public static double armP = 0.0032, armI = 0.0, armD = 0.00007, armF = 0.0037;
