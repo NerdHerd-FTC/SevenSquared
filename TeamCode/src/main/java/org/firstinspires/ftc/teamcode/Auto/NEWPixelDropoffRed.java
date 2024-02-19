@@ -8,6 +8,10 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_norm_F;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
 
 import android.util.Size;
@@ -37,26 +41,12 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
     public Servo ClawServoLeft, ClawServoRight;
 
-    // Constants
-    //11 or 7.5
-    private static final double ROBOT_RADIUS_INCHES = 8; // Half the distance between left and right wheels
-    private static final double DEGREES_TO_INCHES = Math.PI * 2 * ROBOT_RADIUS_INCHES / 360;
-
-    // Pulled from "encoder resolution formula": https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
-    private static final double TICKS_PER_REV = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
-
-    // Pulled from strafer kit - converts mm. to in.
-    private static final double WHEEL_DIAMETER_INCH = 96/25.4;
-    private static final double TICKS_PER_INCH = (TICKS_PER_REV) / (WHEEL_DIAMETER_INCH * Math.PI);
-
-    private static final double TICKS_PER_DEGREE = TICKS_PER_INCH * DEGREES_TO_INCHES;
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
     public static double armPower = 0.0;
 
-    boolean running = false;
-
     private PIDController armPID = new PIDController(armP, armI, armD);
+    private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     private ElapsedTime waitForClaw = new ElapsedTime();
 
@@ -96,6 +86,13 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setDirection(DcMotor.Direction.REVERSE);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        joint = hardwareMap.get(DcMotor.class, "joint");
+
+        joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        joint.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        joint.setDirection(DcMotor.Direction.REVERSE);
+        joint.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
@@ -198,12 +195,15 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                     case CENTER_PUSH:
                         drive.update();
 
+                        asyncMoveJoint(-100);
+
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.ARM_TO_SCORE;
+                            asyncMoveJoint(0);
                         }
                         break;
-
                     case ARM_TO_SCORE:
+                        asyncMoveJoint(0);
                         double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
 
                         if (Math.abs(error) < 10) {
@@ -371,4 +371,27 @@ public class NEWPixelDropoffRed extends LinearOpMode {
     private void killArm() {
         arm.setPower(0);
     }
+
+    private void killJoint() {
+        joint.setPower(0);
+    }
+
+    public double asyncMoveJoint(double target) {
+        double error = target -joint.getCurrentPosition();
+
+        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+
+        double joint_ff = Math.cos(Math.toRadians(joint_angle)) * joint_norm_F;
+
+        double joint_out = jointPID.calculate(joint.getCurrentPosition(), target);
+
+        double joint_power = joint_ff + joint_out;
+
+        joint.setPower(joint_power);
+
+        //opMode.telemetry.addData("Joint Error", error);
+
+        return error;
+    }
+
 }

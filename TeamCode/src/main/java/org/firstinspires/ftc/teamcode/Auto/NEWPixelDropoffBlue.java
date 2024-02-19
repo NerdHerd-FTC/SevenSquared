@@ -1,11 +1,9 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armI;
@@ -23,6 +21,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -31,12 +30,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
-import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-@Autonomous(name="Old Dropoff - Blue")
-public class PixelDropoffBlue extends LinearOpMode {
+@Disabled
+@Autonomous(name="NEW Dropoff - Blue")
+public class NEWPixelDropoffBlue extends LinearOpMode {
     public DcMotor arm, joint;
     public Servo ClawServoLeft;
 
