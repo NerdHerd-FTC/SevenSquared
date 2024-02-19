@@ -44,6 +44,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     private ElapsedTime waitForClaw = new ElapsedTime();
+    private ElapsedTime waitForArm = new ElapsedTime();
 
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
@@ -211,16 +212,19 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
                         double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
 
-                        if (Math.abs(error) < 10) {
+
+                        if (waitForArm.milliseconds() > 1000 && Math.abs(error) < 10) {
                             killJoint();
                             waitForClaw.reset();
                             moveLeftFinger(CLAW_LEFT_OPEN);
                             centerCurrentState = centerState.RELEASE;
+                        } else {
+                            waitForArm.reset();
                         }
                         break;
                     case RELEASE:
                         moveLeftFinger(CLAW_LEFT_OPEN);
-                        if (waitForClaw.milliseconds() > 500) {
+                        if (waitForClaw.milliseconds() > 1000) {
                             moveArm(ARM_HOME);
                             centerCurrentState = centerState.ARM_TO_HOME;
                         }
@@ -269,7 +273,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                     case RELEASE:
                         asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
-                        if (waitForClaw.milliseconds() > 500) {
+                        if (waitForClaw.milliseconds() > 1000) {
                             moveArm(ARM_HOME);
                             leftCurrentState = leftState.ARM_TO_HOME;
                         }
@@ -333,7 +337,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                     case RELEASE:
                         asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
-                        if (waitForClaw.milliseconds() > 500) {
+                        if (waitForClaw.milliseconds() > 1000) {
                             moveArm(ARM_HOME);
                             rightCurrentState = rightState.ARM_TO_HOME;
                         }

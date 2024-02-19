@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.Auto;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
@@ -252,3 +253,5 @@ public class FarPixelDropoffBlue extends LinearOpMode {
     }
 
 }
+
+ */

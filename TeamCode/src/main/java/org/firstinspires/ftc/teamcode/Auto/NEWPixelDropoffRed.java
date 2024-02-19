@@ -50,6 +50,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     private ElapsedTime waitForClaw = new ElapsedTime();
+    private ElapsedTime waitForArm = new ElapsedTime();
 
     private enum centerState {
         CENTER_PUSH,
@@ -106,30 +107,30 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
         Vector2d centerEnd = new Vector2d(51, -31.5);
         Pose2d leftEnd = new Pose2d(51, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(51, -42, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(51, -40, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -29), Math.toRadians(90))
+                .splineTo(new Vector2d(12, -30.5), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
                 .splineTo(centerEnd, Math.toRadians(0))
                 .build();
 
         // Push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToSplineHeading(new Pose2d(2, -30, Math.toRadians(180)), Math.toRadians(180)) // Move backward to (0, -30)
+                .splineToLinearHeading(new Pose2d(3, -30, Math.toRadians(135)), Math.toRadians(135)) // Move ba
                 .build();
 
         // Bring to backdrop
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .lineToLinearHeading(new Pose2d(28, -30, Math.toRadians(180))) // Intermediate to allow for turning
-                .splineToSplineHeading(leftEnd, Math.toRadians(0)) // Move backward to (49, -36)
+                .back(10)
+                .splineToSplineHeading(new Pose2d(54, -24, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(22, -38), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(22, -60), Math.toRadians(90))
+                .splineTo(new Vector2d(27.739, -38), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(22, -55), Math.toRadians(90))
                 .splineToSplineHeading(rightEnd, Math.toRadians(0))
                 .build();
 
@@ -215,21 +216,23 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
                         if (Math.abs(error) < 10) {
                             killJoint();
-                            waitForClaw.reset();
-                            moveLeftFinger(CLAW_LEFT_OPEN);
-                            centerCurrentState = centerState.RELEASE;
+                            if (waitForArm.milliseconds() > 1000) {
+                                waitForClaw.reset();
+                                moveLeftFinger(CLAW_LEFT_OPEN);
+                                centerCurrentState = centerState.RELEASE;
+                            }
+                        } else {
+                            waitForArm.reset();
                         }
                         break;
-
                     case RELEASE:
                         asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
 
-                        if (waitForClaw.milliseconds() > 500) {
+                        if (waitForClaw.milliseconds() > 1000) {
                             centerCurrentState = centerState.ARM_TO_HOME;
                         }
                         break;
-
                     case ARM_TO_HOME:
                         error = asyncMoveArm(ARM_HOME);
 
@@ -239,9 +242,9 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                             killArm();
                         }
                         break;
-
                     case MOVE_TO_CORNER:
                         drive.update();
+                        moveLeftFinger(CLAW_LEFT_CLOSED);
 
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.DONE;
@@ -258,31 +261,35 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         if (!drive.isBusy()) {
                             drive.followTrajectoryAsync(left2);
                             leftCurrentState = leftState.LEFT_BACKDROP;
-                            asyncMoveJoint(0);
                         }
                         break;
                     case LEFT_BACKDROP:
                         drive.update();
-                        asyncMoveJoint(0);
 
                         if (!drive.isBusy()) {
-                            killJoint();
+                            asyncMoveJoint(0);
                             leftCurrentState = leftState.ARM_TO_SCORE;
                         }
                         break;
                     case ARM_TO_SCORE:
                         double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        asyncMoveJoint(0);
 
                         if (Math.abs(error) < 10) {
-                            waitForClaw.reset();
-                            moveLeftFinger(CLAW_LEFT_OPEN);
-                            leftCurrentState = leftState.RELEASE;
+                            killJoint();
+                            if (waitForArm.milliseconds() > 1000) {
+                                waitForClaw.reset();
+                                moveLeftFinger(CLAW_LEFT_OPEN);
+                                leftCurrentState = leftState.RELEASE;
+                            }
+                        } else {
+                            waitForArm.reset();
                         }
                         break;
                     case RELEASE:
                         asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
-                        if (waitForClaw.milliseconds() > 500) {
+                        if (waitForClaw.milliseconds() > 1000) {
                             leftCurrentState = leftState.ARM_TO_HOME;
                         }
                         break;
@@ -319,16 +326,20 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         if (Math.abs(error) < 10) {
                             killJoint();
-                            waitForClaw.reset();
-                            moveLeftFinger(CLAW_LEFT_OPEN);
-                            rightCurrentState = rightState.RELEASE;
+                            if (waitForArm.milliseconds() > 1000) {
+                                waitForClaw.reset();
+                                moveLeftFinger(CLAW_LEFT_OPEN);
+                                rightCurrentState = rightState.RELEASE;
+                            }
+                        } else {
+                            waitForArm.reset();
                         }
                         break;
                     case RELEASE:
                         asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         moveLeftFinger(CLAW_LEFT_OPEN);
 
-                        if (waitForClaw.milliseconds() > 500) {
+                        if (waitForClaw.milliseconds() > 1000) {
                             rightCurrentState = rightState.ARM_TO_HOME;
                         }
                         break;
