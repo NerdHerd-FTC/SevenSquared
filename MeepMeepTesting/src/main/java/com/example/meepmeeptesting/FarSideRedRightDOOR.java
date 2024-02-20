@@ -17,13 +17,14 @@ public class FarSideRedRightDOOR {
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
                                 .splineToLinearHeading(new Pose2d(-20.261, -30, Math.toRadians(45)), Math.toRadians(45))
-                                .turn(Math.toRadians(90))
-                                .lineToConstantHeading(new Vector2d(-34, -31))
-                                .lineToConstantHeading(new Vector2d(-47.5, -28))
+                                .strafeTo(new Vector2d(-38, -48))
+                                .turn(Math.toRadians(135))
+                                //.splineToLinearHeading(new Pose2d(-34, -52, Math.toRadians(180)), Math.toRadians(180))
+                                .lineToConstantHeading(new Vector2d(-38, -29.95))
                                 .lineToConstantHeading(new Vector2d(-55, -29.95))
                                 .strafeRight(36)
                                 .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
-                                .splineToConstantHeading(new Vector2d(67, -25.5), Math.toRadians(0))
+                                .splineToConstantHeading(new Vector2d(67, -40), Math.toRadians(0)) // TUNE THIS ENDPOINT
                                 .strafeTo(new Vector2d(64, 0))
                                 .turn(Math.toRadians(180))
                                 .build()
