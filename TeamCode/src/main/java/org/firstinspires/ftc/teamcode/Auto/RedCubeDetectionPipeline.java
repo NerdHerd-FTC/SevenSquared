@@ -126,10 +126,14 @@ public class RedCubeDetectionPipeline implements VisionProcessor {
             Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
         }
 
-        if (detected != Detection.RIGHT && leftArea > 6000) {
+        if (detected != Detection.RIGHT && leftArea > 7000) {
             telemetry.addData("Location", "Left (WHOLE)");
             detected = RedCubeDetectionPipeline.Detection.LEFT;
-        } else if (centerArea > 6000) {
+
+            if (centerArea > leftArea) {
+                detected = RedCubeDetectionPipeline.Detection.CENTER;
+            }
+        } else if (centerArea > 7000) {
             telemetry.addData("Location", "Center (WHOLE)");
             detected = RedCubeDetectionPipeline.Detection.CENTER;
         } else if (valid_contours.size() < 1) {
