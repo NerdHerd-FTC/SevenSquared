@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_DROP_2;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_PIXEL_DEPTH_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_AVOID_CUBE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_HOME;
 
 import android.util.Size;
@@ -40,8 +42,8 @@ import java.util.List;
 public class DoorFarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double x_end = -46;
-    public static double y_end = -29.5;
+    public static double x_end = -47.5;
+    public static double y_end = -28;
 
     public static double jointError = 0;
     public static double armError = 0;
@@ -49,7 +51,9 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     public Servo ClawServoLeft;
     public Servo ClawServoRight;
 
-    private ElapsedTime waitBeforeClaw = new ElapsedTime();
+    private ElapsedTime waitForClaw = new ElapsedTime();
+
+    private ElapsedTime waitForArm = new ElapsedTime();
 
     RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
 
@@ -159,7 +163,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(40.5)
+                .forward(42.5)
                 .build();
 
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
@@ -199,20 +203,20 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
-                .strafeRight(30)
+                .strafeRight(36)
                 .build();
 
         Trajectory center6 = drive.trajectoryBuilder(center5.end())
-                .lineToSplineHeading(new Pose2d(30, 0, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
                 .build();
 
         Trajectory center7 = drive.trajectoryBuilder(center6.end())
-                .splineToConstantHeading(new Vector2d(67, -31.5), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(67, -25.5), Math.toRadians(0))
                 .build();
 
         // move to left corner
         Trajectory cornerCenter = drive.trajectoryBuilder(center7.end())
-                .strafeTo(new Vector2d(56, -16))
+                .strafeTo(new Vector2d(64, 0))
                 .build();
 
         TrajectorySequence rotateCenter = drive.trajectorySequenceBuilder(cornerCenter.end())
@@ -285,6 +289,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
+        autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
         while (opModeInInit()) {
             if (gamepad2.left_bumper) {
@@ -319,7 +324,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
             telemetry.addData("Center Current State", centerCurrentState);
             telemetry.addData("Left Current State", leftCurrentState);
             telemetry.addData("Right Current State", rightCurrentState);
-            telemetry.addData("Clock", waitBeforeClaw.milliseconds());
+            telemetry.addData("Clock", waitForClaw.milliseconds());
 
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
@@ -327,7 +332,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         // Move forward to spike mark
                         drive.update();
 
-                        autoUtil.asyncMoveJoint(-100);
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER2;
@@ -337,7 +342,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                     case CENTER2:
                         // Move backwards
                         drive.update();
-                        autoUtil.asyncMoveJoint(-100);
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
                             autoUtil.asyncMoveJoint(0);
@@ -390,7 +395,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
                             centerCurrentState = centerState.GRAB;
 
-                            waitBeforeClaw.reset();
+                            waitForClaw.reset();
                         } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
                             if (drive.isBusy()) {
                                 drive.update();
@@ -426,8 +431,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         autoUtil.holdArm();
 
                         // If the claw has been closed for 1000 milliseconds, move to the next state
-                        if (waitBeforeClaw.milliseconds() > 1000) {
-                            waitBeforeClaw.reset();
+                        if (waitForClaw.milliseconds() > 1000) {
+                            waitForClaw.reset();
 
                             if (!autoUtil.pixelLockVerification()) {
                                 autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
@@ -483,35 +488,34 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case FIRST_DROP_OFF:
-                        armError = autoUtil.asyncMoveArm(ARM_DROP_2);
+                        double error = autoUtil.asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
 
-                        if (Math.abs(armError) <= 10) {
-                            centerCurrentState = centerState.RELEASE;
-                            waitBeforeClaw.reset();
+                        if (Math.abs(error) < 10) {
+                            if (waitForArm.milliseconds() > 1000) {
+                                waitForClaw.reset();
+                                autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                                centerCurrentState = centerState.RELEASE;
+                            }
+                        } else {
+                            waitForArm.reset();
                         }
+                        break;
                     case RELEASE:
-                        armError = autoUtil.asyncMoveArm(ARM_DROP_2);
+                        autoUtil.asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
 
-                        if (waitBeforeClaw.milliseconds() > 1000) {
-                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
-                            waitBeforeClaw.reset();
+                        if (waitForClaw.milliseconds() > 1000) {
                             centerCurrentState = centerState.HOME2;
                         }
                         break;
                     case HOME2:
-                        if (waitBeforeClaw.milliseconds() < 1000) {
-                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
-                        } else {
-                            armError = autoUtil.asyncMoveArm(ARM_HOME);
-                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
-                            autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
-                            if (Math.abs(armError) <= 10) {
-                                centerCurrentState = centerState.MOVE_TO_CORNER;
-                                drive.followTrajectory(cornerCenter);
-                                autoUtil.killArm();
-                            }
+                        error = autoUtil.asyncMoveArm(ARM_HOME);
+
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectoryAsync(cornerCenter);
+                            centerCurrentState = centerState.MOVE_TO_CORNER;
+                            autoUtil.killArm();
                         }
                         break;
                     case MOVE_TO_CORNER:

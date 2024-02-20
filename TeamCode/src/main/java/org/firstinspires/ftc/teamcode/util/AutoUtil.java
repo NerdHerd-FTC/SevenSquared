@@ -29,6 +29,7 @@ public class AutoUtil {
     private ElapsedTime callGap = new ElapsedTime();
     private ElapsedTime lockTimeout = new ElapsedTime();
     private int callsToColor = 0;
+    private int forcedOffset = 0;
 
     public static int armUpperLimit = 1070;
     public static int armLowerLimit = 1020;
@@ -55,6 +56,7 @@ public class AutoUtil {
     // add edge cases! - not detecting at all
     public static int errorThreshold = 15;
     public static int timeout = 2000;
+    public static int currentLockTarget = armUpperLimit;
 
     private int stepSize = 5;
 
@@ -128,13 +130,13 @@ public class AutoUtil {
             bottomGreen = green;
 
             if (Math.abs(whiteRedThresholdBottom - red) > 100) {
-                stepSize = 7;
+                stepSize = 8;
             } else if (Math.abs(whiteRedThresholdBottom - red) > 50) {
-                stepSize = 5;
+                stepSize = 4;
             } else if (Math.abs(whiteRedThresholdBottom - red) > 25) {
-                stepSize = 3;
-            } else {
                 stepSize = 2;
+            } else {
+                stepSize = 1;
             }
         }
 
@@ -144,7 +146,8 @@ public class AutoUtil {
     // Add something to adjust the robot when it is stuck - strafe left/move back
 
     public double lockOntoPixel() {
-        if (callGap.milliseconds() > 250) {
+        asyncMoveArm(currentLockTarget);
+        if (callGap.milliseconds() > 200) {
             callGap.reset();
             // Check if top and bottom sensors detect white
             boolean topDetectsWhite = isWhite(topColorSensor, whiteRedThresholdTop, "TOP");
@@ -168,26 +171,36 @@ public class AutoUtil {
             double error = 0;
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() - stepSize;
+                currentLockTarget  = arm.getCurrentPosition() - stepSize;
 
-                if (target > armUpperLimit) {
-                    target = armUpperLimit;
-                } else if (target < armLowerLimit) {
-                    target = armLowerLimit;
+                if (forcedOffset != 0) {
+                    currentLockTarget += forcedOffset;
+                    forcedOffset = 0;
                 }
 
-                error = asyncMoveArm(target);
+                if (currentLockTarget > armUpperLimit) {
+                    currentLockTarget = armUpperLimit;
+                } else if (currentLockTarget < armLowerLimit) {
+                    currentLockTarget = armLowerLimit;
+                }
+
+                error = asyncMoveArm(currentLockTarget);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() + stepSize;
+                currentLockTarget = arm.getCurrentPosition() + stepSize;
 
-                if (target > armUpperLimit) {
-                    target = armUpperLimit;
-                    reachedTop = true;
-                } else if (target < armLowerLimit) {
-                    target = armLowerLimit;
+                if (forcedOffset != 0) {
+                    currentLockTarget += forcedOffset;
+                    forcedOffset = 0;
                 }
-                error = asyncMoveArm(target);
+
+                if (currentLockTarget > armUpperLimit) {
+                    currentLockTarget = armUpperLimit;
+                    reachedTop = true;
+                } else if (currentLockTarget < armLowerLimit) {
+                    currentLockTarget = armLowerLimit;
+                }
+                error = asyncMoveArm(currentLockTarget);
             } else if (armDemands == ARM_DEMANDS.HOLD) {
                 detected ++;
                 asyncMoveArm(arm.getCurrentPosition());
@@ -243,6 +256,14 @@ public class AutoUtil {
 
         if (bottomDetects && !topDetects) {
             pixelLockOK = true;
+        }
+
+        if (!bottomDetects && !topDetects) {
+            currentLockTarget += 10;
+            forcedOffset = 10;
+        } else if (topDetects && bottomDetects) {
+            currentLockTarget -= 10;
+            forcedOffset = -10;
         }
 
         if (!pixelLockOK) {

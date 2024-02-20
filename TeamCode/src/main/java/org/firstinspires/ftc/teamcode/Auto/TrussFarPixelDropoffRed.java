@@ -18,6 +18,7 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -36,12 +37,13 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 @Config
+@Disabled
 @Autonomous(name="Truss Far Dropoff - Red")
 public class TrussFarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
     public static double x_end = -46;
-    public static double y_end = -29.5;
+    public static double y_end = -28;
 
     public static double jointError = 0;
     public static double armError = 0;
@@ -157,7 +159,7 @@ public class TrussFarPixelDropoffRed extends LinearOpMode {
 
         // Push toward spike
         Trajectory center1 = drive.trajectoryBuilder(startPose)
-                .forward(40.5)
+                .forward(41.5)
                 .build();
 
         Trajectory center2 = drive.trajectoryBuilder(center1.end())
