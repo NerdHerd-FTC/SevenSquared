@@ -91,15 +91,20 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     // Left
     private enum leftState {
         LEFT1,
+        LEFT1_2,
         LEFT2,
-        LEFT3,
+        LEFT2_2,
         PICK_UP,
         CALIBRATE_PICKUP,
+        GRAB,
+        HOME,
+        LEFT3,
         LEFT4,
         FIRST_DROP_OFF,
-        LEFT5,
-        SECOND_DROP_OFF,
+        RELEASE,
+        HOME2,
         MOVE_TO_CORNER,
+        ROTATE,
         DONE
     }
 
@@ -107,14 +112,20 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     private enum rightState {
         RIGHT1,
         RIGHT2,
-        RIGHT3,
+        RIGHT2_2,
+        RIGHT2_3,
         PICK_UP,
         CALIBRATE_PICKUP,
+        GRAB,
+        HOME,
         RIGHT4,
-        FIRST_DROP_OFF,
         RIGHT5,
-        SECOND_DROP_OFF,
+        RIGHT6,
+        FIRST_DROP_OFF,
+        RELEASE,
+        HOME2,
         MOVE_TO_CORNER,
+        ROTATE,
         DONE
     }
 
@@ -211,7 +222,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory center7 = drive.trajectoryBuilder(center6.end())
-                .splineToConstantHeading(new Vector2d(67, -25.5), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(67, -30.5), Math.toRadians(0))
                 .build();
 
         // move to left corner
@@ -225,50 +236,81 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(-52, -30), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-45, -30, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // moving to pixel stack
-        Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .back(14)
+        Trajectory left1_2 = drive.trajectoryBuilder(left1.end())
+                .back(11)
                 .build();
 
         // moving to pixel stack
-        Trajectory left3 = drive.trajectoryBuilder(left2.end())
-                .strafeRight(15)
+        Trajectory left2 = drive.trajectoryBuilder(left1_2.end())
+                .lineToConstantHeading(new Vector2d(-34, -5.95))
                 .build();
 
-        // spline through the middle truss to drop off at backdrop
+        Trajectory left2_2 = drive.trajectoryBuilder(left2.end())
+                .lineToConstantHeading(new Vector2d(-55, -5.95))
+                .build();
+
+        Trajectory left3 = drive.trajectoryBuilder(left2_2.end())
+                .strafeRight(12)
+                .build();
+
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
-                .lineToSplineHeading(new Pose2d(0, -10, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
+                .splineToConstantHeading(new Vector2d(67, -17), Math.toRadians(0))
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
                 // new Pose2d(57, -30, Math.toRadians(0));
-                .splineToConstantHeading(new Vector2d(50, -10), Math.toRadians(0))
+                .strafeTo(new Vector2d(64, 0))
+                .build();
+
+        TrajectorySequence rotateLeft = drive.trajectorySequenceBuilder(cornerLeft.end())
+                .turn(Math.toRadians(180))
                 .build();
 
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .forward(26)
+                .splineToLinearHeading(new Pose2d(-20.261, -30, Math.toRadians(45)), Math.toRadians(45))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
-                .back(15)
+                .strafeTo(new Vector2d(-38, -48))
                 .build();
 
-        // go to pixel stack
-        Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .lineToSplineHeading(new Pose2d(-48.5, -32, Math.toRadians(180)))
+        TrajectorySequence right2_2 = drive.trajectorySequenceBuilder(right2.end())
+                .turn(Math.toRadians(135))
                 .build();
 
-        // spline through middle truss to get to backdrop
+        Trajectory right2_3 = drive.trajectoryBuilder(right2_2.end())
+                .lineToConstantHeading(new Vector2d(-38, -29.95))
+                .build();
+
+        // PIKCUP FROM STACK
+        Trajectory right3 = drive.trajectoryBuilder(right2_3.end())
+                .lineToConstantHeading(new Vector2d(-55, -29.95))
+                .build();
+
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
-                .strafeRight(6)
+                .strafeRight(36)
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right4.end())
-                .strafeTo(new Vector2d(56, -16))
+        Trajectory right5 = drive.trajectoryBuilder(right4.end())
+                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
+                .build();
+
+        Trajectory right6 = drive.trajectoryBuilder(right5.end())
+                .splineToConstantHeading(new Vector2d(67, -40), Math.toRadians(0)) // TUNE THIS ENDPOINT
+                .build();
+
+        Trajectory cornerRight = drive.trajectoryBuilder(right6.end())
+                .strafeTo(new Vector2d(64, 0))
+                .build();
+
+        TrajectorySequence rotateRight = drive.trajectorySequenceBuilder(cornerRight.end())
+                .turn(Math.toRadians(180))
                 .build();
 
         aprilTag = new AprilTagProcessor.Builder()
@@ -539,9 +581,176 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         break;
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+                switch (leftCurrentState) {
+                    case LEFT1:
+                        drive.update();
 
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.LEFT1_2;
+                            drive.followTrajectoryAsync(left1_2);
+                        }
+                        break;
+
+                    case LEFT1_2:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.asyncMoveJoint(0);
+                            leftCurrentState = leftState.LEFT2;
+                            drive.followTrajectoryAsync(left2);
+                        }
+                        break;
+
+                    case LEFT2:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(0);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.killJoint();
+                            leftCurrentState = leftState.LEFT2_2;
+                            drive.followTrajectoryAsync(left2_2);
+                        }
+                        break;
+
+                    case LEFT2_2:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.PICK_UP;
+                        }
+                        break;
+
+                    case PICK_UP:
+                        // Move the arm to the pixel stack height
+                        double timeLock = autoUtil.lockOntoPixel();
+
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        // If the arm is at the pixel stack height, move to the next state
+                        if (timeLock > 750) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                            leftCurrentState = leftState.GRAB;
+
+                            waitForClaw.reset();
+                        } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
+                            if (drive.isBusy()) {
+                                drive.update();
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_BACK) {
+                                drive.followTrajectoryAsync(center3_1);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_FORWARD) {
+                                drive.followTrajectoryAsync(center3_2);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.STRAFE_RIGHT) {
+                                drive.followTrajectoryAsync(center3_3);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            }
+                        }
+                        break;
+                    case GRAB:
+                        autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                        // Hold the position of the arm and joint and close the claw
+                        autoUtil.holdArm();
+
+                        // If the claw has been closed for 1000 milliseconds, move to the next state
+                        if (waitForClaw.milliseconds() > 1000) {
+                            waitForClaw.reset();
+
+                            if (!autoUtil.pixelLockVerification()) {
+                                autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                                autoUtil.pixelLock.reset();
+                                leftCurrentState = leftState.PICK_UP;
+                            } else {
+                                leftCurrentState = leftState.HOME;
+                            }
+                        }
+                        break;
+                    case HOME:
+                        // Move the arm and joint to the home position
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+
+                        // If the arm and joint are at the home position, move to the next state
+                        if (Math.abs(armError) <= 10) {
+                            leftCurrentState = leftState.LEFT3;
+                            drive.followTrajectory(left3);
+                            autoUtil.killArm();
+                        }
+                        break;
+                    case LEFT3:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.LEFT4;
+                            drive.followTrajectory(left4);
+                        }
+                        break;
+                    case LEFT4:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.FIRST_DROP_OFF;
+                        }
+                        break;
+                    case FIRST_DROP_OFF:
+                        double error = autoUtil.asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+
+                        if (Math.abs(error) < 10) {
+                            if (waitForArm.milliseconds() > 1000) {
+                                waitForClaw.reset();
+                                autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                                leftCurrentState = leftState.RELEASE;
+                            }
+                        } else {
+                            waitForArm.reset();
+                        }
+                        break;
+                    case RELEASE:
+                        autoUtil.asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        if (waitForClaw.milliseconds() > 1000) {
+                            leftCurrentState = leftState.HOME2;
+                        }
+                        break;
+                    case HOME2:
+                        error = autoUtil.asyncMoveArm(ARM_HOME);
+
+                        if (Math.abs(error) < 10) {
+                            drive.followTrajectoryAsync(cornerLeft);
+                            leftCurrentState = leftState.MOVE_TO_CORNER;
+                            autoUtil.killArm();
+                        }
+                        break;
+                    case MOVE_TO_CORNER:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.ROTATE;
+                            drive.followTrajectorySequence(rotateLeft);
+                        }
+                        break;
+                    case ROTATE:
+                        drive.update();
+                        armError = autoUtil.asyncMoveArm(ARM_HOME);
+                        jointError = autoUtil.asyncMoveJoint(JOINT_HOME);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.killArm();
+                            autoUtil.killJoint();
+                            leftCurrentState = leftState.DONE;
+                        }
+                        break;
+                }
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+                switch (rightCurrentState) {
 
+                }
             }
 
             // Continually write pose to `PoseStorage`
