@@ -25,6 +25,7 @@ public class RobotConstants {
     public static Integer ARM_GROUND = 1200; // TUNE THIS FOR MACRO
     public static Integer ARM_FORWARDS_SCORE = 730;
     public static Integer ARM_FORWARDS_LOW_SCORE = 825;
+    public static Integer ARM_FORWARDS_MID_SCORE = 815;
     public static Integer ARM_AIRPLANE = 2160;
     public static Integer ARM_DROP_1 = 800;
     public static Integer ARM_DROP_2 = 780;
