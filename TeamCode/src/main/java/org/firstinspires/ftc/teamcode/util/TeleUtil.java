@@ -464,7 +464,11 @@ public class TeleUtil {
             } else {
                 jointState = JointState.BACKWARDS_SCORING;
             }
-        }  else if (gamepad.left_trigger > 0.5) {
+        } else if (gamepad.x && gamepad.right_trigger > 0.75) {
+            joint.setPower(0);
+            joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            opMode.telemetry.addLine("Joint reset");
+        } else if (gamepad.left_trigger > 0.5) {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_AIRPLANE);
             power = joint_out + joint_ff;
             joint_hold = JOINT_AIRPLANE;
@@ -473,7 +477,7 @@ public class TeleUtil {
             power = input + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
-        } else if (gamepad.dpad_up && dpadDebounce.milliseconds() > 500) {
+        } /* else if (gamepad.dpad_up && dpadDebounce.milliseconds() > 500) {
             dpadDebounce.reset();
             targetPixelLayer++;
 
@@ -503,7 +507,8 @@ public class TeleUtil {
             joint_hold = jointState.target;
 
             power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
-        } else if (gamepad.dpad_down && dpadDebounce.milliseconds() > 500) {
+        }
+        else if (gamepad.dpad_down && dpadDebounce.milliseconds() > 500) {
             dpadDebounce.reset();
             targetPixelLayer--;
 
@@ -533,7 +538,7 @@ public class TeleUtil {
             joint_hold = jointState.target;
 
             power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
-        } else if (joint.getCurrentPosition() > -10) {
+        }  */else if (joint.getCurrentPosition() > -10) {
             jointState = JointState.GROUNDING;
             power = 0.0;
             joint_hold = 0;
@@ -597,19 +602,10 @@ public class TeleUtil {
             } else {
                 armState = ArmState.BACKWARDS_SCORING;
             }
-        } else if (gamepad.x) {
-            // forwards score!
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_FORWARDS_SCORE);
-            power = arm_out + arm_ff;
-            arm_hold = ARM_FORWARDS_SCORE;
-            armState = ArmState.FORWARDS_SCORING;
-
-            double error = arm.getCurrentPosition() - ARM_FORWARDS_SCORE;
-            if (Math.abs(error) < 10) {
-                armState = ArmState.FORWARDS_REACHED;
-            } else {
-                armState = ArmState.FORWARDS_SCORING;
-            }
+        } else if (gamepad.x && gamepad.right_trigger > 0.75) {
+            arm.setPower(0);
+            arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            opMode.telemetry.addLine("Arm reset");
         } else if (gamepad.left_trigger > 0.5) {
             // airplane!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_AIRPLANE);
