@@ -114,6 +114,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         RIGHT2,
         RIGHT2_2,
         RIGHT2_3,
+        RIGHT3,
         PICK_UP,
         CALIBRATE_PICKUP,
         GRAB,
@@ -749,7 +750,192 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
                 switch (rightCurrentState) {
+                    case RIGHT1:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+                        
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.RIGHT2;
+                            drive.followTrajectoryAsync(right2);
+                        }
+                        break;
 
+                    case RIGHT2:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.asyncMoveJoint(JOINT_HOME);
+                            rightCurrentState = rightState.RIGHT2_2;
+                            drive.followTrajectorySequenceAsync(right2_2);
+                        }
+                        break;
+
+                    case RIGHT2_2:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_HOME);
+
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.RIGHT2_3;
+                            drive.followTrajectoryAsync(right2_3);
+                        }
+                        break;
+
+                    case RIGHT2_3:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_HOME);
+
+                        if (!drive.isBusy()) {
+                            autoUtil.killJoint();
+                            rightCurrentState = rightState.RIGHT3;
+                            drive.followTrajectoryAsync(right3);
+                        }
+                        break;
+
+                    case RIGHT3:
+                        drive.update();
+
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.PICK_UP;
+                        }
+                        break;
+
+                    case PICK_UP:
+                        // Move the arm to the pixel stack height
+                        double timeLock = autoUtil.lockOntoPixel();
+
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        // If the arm is at the pixel stack height, move to the next state
+                        if (timeLock > 750) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                            rightCurrentState = rightState.GRAB;
+
+                            waitForClaw.reset();
+                        } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) { // may need to be redone for RIGHT
+                            if (drive.isBusy()) {
+                                drive.update();
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_BACK) {
+                                drive.followTrajectoryAsync(center3_1);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_FORWARD) {
+                                drive.followTrajectoryAsync(center3_2);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.STRAFE_RIGHT) {
+                                drive.followTrajectoryAsync(center3_3);
+                                autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
+                            }
+                        }
+                        break;
+
+                        case CALIBRATE_PICKUP:
+                            break;
+
+                        case GRAB:
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                            // Hold the position of the arm and joint and close the claw
+                            autoUtil.holdArm();
+
+                            // If the claw has been closed for 1000 milliseconds, move to the next state
+                            if (waitForClaw.milliseconds() > 1000) {
+                                waitForClaw.reset();
+
+                                if (!autoUtil.pixelLockVerification()) {
+                                    autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                                    autoUtil.pixelLock.reset();
+                                    rightCurrentState = rightState.PICK_UP;
+                                } else {
+                                    rightCurrentState = rightState.HOME;
+                                }
+                            }
+                            break;
+
+                        case HOME:
+                            double error = autoUtil.asyncMoveArm(ARM_HOME);
+
+                            if (Math.abs(error) < 10) {
+                                drive.followTrajectoryAsync(right4);
+                                rightCurrentState = rightState.RIGHT4;
+                                autoUtil.killArm();
+                            }
+                            break;
+
+                        case RIGHT4:
+                            drive.update();
+
+                            if (!drive.isBusy()) {
+                                rightCurrentState = rightState.RIGHT5;
+                                drive.followTrajectoryAsync(right5);
+                            }
+                            break;
+
+                        case RIGHT5:
+                            drive.update();
+
+                            if (!drive.isBusy()) {
+                                rightCurrentState = rightState.RIGHT6;
+                            }
+                            break;
+
+                        case RIGHT6:
+                            drive.update();
+
+                            if (!drive.isBusy()) {
+                                rightCurrentState = rightState.FIRST_DROP_OFF;
+                            }
+                            break;
+
+                        case FIRST_DROP_OFF:
+                            error = autoUtil.asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+
+                            if (Math.abs(error) < 10) {
+                                if (waitForArm.milliseconds() > 1000) {
+                                    waitForClaw.reset();
+                                    autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                                    rightCurrentState = rightState.RELEASE;
+                                }
+                            } else {
+                                waitForArm.reset();
+                            }
+                            break;
+
+                        case RELEASE:
+                            autoUtil.asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                            autoUtil.moveLeftFinger(CLAW_LEFT_OPEN);
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                            if (waitForClaw.milliseconds() > 1000) {
+                                rightCurrentState = rightState.HOME2;
+                            }
+                            break;
+
+                        case HOME2:
+                            error = autoUtil.asyncMoveArm(ARM_HOME);
+
+                            if (Math.abs(error) < 10) {
+                                drive.followTrajectoryAsync(cornerRight);
+                                rightCurrentState = rightState.MOVE_TO_CORNER;
+                            }
+                            break;
+
+                        case MOVE_TO_CORNER:
+                            drive.update();
+
+                            if (!drive.isBusy()) {
+                                drive.followTrajectoryAsync(cornerRight);
+                                rightCurrentState = rightState.ROTATE;
+                            }
+                            break;
+
+                        case ROTATE:
+                            drive.update();
+
+                            if (!drive.isBusy()) {
+                                rightCurrentState = rightState.DONE;
+                            }
+                            break;
                 }
             }
 
