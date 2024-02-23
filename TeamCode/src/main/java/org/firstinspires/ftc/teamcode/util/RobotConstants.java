@@ -32,10 +32,11 @@ public class RobotConstants {
 
 
     // for auto mainly
-    public static Integer ARM_PIXEL_DEPTH_1 = 1070;
-    public static Integer ARM_PIXEL_DEPTH_2 = 1050;
+    public static Integer ARM_PIXEL_DEPTH_1 = 1030;
+    /*public static Integer ARM_PIXEL_DEPTH_2 = 1050;
     public static Integer ARM_PIXEL_DEPTH_3 = 1100;
-    public static Integer ARM_PIXEL_DEPTH_4 = 1150;
+    public static Integer ARM_PIXEL_DEPTH_4 = 1150;*/
+    public static Integer ARM_PIXEL_GRAB_1 = 1025;
     public static Integer ARM_PIXEL_DEPTH_5 = ARM_GROUND;
 
     public static double JOINT_SPEED = 1.0;

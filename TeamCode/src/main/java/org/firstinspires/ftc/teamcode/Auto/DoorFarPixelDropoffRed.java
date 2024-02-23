@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_DROP_2;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_PIXEL_DEPTH_1;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_PIXEL_GRAB_1;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
@@ -67,6 +68,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     private ElapsedTime initToggleDebounce = new ElapsedTime();
     private boolean pickupPixels = true;
 
+    private ElapsedTime autoTime = new ElapsedTime();
+
     // States for the state machine
     // Center
     private enum centerState {
@@ -76,7 +79,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         CENTER2_2,
         CENTER3,
         PICK_UP,
-        CALIBRATE_PICKUP,
+        JUST_PICK_UP,
         GRAB,
         HOME,
         CENTER4,
@@ -98,7 +101,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         LEFT2,
         LEFT2_2,
         PICK_UP,
-        CALIBRATE_PICKUP,
+        JUST_PICK_UP,
         GRAB,
         HOME,
         LEFT3,
@@ -119,7 +122,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         RIGHT2_3,
         RIGHT3,
         PICK_UP,
-        CALIBRATE_PICKUP,
+        JUST_PICK_UP,
         GRAB,
         HOME,
         RIGHT4,
@@ -351,6 +354,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
             telemetry.addData("Picking Up Pixels", pickupPixels);
         }
 
+        autoTime.reset();
+
         leftState leftCurrentState = leftState.LEFT1;
         rightState rightCurrentState = rightState.RIGHT1;
         centerState centerCurrentState = centerState.CENTER1;
@@ -452,6 +457,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                             centerCurrentState = centerState.GRAB;
 
                             waitForClaw.reset();
+                        } else if (autoTime.seconds() > 18) {
+                            centerCurrentState = centerState.JUST_PICK_UP;
                         } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
                             if (drive.isBusy()) {
                                 drive.update();
@@ -467,16 +474,14 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                             }
                         }
                         break;
-                    case CALIBRATE_PICKUP:
-                        drive.update();
-
+                    case JUST_PICK_UP:
                         autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
 
-                        armError = autoUtil.asyncMoveArm(1000);
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_GRAB_1);
 
-                        if (!drive.isBusy()) {
-                            centerCurrentState = centerState.PICK_UP;
-                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        if (armError <= 3) {
+                            centerCurrentState = centerState.GRAB;
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
                         }
 
                         break;
@@ -654,7 +659,9 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                             leftCurrentState = leftState.GRAB;
 
                             waitForClaw.reset();
-                        } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
+                        } else if (autoTime.seconds() > 18) {
+                            leftCurrentState = leftState.JUST_PICK_UP;
+                        }else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) {
                             if (drive.isBusy()) {
                                 drive.update();
                             } else if (autoUtil.pixelDemands == AutoUtil.PIXEL_DEMANDS.MOVE_BACK) {
@@ -667,6 +674,16 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                                 drive.followTrajectoryAsync(center3_3);
                                 autoUtil.pixelDemands = AutoUtil.PIXEL_DEMANDS.IDLE;
                             }
+                        }
+                        break;
+                    case JUST_PICK_UP:
+                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_GRAB_1);
+
+                        if (armError <= 3) {
+                            leftCurrentState = leftState.GRAB;
+                            autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
                         }
                         break;
                     case GRAB:
@@ -834,6 +851,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                             rightCurrentState = rightState.GRAB;
 
                             waitForClaw.reset();
+                        } else if (autoTime.seconds() > 18) {
+                            rightCurrentState = rightState.JUST_PICK_UP;
                         } else if (autoUtil.armDemands == AutoUtil.ARM_DEMANDS.STUCK) { // may need to be redone for RIGHT
                             if (drive.isBusy()) {
                                 drive.update();
@@ -850,7 +869,15 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         }
                         break;
 
-                        case CALIBRATE_PICKUP:
+                        case JUST_PICK_UP:
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_GRAB_1);
+
+                            if (armError <= 3) {
+                                rightCurrentState = rightState.GRAB;
+                                autoUtil.moveRightFinger(CLAW_RIGHT_CLOSED);
+                            }
                             break;
 
                         case GRAB:
