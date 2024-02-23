@@ -63,6 +63,9 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     static final double CAMERA_Y_OFFSET = 0.0; // replace with your camera's y offset
 
     public static int calibration_step = 0;
+    private ElapsedTime initDebounce = new ElapsedTime();
+    private ElapsedTime initToggleDebounce = new ElapsedTime();
+    private boolean pickupPixels = true;
 
     // States for the state machine
     // Center
@@ -340,6 +343,12 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
             } else if (gamepad2.right_bumper) {
                 autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
             }
+
+            if (gamepad2.x && initToggleDebounce.milliseconds() > 500) {
+                pickupPixels = !pickupPixels;
+            }
+
+            telemetry.addData("Picking Up Pixels", pickupPixels);
         }
 
         leftState leftCurrentState = leftState.LEFT1;
@@ -423,7 +432,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
                         if (!drive.isBusy()) {
                             autoUtil.pixelLock.reset();
-                            centerCurrentState = centerState.PICK_UP;
+                            if (pickupPixels) {
+                                centerCurrentState = centerState.PICK_UP;
+                            } else {
+                                centerCurrentState = centerState.HOME;
+                            }
                         }
                         break;
                     case PICK_UP:
@@ -620,7 +633,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         drive.update();
 
                         if (!drive.isBusy()) {
-                            leftCurrentState = leftState.PICK_UP;
+                            if (pickupPixels) {
+                                leftCurrentState = leftState.PICK_UP;
+                            } else {
+                                leftCurrentState = leftState.HOME;
+                            }
                         }
                         break;
 
@@ -753,7 +770,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                     case RIGHT1:
                         drive.update();
                         autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
-                        
+
                         if (!drive.isBusy()) {
                             rightCurrentState = rightState.RIGHT2;
                             drive.followTrajectoryAsync(right2);
@@ -796,7 +813,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         drive.update();
 
                         if (!drive.isBusy()) {
-                            rightCurrentState = rightState.PICK_UP;
+                            if (pickupPixels) {
+                                rightCurrentState = rightState.PICK_UP;
+                            } else {
+                                rightCurrentState = rightState.HOME;
+                            }
                         }
                         break;
 
@@ -924,7 +945,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                             drive.update();
 
                             if (!drive.isBusy()) {
-                                drive.followTrajectoryAsync(cornerRight);
+                                drive.followTrajectorySequenceAsync(rotateRight);
                                 rightCurrentState = rightState.ROTATE;
                             }
                             break;
