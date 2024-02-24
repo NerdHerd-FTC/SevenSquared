@@ -53,20 +53,20 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     public static double left_pixel_stack_x = -50;
     public static double left_pixel_stack_y = -5.95;
 
-    public static double right_pixel_stack_x = -55;
-    public static double right_pixel_stack_y = -29.95;
+    public static double right_pixel_stack_x = -43;
+    public static double right_pixel_stack_y = -29;
 
     public static double center_pixel_stack_x = -47.5;
     public static double center_pixel_stack_y = -28;
 
     public static double left_back_x = 67;
-    public static double left_back_y = -17;
+    public static double left_back_y = -19;
 
     public static double right_back_x = 67;
-    public static double right_back_y = -40;
+    public static double right_back_y = -42;
 
     public static double center_back_x = 67;
-    public static double center_back_y = 0;
+    public static double center_back_y = -30.5;
 
     public static double jointError = 0;
     public static double armError = 0;
@@ -118,6 +118,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
     // Left
     private enum leftState {
+        LEFT_0,
         LEFT1,
         LEFT1_2,
         LEFT2,
@@ -138,6 +139,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
     // Right
     private enum rightState {
+        RIGHT0,
         RIGHT1,
         RIGHT2,
         RIGHT2_2,
@@ -264,7 +266,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         // push to spike
-        Trajectory left1 = drive.trajectoryBuilder(startPose)
+        Trajectory left0 = drive.trajectoryBuilder(startPose)
+                .splineToLinearHeading(new Pose2d(-42, -30, Math.toRadians(90)), Math.toRadians(90))
+                .build();
+
+        Trajectory left1 = drive.trajectoryBuilder(left0.end())
                 .splineToLinearHeading(new Pose2d(-42, -22, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
@@ -288,7 +294,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
                 .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
-                .splineToConstantHeading(new Vector2d(67, -17), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(left_back_x, left_back_y), Math.toRadians(0))
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
@@ -300,8 +306,13 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .turn(Math.toRadians(180))
                 .build();
 
+
+        Trajectory right0 = drive.trajectoryBuilder(startPose)
+                .forward(7)
+                .build();
+
         // RIGHT goes through the edge truss to drop off at backdrop
-        Trajectory right1 = drive.trajectoryBuilder(startPose)
+        Trajectory right1 = drive.trajectoryBuilder(right0.end())
                 .splineToLinearHeading(new Pose2d(-20.261, -25, Math.toRadians(45)), Math.toRadians(45))
                 .build();
 
@@ -331,7 +342,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory right6 = drive.trajectoryBuilder(right5.end())
-                .splineToConstantHeading(new Vector2d(67, -40), Math.toRadians(0)) // TUNE THIS ENDPOINT
+                .splineToConstantHeading(new Vector2d(right_back_x, right_back_y), Math.toRadians(0)) // TUNE THIS ENDPOINT
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right6.end())
@@ -378,8 +389,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         autoTime.reset();
 
-        leftState leftCurrentState = leftState.LEFT1;
-        rightState rightCurrentState = rightState.RIGHT1;
+        leftState leftCurrentState = leftState.LEFT_0;
+        rightState rightCurrentState = rightState.RIGHT0;
         centerState centerCurrentState = centerState.CENTER1;
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
@@ -392,9 +403,9 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectoryAsync(center1);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-            drive.followTrajectoryAsync(left1);
+            drive.followTrajectoryAsync(left0);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-            drive.followTrajectoryAsync(right1);
+            drive.followTrajectoryAsync(right0);
         }
 
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
@@ -623,6 +634,15 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
                 switch (leftCurrentState) {
+                    case LEFT_0:
+                        drive.update();
+
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                            if (!drive.isBusy()) {
+                                leftCurrentState = leftState.LEFT1;
+                                drive.followTrajectoryAsync(left1);
+                            }
                     case LEFT1:
                         drive.update();
 
@@ -806,6 +826,15 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 }
             } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
                 switch (rightCurrentState) {
+                    case RIGHT0:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.RIGHT1;
+                            drive.followTrajectoryAsync(right1);
+                        }
+                        break;
                     case RIGHT1:
                         drive.update();
                         autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
