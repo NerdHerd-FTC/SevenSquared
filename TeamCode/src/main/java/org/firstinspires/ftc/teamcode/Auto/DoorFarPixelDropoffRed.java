@@ -267,7 +267,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // push to spike
         Trajectory left0 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(-42, -30, Math.toRadians(90)), Math.toRadians(90))
+                .forward(20)
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(left0.end())
@@ -306,9 +306,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .turn(Math.toRadians(180))
                 .build();
 
-
         Trajectory right0 = drive.trajectoryBuilder(startPose)
-                .forward(7)
+                .forward(20)
                 .build();
 
         // RIGHT goes through the edge truss to drop off at backdrop

@@ -37,14 +37,36 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
+import java.util.Vector;
 
 @Config
-@Autonomous(name="Door Far Dropoff - BlueNew")
+@Autonomous(name="Door Far Dropoff - Red")
 public class NEWFarPixelDropOffBlue extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double x_end = -47.5;
-    public static double y_end = -28;
+    public static double left_spike_x = -45;
+    public static double left_spike_y = 29;
+
+    public static double right_spike_x = -20.261;
+    public static double right_spike_y = 30;
+
+    public static double left_pixel_stack_x = -48;
+    public static double left_pixel_stack_y = 5.95;
+
+    public static double right_pixel_stack_x = -43;
+    public static double right_pixel_stack_y = 29;
+
+    public static double center_pixel_stack_x = -47.5;
+    public static double center_pixel_stack_y = 28;
+
+    public static double left_back_x = 67;
+    public static double left_back_y = 19;
+
+    public static double right_back_x = 67;
+    public static double right_back_y = 40;
+
+    public static double center_back_x = 67;
+    public static double center_back_y = 30.5;
 
     public static double jointError = 0;
     public static double armError = 0;
@@ -56,7 +78,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
     private ElapsedTime waitForArm = new ElapsedTime();
 
-    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     private AprilTagProcessor aprilTag;
 
@@ -96,6 +118,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
     // Left
     private enum leftState {
+        LEFT_0,
         LEFT1,
         LEFT1_2,
         LEFT2,
@@ -116,6 +139,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
     // Right
     private enum rightState {
+        RIGHT0,
         RIGHT1,
         RIGHT2,
         RIGHT2_2,
@@ -174,7 +198,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // Bot starts on the far side of the red side of the field
+        // Bot starts on the far side of the blue side of the field
         Pose2d startPose = new Pose2d(-34, 61, Math.toRadians(90));
 
         drive.setPoseEstimate(startPose);
@@ -189,7 +213,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         TrajectorySequence center2_turn = drive.trajectorySequenceBuilder(center2.end())
-                .turn(Math.toRadians(270))
+                .turn(Math.toRadians(90))
                 .build();
 
         Trajectory center2_strafeToX = drive.trajectoryBuilder(center2_turn.end())
@@ -198,7 +222,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // Spline to pixel stack
         Trajectory center3 = drive.trajectoryBuilder(center2_strafeToX.end())
-                .lineToConstantHeading(new Vector2d(x_end, y_end))
+                .lineToConstantHeading(new Vector2d(center_pixel_stack_x, center_pixel_stack_y))
                 .build();
 
         // Raise arm up before executing 3_ series of movements - one issue may be time for later autos
@@ -221,11 +245,11 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
-                .strafeLeft(36)
+                .strafeRight(36)
                 .build();
 
         Trajectory center6 = drive.trajectoryBuilder(center5.end())
-                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(30, -6, Math.toRadians(0)))
                 .build();
 
         Trajectory center7 = drive.trajectoryBuilder(center6.end())
@@ -234,7 +258,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // move to left corner
         Trajectory cornerCenter = drive.trajectoryBuilder(center7.end())
-                .strafeTo(new Vector2d(64, 56))
+                .strafeTo(new Vector2d(64, 0))
                 .build();
 
         TrajectorySequence rotateCenter = drive.trajectorySequenceBuilder(cornerCenter.end())
@@ -242,8 +266,12 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         // push to spike
-        Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(-45, 30, Math.toRadians(180)), Math.toRadians(180))
+        Trajectory left0 = drive.trajectoryBuilder(startPose)
+                .forward(20)
+                .build();
+
+        Trajectory left1 = drive.trajectoryBuilder(left0.end())
+                .splineToLinearHeading(new Pose2d(-42, 22, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // moving to pixel stack
@@ -253,34 +281,38 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1_2.end())
-                .lineToConstantHeading(new Vector2d(-34, 5.95))
+                .lineToConstantHeading(new Vector2d(-31, 5.95))
                 .build();
 
         Trajectory left2_2 = drive.trajectoryBuilder(left2.end())
-                .lineToConstantHeading(new Vector2d(-55, 5.95))
+                .lineToConstantHeading(new Vector2d(left_pixel_stack_x, left_pixel_stack_y))
                 .build();
 
         Trajectory left3 = drive.trajectoryBuilder(left2_2.end())
-                .strafeLeft(12)
+                .strafeRight(12)
                 .build();
 
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
-                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
-                .splineToConstantHeading(new Vector2d(67, 17), Math.toRadians(0))
+                .lineToSplineHeading(new Pose2d(30, -6, Math.toRadians(0)))
+                .splineToConstantHeading(new Vector2d(left_back_x, left_back_y), Math.toRadians(0))
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left4.end())
                 // new Pose2d(57, -30, Math.toRadians(0));
-                .strafeTo(new Vector2d(64, 56))
+                .strafeTo(new Vector2d(64, 0))
                 .build();
 
         TrajectorySequence rotateLeft = drive.trajectorySequenceBuilder(cornerLeft.end())
                 .turn(Math.toRadians(180))
                 .build();
 
+        Trajectory right0 = drive.trajectoryBuilder(startPose)
+                .forward(20)
+                .build();
+
         // RIGHT goes through the edge truss to drop off at backdrop
-        Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(-20.261, 30, Math.toRadians(45)), Math.toRadians(45))
+        Trajectory right1 = drive.trajectoryBuilder(right0.end())
+                .splineToLinearHeading(new Pose2d(-20.261, 25, Math.toRadians(45)), Math.toRadians(45))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
@@ -297,23 +329,23 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // PIKCUP FROM STACK
         Trajectory right3 = drive.trajectoryBuilder(right2_3.end())
-                .lineToConstantHeading(new Vector2d(-55, 29.95))
+                .lineToConstantHeading(new Vector2d(right_pixel_stack_x, right_pixel_stack_y))
                 .build();
 
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
-                .strafeLeft(36)
+                .strafeRight(36)
                 .build();
 
         Trajectory right5 = drive.trajectoryBuilder(right4.end())
-                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(30, -6, Math.toRadians(0)))
                 .build();
 
         Trajectory right6 = drive.trajectoryBuilder(right5.end())
-                .splineToConstantHeading(new Vector2d(67, 40), Math.toRadians(0)) // TUNE THIS ENDPOINT
+                .splineToConstantHeading(new Vector2d(right_back_x, right_back_y), Math.toRadians(0)) // TUNE THIS ENDPOINT
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right6.end())
-                .strafeTo(new Vector2d(64, 56))
+                .strafeTo(new Vector2d(64, 0))
                 .build();
 
         TrajectorySequence rotateRight = drive.trajectorySequenceBuilder(cornerRight.end())
@@ -330,7 +362,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(blueCubeDetectionPipeline)
                 .addProcessor(aprilTag)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
@@ -350,29 +382,29 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
             if (gamepad2.x && initToggleDebounce.milliseconds() > 500) {
                 pickupPixels = !pickupPixels;
             }
-
             telemetry.addData("Picking Up Pixels", pickupPixels);
+            telemetry.update();
         }
 
         autoTime.reset();
 
-        leftState leftCurrentState = leftState.LEFT1;
-        rightState rightCurrentState = rightState.RIGHT1;
+        leftState leftCurrentState = leftState.LEFT_0;
+        rightState rightCurrentState = rightState.RIGHT0;
         centerState centerCurrentState = centerState.CENTER1;
 
-        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         autoUtil.moveLeftFinger(CLAW_LEFT_CLOSED);
 
-        visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
+        visionPortal.setProcessorEnabled(blueCubeDetectionPipeline, false);
         visionPortal.setProcessorEnabled(aprilTag, true);
 
-        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectoryAsync(center1);
-        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-            drive.followTrajectoryAsync(left1);
-        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-            drive.followTrajectoryAsync(right1);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            drive.followTrajectoryAsync(left0);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            drive.followTrajectoryAsync(right0);
         }
 
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
@@ -383,7 +415,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
             telemetry.addData("Right Current State", rightCurrentState);
             telemetry.addData("Clock", waitForClaw.milliseconds());
 
-            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER1:
                         // Move forward to spike mark
@@ -599,8 +631,17 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                         }
                         break;
                 }
-            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
                 switch (leftCurrentState) {
+                    case LEFT_0:
+                        drive.update();
+
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            leftCurrentState = leftState.LEFT1;
+                            drive.followTrajectoryAsync(left1);
+                        }
                     case LEFT1:
                         drive.update();
 
@@ -782,8 +823,17 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                         }
                         break;
                 }
-            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
                 switch (rightCurrentState) {
+                    case RIGHT0:
+                        drive.update();
+                        autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
+                            rightCurrentState = rightState.RIGHT1;
+                            drive.followTrajectoryAsync(right1);
+                        }
+                        break;
                     case RIGHT1:
                         drive.update();
                         autoUtil.asyncMoveJoint(JOINT_AVOID_CUBE);
@@ -923,6 +973,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                         drive.update();
 
                         if (!drive.isBusy()) {
+                            drive.followTrajectoryAsync(right6);
                             rightCurrentState = rightState.RIGHT6;
                         }
                         break;
@@ -1006,8 +1057,8 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
         }
     }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
+    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return blueCubeDetectionPipeline.getDetection();
     }
 
     private void motorTelemetry (DcMotor motor, String name){
