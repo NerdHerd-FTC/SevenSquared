@@ -39,7 +39,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 @Config
-@Autonomous(name="Door Far Dropoff - Red")
+@Autonomous(name="Door Far Dropoff - BlueNew")
 public class NEWFarPixelDropOffBlue extends LinearOpMode {
     DcMotor arm, joint;
 
