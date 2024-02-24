@@ -18,13 +18,13 @@ public class FarSideBlueCenter {
                                 .forward(40.5)
                                 .back(33)
                                 // drop arm
-                                .turn(Math.toRadians(90))
+                                .turn(Math.toRadians(270))
                                 .lineToConstantHeading(new Vector2d(-34, 31))
                                 .lineToConstantHeading(new Vector2d(-46, 29.5))
                                 // pickup
                                 // bring arm back up
                                 .lineToConstantHeading(new Vector2d(-55, 29.5))
-                                .strafeRight(29)
+                                .strafeLeft(29)
                                 .lineToSplineHeading(new Pose2d(30, 1, Math.toRadians(0)))
                                 .splineToConstantHeading(new Vector2d(67, 31.5), Math.toRadians(0))
                                 .strafeTo(new Vector2d(56, 56))
