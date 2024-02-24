@@ -22,7 +22,8 @@ public class FarSideBlueRight {
                                 .splineToLinearHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
                                 .waitSeconds(1)
                                 .back(90)
-                                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
+                                .lineToSplineHeading(new Pose2d(49, 17, Math.toRadians(0)))
+                                .strafeLeft(28)
 
 
                                 //.splineToLinearHeading(new Vector2d(-55, -34), Math.toRadians(180))

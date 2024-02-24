@@ -70,7 +70,7 @@ public class FarPixelDropoffBlue extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // Bot starts on the far side of the blue side of the field
-        Pose2d startPose = new Pose2d(-34, 62, Math.toRadians(270));
+        Pose2d startPose = new Pose2d(-34, 61, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 

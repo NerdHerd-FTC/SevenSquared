@@ -14,7 +14,7 @@ public class FarSideBlueCenter {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-34, 63, Math.toRadians(270)))
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, 61, Math.toRadians(270)))
                                 .splineTo(new Vector2d(-34, 25), Math.toRadians(270))
                                 .back(20)
                                 .strafeRight(5)
@@ -23,7 +23,8 @@ public class FarSideBlueCenter {
                                 //.splineToLinearHeading(new Pose2d(-60, -10, Math.toRadians(180)), Math.toRadians(180))
                                 .waitSeconds(1)
                                 .back(90)
-                                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
+                                .lineToSplineHeading(new Pose2d(49, 17, Math.toRadians(0)))
+                                .strafeLeft(28)
 
                                 .build()
                 );
