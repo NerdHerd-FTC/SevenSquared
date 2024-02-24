@@ -27,7 +27,16 @@ public class TeleUtil {
     public LinearOpMode opMode;
     public DcMotor motorFL, motorFR, motorBL, motorBR, arm, joint;
     public Servo ClawServoRight, ClawServoLeft;
-    public CRServo DroneServo;
+    public CRServo DroneServo, DroneCover;
+    private ElapsedTime DroneActive = new ElapsedTime();
+
+    private enum DroneCoverState {
+        closing,
+        open,
+        opening,
+        closed
+    }
+    private DroneCoverState droneState  = DroneCoverState.closed;
 
     public static double joint_error = 0;
     public static double arm_error = 0;
@@ -119,7 +128,7 @@ public class TeleUtil {
     private double driveMult = 1.0;
 
     // Constructor
-    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo) {
+    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo DroneCover) {
         this.opMode = opMode;
         this.motorFL = frontLeft;
         this.motorFR = frontRight;
@@ -130,7 +139,7 @@ public class TeleUtil {
         this.ClawServoRight = ClawServoRight;
         this.ClawServoLeft = ClawServoLeft;
         this.DroneServo = DroneServo;
-
+        this.DroneCover = DroneCover;
     }
 
     /*public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
@@ -401,10 +410,33 @@ public class TeleUtil {
 
     public void activateDroneLauncher(Gamepad gamepad, ElapsedTime matchTime) {
         double power = 0;
+
+        if (droneState == DroneCoverState.opening && DroneActive.milliseconds() > 1000) {
+            droneState = DroneCoverState.open;
+            DroneCover.setPower(0);
+        }
+
+        if (droneState == DroneCoverState.closing && DroneActive.milliseconds() > 1000) {
+            droneState = DroneCoverState.closed;
+            DroneCover.setPower(0);
+        }
+        
         if(gamepad.dpad_up)  {
-            power = 1.0;
+            if (droneState == DroneCoverState.open) {
+                power = 1.0;
+            } else if (droneState != DroneCoverState.opening) {
+                droneState = DroneCoverState.opening;
+                DroneActive.reset();
+            } else if (droneState == DroneCoverState.opening) {
+                DroneCover.setPower(1.0);
+            }
         } else if (gamepad.dpad_down) {
-            power = -1.0;
+            if (droneState != DroneCoverState.closing) {
+                droneState = DroneCoverState.closing;
+                DroneActive.reset();
+            } else if (droneState == DroneCoverState.closing) {
+                DroneCover.setPower(-1.0);
+            }
         }
 
         DroneServo.setPower(power);
