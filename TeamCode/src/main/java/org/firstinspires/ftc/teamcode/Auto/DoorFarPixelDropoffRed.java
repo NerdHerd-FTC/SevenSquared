@@ -37,14 +37,36 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
+import java.util.Vector;
 
 @Config
 @Autonomous(name="Door Far Dropoff - Red")
 public class DoorFarPixelDropoffRed extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double x_end = -47.5;
-    public static double y_end = -28;
+    public static double left_spike_x = -45;
+    public static double left_spike_y = -29;
+    
+    public static double right_spike_x = -20.261;
+    public static double right_spike_y = -30;
+    
+    public static double left_pixel_stack_x = -50;
+    public static double left_pixel_stack_y = -5.95;
+
+    public static double right_pixel_stack_x = -55;
+    public static double right_pixel_stack_y = -29.95;
+
+    public static double center_pixel_stack_x = -47.5;
+    public static double center_pixel_stack_y = -28;
+
+    public static double left_back_x = 67;
+    public static double left_back_y = -17;
+
+    public static double right_back_x = 67;
+    public static double right_back_y = -40;
+
+    public static double center_back_x = 67;
+    public static double center_back_y = 0;
 
     public static double jointError = 0;
     public static double armError = 0;
@@ -198,7 +220,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // Spline to pixel stack
         Trajectory center3 = drive.trajectoryBuilder(center2_strafeToX.end())
-                .lineToConstantHeading(new Vector2d(x_end, y_end))
+                .lineToConstantHeading(new Vector2d(center_pixel_stack_x, center_pixel_stack_y))
                 .build();
 
         // Raise arm up before executing 3_ series of movements - one issue may be time for later autos
@@ -243,7 +265,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(-45, -30, Math.toRadians(180)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-42, -22, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // moving to pixel stack
@@ -253,11 +275,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1_2.end())
-                .lineToConstantHeading(new Vector2d(-34, -5.95))
+                .lineToConstantHeading(new Vector2d(-31, -5.95))
                 .build();
 
         Trajectory left2_2 = drive.trajectoryBuilder(left2.end())
-                .lineToConstantHeading(new Vector2d(-55, -5.95))
+                .lineToConstantHeading(new Vector2d(left_pixel_stack_x, left_pixel_stack_y))
                 .build();
 
         Trajectory left3 = drive.trajectoryBuilder(left2_2.end())
@@ -280,7 +302,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(-20.261, -30, Math.toRadians(45)), Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(-20.261, -25, Math.toRadians(45)), Math.toRadians(45))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
@@ -297,7 +319,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // PIKCUP FROM STACK
         Trajectory right3 = drive.trajectoryBuilder(right2_3.end())
-                .lineToConstantHeading(new Vector2d(-55, -29.95))
+                .lineToConstantHeading(new Vector2d(right_pixel_stack_x, right_pixel_stack_y))
                 .build();
 
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
@@ -350,8 +372,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
             if (gamepad2.x && initToggleDebounce.milliseconds() > 500) {
                 pickupPixels = !pickupPixels;
             }
-
             telemetry.addData("Picking Up Pixels", pickupPixels);
+            telemetry.update();
         }
 
         autoTime.reset();
@@ -923,6 +945,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                             drive.update();
 
                             if (!drive.isBusy()) {
+                                drive.followTrajectoryAsync(right6);
                                 rightCurrentState = rightState.RIGHT6;
                             }
                             break;
