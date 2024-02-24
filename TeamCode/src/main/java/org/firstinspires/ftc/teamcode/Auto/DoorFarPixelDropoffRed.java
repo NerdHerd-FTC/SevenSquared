@@ -63,7 +63,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     public static double left_back_y = -19;
 
     public static double right_back_x = 67;
-    public static double right_back_y = -42;
+    public static double right_back_y = -40;
 
     public static double center_back_x = 67;
     public static double center_back_y = -30.5;
