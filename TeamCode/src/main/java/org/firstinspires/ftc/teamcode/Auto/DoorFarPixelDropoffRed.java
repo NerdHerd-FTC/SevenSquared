@@ -312,7 +312,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(right0.end())
-                .splineToLinearHeading(new Pose2d(-20.261, -25, Math.toRadians(45)), Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(right_spike_x, right_spike_y, Math.toRadians(45)), Math.toRadians(45))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())

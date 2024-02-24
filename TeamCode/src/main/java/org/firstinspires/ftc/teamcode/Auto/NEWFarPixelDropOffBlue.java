@@ -40,14 +40,14 @@ import java.util.List;
 import java.util.Vector;
 
 @Config
-@Autonomous(name="Door Far Dropoff - Red")
+@Autonomous(name="Door Far Dropoff - Blue")
 public class NEWFarPixelDropOffBlue extends LinearOpMode {
     DcMotor arm, joint;
 
-    public static double left_spike_x = -45;
-    public static double left_spike_y = 29;
+    public static double left_spike_x = -42;
+    public static double left_spike_y = 27;
 
-    public static double right_spike_x = -20.261;
+    public static double right_spike_x = -24.261;
     public static double right_spike_y = 30;
 
     public static double left_pixel_stack_x = -48;
@@ -199,7 +199,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // Bot starts on the far side of the blue side of the field
-        Pose2d startPose = new Pose2d(-34, 61, Math.toRadians(90));
+        Pose2d startPose = new Pose2d(-34, 61, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
@@ -213,7 +213,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         TrajectorySequence center2_turn = drive.trajectorySequenceBuilder(center2.end())
-                .turn(Math.toRadians(90))
+                .turn(Math.toRadians(-90))
                 .build();
 
         Trajectory center2_strafeToX = drive.trajectoryBuilder(center2_turn.end())
@@ -232,7 +232,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         Trajectory center3_2 = drive.trajectoryBuilder(center3_1.end())
-                .strafeLeft(1)
+                .strafeRight(1)
                 .build();
 
         Trajectory center3_3 = drive.trajectoryBuilder(center3_2.end())
@@ -245,7 +245,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         Trajectory center5 = drive.trajectoryBuilder(center4.end())
-                .strafeRight(36)
+                .strafeLeft(36)
                 .build();
 
         Trajectory center6 = drive.trajectoryBuilder(center5.end())
@@ -267,11 +267,11 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // push to spike
         Trajectory left0 = drive.trajectoryBuilder(startPose)
-                .forward(20)
+                .forward(2)
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(left0.end())
-                .splineToLinearHeading(new Pose2d(-42, 22, Math.toRadians(180)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(left_spike_x, left_spike_y, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         // moving to pixel stack
@@ -281,7 +281,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // moving to pixel stack
         Trajectory left2 = drive.trajectoryBuilder(left1_2.end())
-                .lineToConstantHeading(new Vector2d(-31, 5.95))
+                .strafeLeft(left_spike_y - 5.95)
                 .build();
 
         Trajectory left2_2 = drive.trajectoryBuilder(left2.end())
@@ -289,7 +289,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         Trajectory left3 = drive.trajectoryBuilder(left2_2.end())
-                .strafeRight(12)
+                .strafeLeft(12)
                 .build();
 
         Trajectory left4 = drive.trajectoryBuilder(left3.end())
@@ -312,7 +312,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
         // RIGHT goes through the edge truss to drop off at backdrop
         Trajectory right1 = drive.trajectoryBuilder(right0.end())
-                .splineToLinearHeading(new Pose2d(-20.261, 25, Math.toRadians(45)), Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(right_spike_x, right_spike_y, Math.toRadians(-45)), Math.toRadians(-45))
                 .build();
 
         Trajectory right2 = drive.trajectoryBuilder(right1.end())
@@ -320,7 +320,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         TrajectorySequence right2_2 = drive.trajectorySequenceBuilder(right2.end())
-                .turn(Math.toRadians(135))
+                .turn(Math.toRadians(-135))
                 .build();
 
         Trajectory right2_3 = drive.trajectoryBuilder(right2_2.end())
@@ -333,7 +333,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                 .build();
 
         Trajectory right4 = drive.trajectoryBuilder(right3.end())
-                .strafeRight(36)
+                .strafeLeft(36)
                 .build();
 
         Trajectory right5 = drive.trajectoryBuilder(right4.end())
@@ -402,9 +402,9 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectoryAsync(center1);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
-            drive.followTrajectoryAsync(left0);
-        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectoryAsync(right0);
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            drive.followTrajectoryAsync(left0);
         }
 
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
@@ -632,7 +632,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                         }
                         break;
                 }
-            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
                 switch (leftCurrentState) {
                     case LEFT_0:
                         drive.update();
@@ -829,7 +829,7 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                         }
                         break;
                 }
-            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
                 switch (rightCurrentState) {
                     case RIGHT0:
                         drive.update();
