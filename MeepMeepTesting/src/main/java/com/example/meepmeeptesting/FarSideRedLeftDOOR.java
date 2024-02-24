@@ -20,7 +20,7 @@ public class FarSideRedLeftDOOR {
                                 .back(11)
                                 .lineToConstantHeading(new Vector2d(-34, -5.95))
                                 .lineToConstantHeading(new Vector2d(-55, -5.95))
-                                .strafeRight(12)
+                                .strafeLeft(12)
                                 .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
                                 .splineToConstantHeading(new Vector2d(67, -17), Math.toRadians(0))
                                 .strafeTo(new Vector2d(64, 0))

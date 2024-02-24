@@ -15,16 +15,19 @@ public class FarSideBlueCenter {
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(-34, 63, Math.toRadians(270)))
-                                .splineTo(new Vector2d(-34, 25), Math.toRadians(270))
-                                .back(20)
-                                .strafeRight(5)
-                                .splineToSplineHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
-                                //.lineToSplineHeading(new Pose2d(-60, -10, Math.toRadians(180)))
-                                //.splineToLinearHeading(new Pose2d(-60, -10, Math.toRadians(180)), Math.toRadians(180))
-                                .waitSeconds(1)
-                                .back(90)
-                                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
-
+                                .forward(40.5)
+                                .back(33)
+                                // drop arm
+                                .turn(Math.toRadians(270))
+                                .lineToConstantHeading(new Vector2d(-34, 31))
+                                .lineToConstantHeading(new Vector2d(-46, 29.5))
+                                // pickup
+                                // bring arm back up
+                                .lineToConstantHeading(new Vector2d(-55, 29.5))
+                                .strafeLeft(29)
+                                .lineToSplineHeading(new Pose2d(30, 1, Math.toRadians(0)))
+                                .splineToConstantHeading(new Vector2d(67, 31.5), Math.toRadians(0))
+                                .strafeTo(new Vector2d(56, 56))
                                 .build()
                 );
 
