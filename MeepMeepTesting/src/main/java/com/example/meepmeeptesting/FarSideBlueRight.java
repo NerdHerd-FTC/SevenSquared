@@ -14,22 +14,18 @@ public class FarSideBlueRight {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-34, 63, Math.toRadians(270)))
-                                .forward(20)
-                                .splineTo(new Vector2d(-47, 34), Math.toRadians(180))
-                                .back(15)
-                                .strafeLeft(15)
-                                .splineToLinearHeading(new Pose2d(-60, 10, Math.toRadians(180)), Math.toRadians(180))
-                                .waitSeconds(1)
-                                .back(90)
-                                .lineToSplineHeading(new Pose2d(53, 37, Math.toRadians(0)))
-
-
-                                //.splineToLinearHeading(new Vector2d(-55, -34), Math.toRadians(180))
-                                // .splineToConstantHeading()
-                                //.splineTo(new Vector2d(57, -30), Math.toRadians(0))
-                                //.strafeRight(48) // separate trajectory
+                        drive.trajectorySequenceBuilder(new Pose2d(-30, 63, Math.toRadians(270)))
+                                .splineToLinearHeading(new Pose2d(-45, 30, Math.toRadians(180)), Math.toRadians(180))
+                                .back(11)
+                                .lineToConstantHeading(new Vector2d(-34, 5.95))
+                                .lineToConstantHeading(new Vector2d(-55, 5.95))
+                                .strafeRight(12)
+                                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
+                                .splineToConstantHeading(new Vector2d(67, 17), Math.toRadians(0))
+                                .strafeTo(new Vector2d(64, 56))
+                                .turn(Math.toRadians(180))
                                 .build()
+
                 );
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
