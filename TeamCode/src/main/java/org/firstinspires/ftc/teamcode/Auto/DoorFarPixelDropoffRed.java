@@ -452,7 +452,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         break;
                     case CENTER2_2:
                         drive.update();
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
 
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.CENTER3;
@@ -463,9 +467,10 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         // Move to the pixel stack
                         drive.update();
 
-                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
 
                         if (!drive.isBusy()) {
                             autoUtil.pixelLock.reset();
@@ -668,6 +673,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         drive.update();
                         autoUtil.asyncMoveJoint(0);
 
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
+
                         if (!drive.isBusy()) {
                             autoUtil.killJoint();
                             leftCurrentState = leftState.LEFT2_2;
@@ -677,6 +687,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
                     case LEFT2_2:
                         drive.update();
+
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
 
                         if (!drive.isBusy()) {
                             if (pickupPixels) {
@@ -869,6 +884,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                         drive.update();
                         autoUtil.asyncMoveJoint(JOINT_HOME);
 
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
+
                         if (!drive.isBusy()) {
                             autoUtil.killJoint();
                             rightCurrentState = rightState.RIGHT3;
@@ -878,6 +898,11 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
 
                     case RIGHT3:
                         drive.update();
+
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
 
                         if (!drive.isBusy()) {
                             if (pickupPixels) {

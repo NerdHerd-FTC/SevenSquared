@@ -463,9 +463,10 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
                         // Move to the pixel stack
                         drive.update();
 
-                        autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
-
-                        armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
 
                         if (!drive.isBusy()) {
                             autoUtil.pixelLock.reset();
@@ -677,6 +678,11 @@ public class NEWFarPixelDropOffBlue extends LinearOpMode {
 
                     case LEFT2_2:
                         drive.update();
+
+                        if (pickupPixels) {
+                            autoUtil.moveRightFinger(CLAW_RIGHT_OPEN);
+                            armError = autoUtil.asyncMoveArm(ARM_PIXEL_DEPTH_1);
+                        }
 
                         if (!drive.isBusy()) {
                             if (pickupPixels) {
