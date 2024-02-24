@@ -420,7 +420,7 @@ public class TeleUtil {
             droneState = DroneCoverState.closed;
             DroneCover.setPower(0);
         }
-        
+
         if(gamepad.dpad_up)  {
             if (droneState == DroneCoverState.open) {
                 power = 1.0;
