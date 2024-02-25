@@ -421,7 +421,7 @@ public class TeleUtil {
             DroneCover.setPower(0);
         }
 
-        if(gamepad.dpad_up)  {
+        if(gamepad.dpad_up )  {
             if (droneState == DroneCoverState.open) {
                 power = 1.0;
             } else if (droneState != DroneCoverState.opening) {
@@ -644,7 +644,7 @@ public class TeleUtil {
             power = arm_out + arm_ff;
             arm_hold = ARM_FORWARDS_SCORE;
             armState = ArmState.PLANE_LAUNCHING;
-        } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
+        } else if (Math.abs(gamepad.right_stick_y) > 0.05) {
             double distanceToZero = Math.abs(currentArmPosition);
             if (currentArmPosition < 0) {
                 distanceToZero = 0.0;
@@ -658,6 +658,11 @@ public class TeleUtil {
             }
 
             power = input * scalingFactor;
+
+            if (gamepad.right_trigger > 0.5)  {
+                power *= 0.3;
+            }
+
             arm_hold = currentArmPosition;
             armState = ArmState.DRIVER_CONTROL;
         } else {

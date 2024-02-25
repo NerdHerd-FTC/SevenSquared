@@ -126,14 +126,14 @@ public class BlueCubeDetectionPipeline implements VisionProcessor {
             Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
         }
 
-        if (leftArea > 7000) {
+        if (leftArea > 8000) {
             telemetry.addData("Location", "Left (WHOLE)");
             detected = Detection.LEFT;
 
             if (centerArea > leftArea) {
                 detected = Detection.CENTER;
             }
-        } else if (centerArea > 7000) {
+        } else if (centerArea > 8000) {
             telemetry.addData("Location", "Center (WHOLE)");
             detected = Detection.CENTER;
         } else if (valid_contours.size() < 1) {

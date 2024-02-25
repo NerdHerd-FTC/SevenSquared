@@ -105,13 +105,13 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         Trajectory center = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(12, 30), Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
-                .splineTo(new Vector2d(49.5, 26.5), Math.toRadians(0))
+                .splineTo(new Vector2d(50.5, 26.5), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(20, 30), Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
-                .splineToSplineHeading(new Pose2d(49.5, 36, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(51, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
@@ -123,7 +123,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .splineToSplineHeading(new Pose2d(49.5, 17), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(50.5, 17), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())

@@ -105,9 +105,9 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
-        Vector2d centerEnd = new Vector2d(51, -31.5);
-        Pose2d leftEnd = new Pose2d(51, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(51, -40, Math.toRadians(0));
+        Vector2d centerEnd = new Vector2d(53, -31.5);
+        Pose2d leftEnd = new Pose2d(53, -25, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(53, -40, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
