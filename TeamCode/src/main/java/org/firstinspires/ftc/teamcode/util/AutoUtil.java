@@ -171,7 +171,7 @@ public class AutoUtil {
             double error = 0;
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
-                currentLockTarget  = arm.getCurrentPosition() - stepSize;
+                currentLockTarget  = currentLockTarget - stepSize;
 
                 if (forcedOffset != 0) {
                     currentLockTarget += forcedOffset;
@@ -187,7 +187,7 @@ public class AutoUtil {
                 error = asyncMoveArm(currentLockTarget);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                currentLockTarget = arm.getCurrentPosition() + stepSize;
+                currentLockTarget = currentLockTarget + stepSize;
 
                 if (forcedOffset != 0) {
                     currentLockTarget += forcedOffset;
@@ -204,7 +204,10 @@ public class AutoUtil {
             } else if (armDemands == ARM_DEMANDS.HOLD) {
                 detected ++;
                 asyncMoveArm(arm.getCurrentPosition());
-                moveRightFinger(CLAW_RIGHT_CLOSED);
+
+                if (pixelLock.milliseconds() > 500) {
+                    moveRightFinger(CLAW_RIGHT_CLOSED);
+                }
                 error = 0;
             }
 
