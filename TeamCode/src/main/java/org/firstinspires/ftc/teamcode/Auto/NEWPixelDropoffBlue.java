@@ -17,12 +17,12 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per
 
 import android.util.Size;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -30,27 +30,22 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
-import org.firstinspires.ftc.teamcode.util.AutoUtil;
-
-@Config
-@Autonomous(name="NEW Dropoff - Red")
-public class NEWPixelDropoffRed extends LinearOpMode {
-    DcMotor arm, joint;
-
+@Autonomous(name="NEW Dropoff - Blue")
+public class NEWPixelDropoffBlue extends LinearOpMode {
+    public DcMotor arm, joint;
     public Servo ClawServoLeft;
 
-    RedCubeDetectionPipeline redCubeDetectionPipeline = new RedCubeDetectionPipeline(telemetry);
-
-    public static double armPower = 0.0;
-
-    private PIDController armPID = new PIDController(armP, armI, armD);
+    public PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     private ElapsedTime waitForClaw = new ElapsedTime();
     private ElapsedTime waitForArm = new ElapsedTime();
+
+    BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
     private enum centerState {
         CENTER_PUSH,
@@ -63,7 +58,6 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
     private enum leftState {
         LEFT_PUSH,
-        LEFT_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
@@ -73,6 +67,8 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
     private enum rightState {
         RIGHT_PUSH,
+        RIGHT_BACKUP,
+        RIGHT_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
@@ -101,50 +97,57 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        // We want to start the bot at x: 10, y: -8, heading: 90 degrees
-        // probably should be ~61 but keep this for consistency with other paths
-        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
-
-        Vector2d centerEnd = new Vector2d(53, -31.5);
-        Pose2d leftEnd = new Pose2d(53, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(53, -40, Math.toRadians(0));
+        // We want to start the bot at x: 10, y: -8, heading: 270 degrees
+        Pose2d startPose = new Pose2d(12, 62, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
 
         Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -30.5), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(centerEnd, Math.toRadians(0))
+                .splineTo(new Vector2d(12, 30), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
+                .splineTo(new Vector2d(50.5, 26.5), Math.toRadians(0))
                 .build();
 
-        // Push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(3, -30, Math.toRadians(135)), Math.toRadians(135)) // Move ba
-                .build();
-
-        // Bring to backdrop
-        Trajectory left2 = drive.trajectoryBuilder(left1.end())
-                .back(10)
-                .splineToSplineHeading(new Pose2d(54, -24, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+                .splineTo(new Vector2d(20, 30), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
+                .splineToSplineHeading(new Pose2d(51, 36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(27.739, -38), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(22, -55), Math.toRadians(90))
-                .splineToSplineHeading(rightEnd, Math.toRadians(0))
+                .splineTo(new Vector2d(1, 30), Math.toRadians(180))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(20)
+                .build();
+
+        Trajectory right3 = drive.trajectoryBuilder(right2.end())
+                .splineToSplineHeading(new Pose2d(50.5, 17), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeRight(28)
+                .strafeLeft(28)
                 .build();
 
-        Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
-                // new Pose2d(57, -30, Math.toRadians(0));
-                .strafeRight(37)
+        Trajectory cornerLeft = drive.trajectoryBuilder(left1.end())
+                .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .strafeRight(20)
+        Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
+                .lineToConstantHeading(new Vector2d(42, 5))
+                .build();
+
+        TrajectorySequence cornerRightRotate = drive.trajectorySequenceBuilder(cornerRight.end())
+                .turn(Math.toRadians(180))
+                .build();
+
+        TrajectorySequence cornerLeftRotate = drive.trajectorySequenceBuilder(cornerLeft.end())
+                .turn(Math.toRadians(180))
+                .build();
+
+        TrajectorySequence cornerCenterRotate = drive.trajectorySequenceBuilder(cornerCenter.end())
+                .turn(Math.toRadians(180))
                 .build();
 
         // VisionPortal
@@ -153,12 +156,16 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         // Create a new VisionPortal Builder object.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "leftCamera"))
-                .addProcessor(redCubeDetectionPipeline)
+                .addProcessor(blueCubeDetectionPipeline)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .enableLiveView(true)
                 .setAutoStopLiveView(true)
                 .build();
+
+        leftState leftCurrentState = leftState.LEFT_PUSH;
+        rightState rightCurrentState = rightState.RIGHT_PUSH;
+        centerState centerCurrentState = centerState.CENTER_PUSH;
 
         moveLeftFinger(CLAW_LEFT_CLOSED);
 
@@ -170,35 +177,24 @@ public class NEWPixelDropoffRed extends LinearOpMode {
             }
         }
 
-        leftState leftCurrentState = leftState.LEFT_PUSH;
-        rightState rightCurrentState = rightState.RIGHT_PUSH;
-        centerState centerCurrentState = centerState.CENTER_PUSH;
+        waitForStart();
 
         moveLeftFinger(CLAW_LEFT_CLOSED);
 
-        RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
+        BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
-        visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
-
-        if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
+        if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectoryAsync(center);
-        } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+        } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectoryAsync(left1);
-        } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+        } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
             drive.followTrajectoryAsync(right1);
         }
 
-        // exits after completing center_push - debug
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
-            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-                telemetry.addData("Center State", centerCurrentState);
-            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
-                telemetry.addData("Left State", leftCurrentState);
-            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
-                telemetry.addData("Right State", rightCurrentState);
-            }
+            if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
+                telemetry.addData("Current State", centerCurrentState);
 
-            if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 switch (centerCurrentState) {
                     case CENTER_PUSH:
                         drive.update();
@@ -206,13 +202,14 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
-                            centerCurrentState = centerState.ARM_TO_SCORE;
                             asyncMoveJoint(0);
+                            centerCurrentState = centerState.ARM_TO_SCORE;
                         }
                         break;
                     case ARM_TO_SCORE:
                         asyncMoveJoint(0);
-                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
 
                         if (Math.abs(error) < 10) {
                             killJoint();
@@ -226,55 +223,49 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
-                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
                         moveLeftFinger(CLAW_LEFT_OPEN);
-
                         if (waitForClaw.milliseconds() > 1000) {
+                            moveArm(ARM_HOME);
                             centerCurrentState = centerState.ARM_TO_HOME;
                         }
                         break;
+
                     case ARM_TO_HOME:
                         error = asyncMoveArm(ARM_HOME);
 
                         if (Math.abs(error) < 10) {
-                            drive.followTrajectoryAsync(cornerCenter);
+                            drive.followTrajectory(cornerCenter);
                             centerCurrentState = centerState.MOVE_TO_CORNER;
+                            killJoint();
+                        }
+                        break;
+
+                    case MOVE_TO_CORNER:
+                        asyncMoveArm(ARM_HOME);
+
+                        drive.update();
+                        if (!drive.isBusy()) {
+                            centerCurrentState = centerState.DONE;
                             killArm();
                         }
                         break;
-                    case MOVE_TO_CORNER:
-                        drive.update();
-                        moveLeftFinger(CLAW_LEFT_CLOSED);
-
-                        if (!drive.isBusy()) {
-                            centerCurrentState = centerState.DONE;
-                        }
-                        break;
                 }
-            } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
+                telemetry.addData("Current State", leftCurrentState);
+
                 switch (leftCurrentState) {
                     case LEFT_PUSH:
                         drive.update();
-
                         asyncMoveJoint(JOINT_AVOID_CUBE);
-
-                        if (!drive.isBusy()) {
-                            drive.followTrajectoryAsync(left2);
-                            leftCurrentState = leftState.LEFT_BACKDROP;
-                        }
-                        break;
-                    case LEFT_BACKDROP:
-                        drive.update();
-
                         if (!drive.isBusy()) {
                             asyncMoveJoint(0);
                             leftCurrentState = leftState.ARM_TO_SCORE;
                         }
                         break;
                     case ARM_TO_SCORE:
-                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
                         asyncMoveJoint(0);
-
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
                         if (Math.abs(error) < 10) {
                             killJoint();
                             if (waitForArm.milliseconds() > 1000) {
@@ -287,43 +278,65 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
-                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
                         moveLeftFinger(CLAW_LEFT_OPEN);
                         if (waitForClaw.milliseconds() > 1000) {
+                            moveArm(ARM_HOME);
                             leftCurrentState = leftState.ARM_TO_HOME;
                         }
                         break;
                     case ARM_TO_HOME:
                         error = asyncMoveArm(ARM_HOME);
-
                         if (Math.abs(error) < 10) {
-                            drive.followTrajectoryAsync(cornerLeft);
+                            drive.followTrajectory(cornerLeft);
                             leftCurrentState = leftState.MOVE_TO_CORNER;
                             killArm();
+                            killJoint();
                         }
                         break;
                     case MOVE_TO_CORNER:
-                        drive.update();
+                        killArm();
 
+                        drive.update();
                         if (!drive.isBusy()) {
                             leftCurrentState = leftState.DONE;
                         }
                         break;
                 }
-            } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
+            } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
+                telemetry.addData("Current State", rightCurrentState);
+
                 switch (rightCurrentState) {
                     case RIGHT_PUSH:
                         drive.update();
 
                         asyncMoveJoint(JOINT_AVOID_CUBE);
+                        if (!drive.isBusy()) {
+                            drive.followTrajectory(right2);
+                            rightCurrentState = rightState.RIGHT_BACKUP;
+                        }
+                        break;
+                    case RIGHT_BACKUP:
+                        drive.update();
 
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
                         if (!drive.isBusy()) {
                             asyncMoveJoint(0);
-                            rightCurrentState =  rightState.ARM_TO_SCORE;
+                            drive.followTrajectory(right3);
+                            rightCurrentState = rightState.RIGHT_BACKDROP;
+                        }
+                        break;
+                    case RIGHT_BACKDROP:
+                        drive.update();
+
+                        asyncMoveJoint(0);
+                        if (!drive.isBusy()) {
+                            killJoint();
+                            rightCurrentState = rightState.ARM_TO_SCORE;
                         }
                         break;
                     case ARM_TO_SCORE:
-                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
                         if (Math.abs(error) < 10) {
                             killJoint();
                             if (waitForArm.milliseconds() > 1000) {
@@ -336,49 +349,84 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
-                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
+                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
                         moveLeftFinger(CLAW_LEFT_OPEN);
-
                         if (waitForClaw.milliseconds() > 1000) {
+                            moveArm(ARM_HOME);
                             rightCurrentState = rightState.ARM_TO_HOME;
                         }
                         break;
                     case ARM_TO_HOME:
                         error = asyncMoveArm(ARM_HOME);
-
                         if (Math.abs(error) < 10) {
-                            drive.followTrajectoryAsync(cornerRight);
+                            drive.followTrajectory(cornerRight);
                             rightCurrentState = rightState.MOVE_TO_CORNER;
                             killArm();
+                            killJoint();
                         }
                         break;
                     case MOVE_TO_CORNER:
+                        killArm();
                         drive.update();
-
                         if (!drive.isBusy()) {
                             rightCurrentState = rightState.DONE;
                         }
                         break;
                 }
             }
+
+
         }
     }
 
-    public RedCubeDetectionPipeline.Detection getDecisionFromEOCV() {
-        return redCubeDetectionPipeline.getDetection();
+    public BlueCubeDetectionPipeline.Detection getDecisionFromEOCV() {
+        return blueCubeDetectionPipeline.getDetection();
     }
 
-    private void motorTelemetry(DcMotor motor, String name, double error) {
+    private void motorTelemetry(DcMotor motor, String name) {
         telemetry.addLine("--- " + name + " ---");
         telemetry.addData(name + " Power", motor.getPower());
         telemetry.addData(name + " Position", motor.getCurrentPosition());
-        telemetry.addData(name + " Error", error);
+        telemetry.addData(name + " Target Position", motor.getTargetPosition());
+    }
+
+    private void moveArm(double target) {
+        PIDController armPID = new PIDController(armP, armI, armD);
+        double error = target - arm.getCurrentPosition();
+
+        while (opModeIsActive() && Math.abs(error) > 10) {
+            // calculate angles of joint & arm (in degrees) to account for torque
+            double joint_angle = 193;
+            double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
+            double arm_angle = 270 - relative_arm_angle - joint_angle;
+
+            double arm_ff = Math.cos(Math.toRadians(arm_angle)) * armF;
+
+            error = target - arm.getCurrentPosition();
+
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), target);
+
+            double arm_power = arm_ff + arm_out;
+
+            arm.setPower(arm_power);
+
+            motorTelemetry(arm, "Arm");
+            telemetry.addData("Error", error);
+            telemetry.addData("Power", arm_power);
+            telemetry.update();
+            sleep(100);
+        }
+
+    }
+
+    private void moveLeftFinger(double target) {
+        ClawServoLeft.setPosition(target);
     }
 
     public double asyncMoveArm(double target) {
         double error = target - arm.getCurrentPosition();
 
-        double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
+        double joint_angle = 0 / joint_ticks_per_degree + 193;
         double relative_arm_angle = arm.getCurrentPosition() / RobotConstants.arm_ticks_per_degree + 14.8;
         double arm_angle = 270 - relative_arm_angle - joint_angle;
 
@@ -390,16 +438,10 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
         arm.setPower(arm_power);
 
-        //opMode.telemetry.addData("Arm Error", error);
-
         return error;
     }
 
-    private void moveLeftFinger(double target) {
-        ClawServoLeft.setPosition(target);
-    }
-
-    private void killArm() {
+    public void killArm() {
         arm.setPower(0);
     }
 
@@ -407,8 +449,10 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         joint.setPower(0);
     }
 
+
     public double asyncMoveJoint(double target) {
-        double error = target -joint.getCurrentPosition();
+        PIDController jointPID = new PIDController(jointP, jointI, jointD);
+        double error = target - joint.getCurrentPosition();
 
         double joint_angle = joint.getCurrentPosition() / joint_ticks_per_degree + 193;
 

@@ -73,6 +73,7 @@ public class NewRobotDrive extends LinearOpMode {
         Servo ClawServoRight = hardwareMap.get(Servo.class, "CSR");
         Servo ClawServoLeft = hardwareMap.get(Servo.class, "CSL");
         CRServo DroneServo = hardwareMap.get(CRServo.class, "DS");
+        CRServo DroneCover = hardwareMap.get(CRServo.class, "DC");
 
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
@@ -80,7 +81,7 @@ public class NewRobotDrive extends LinearOpMode {
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TeleUtil instance
-        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo);
+        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 

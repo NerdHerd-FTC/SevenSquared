@@ -29,6 +29,7 @@ public class AutoUtil {
     private ElapsedTime callGap = new ElapsedTime();
     private ElapsedTime lockTimeout = new ElapsedTime();
     private int callsToColor = 0;
+    private int forcedOffset = 0;
 
     public static int armUpperLimit = 1070;
     public static int armLowerLimit = 1020;
@@ -51,8 +52,11 @@ public class AutoUtil {
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
 
     // tune timeouts
+
+    // add edge cases! - not detecting at all
     public static int errorThreshold = 15;
     public static int timeout = 2000;
+    public static int currentLockTarget = armUpperLimit;
 
     private int stepSize = 5;
 
@@ -77,8 +81,27 @@ public class AutoUtil {
         STUCK
     }
 
+    public enum PIXEL_DEMANDS {
+        IDLE,
+        STRAFE_RIGHT,
+        MOVE_BACK,
+        MOVE_FORWARD
+    }
+
+    public enum PIXEL_LOCK_ERRORS {
+        NONE,
+        NOSE_STUCK,
+        NO_DETECTION
+    }
+
     public RobotState currentState = RobotState.IDLE;
     public ARM_DEMANDS armDemands = ARM_DEMANDS.IDLE;
+    public PIXEL_DEMANDS pixelDemands = PIXEL_DEMANDS.IDLE;
+    public PIXEL_LOCK_ERRORS pixelLockErrors = PIXEL_LOCK_ERRORS.NONE;
+    public int pixelErrorNum = 0;
+    private boolean reachedTop = false;
+    private double detected = 0;
+    public String escapeReasoning = "No escape";
 
     // Constructor
     public AutoUtil(LinearOpMode opMode, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, ColorSensor topColorSensor, ColorSensor bottomColorSensor, Telemetry telemetry) {
@@ -107,13 +130,13 @@ public class AutoUtil {
             bottomGreen = green;
 
             if (Math.abs(whiteRedThresholdBottom - red) > 100) {
-                stepSize = 7;
+                stepSize = 8;
             } else if (Math.abs(whiteRedThresholdBottom - red) > 50) {
-                stepSize = 5;
+                stepSize = 4;
             } else if (Math.abs(whiteRedThresholdBottom - red) > 25) {
-                stepSize = 3;
-            } else {
                 stepSize = 2;
+            } else {
+                stepSize = 1;
             }
         }
 
@@ -123,7 +146,8 @@ public class AutoUtil {
     // Add something to adjust the robot when it is stuck - strafe left/move back
 
     public double lockOntoPixel() {
-        if (callGap.milliseconds() > 250) {
+        asyncMoveArm(currentLockTarget);
+        if (callGap.milliseconds() > 200) {
             callGap.reset();
             // Check if top and bottom sensors detect white
             boolean topDetectsWhite = isWhite(topColorSensor, whiteRedThresholdTop, "TOP");
@@ -147,33 +171,57 @@ public class AutoUtil {
             double error = 0;
             if (armDemands == ARM_DEMANDS.MOVE_UP) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() - stepSize;
+                currentLockTarget  = arm.getCurrentPosition() - stepSize;
 
-                if (target > armUpperLimit) {
-                    target = armUpperLimit;
-                } else if (target < armLowerLimit) {
-                    target = armLowerLimit;
+                if (forcedOffset != 0) {
+                    currentLockTarget += forcedOffset;
+                    forcedOffset = 0;
                 }
 
-                error = asyncMoveArm(target);
+                if (currentLockTarget > armUpperLimit) {
+                    currentLockTarget = armUpperLimit;
+                } else if (currentLockTarget < armLowerLimit) {
+                    currentLockTarget = armLowerLimit;
+                }
+
+                error = asyncMoveArm(currentLockTarget);
             } else if (armDemands == ARM_DEMANDS.MOVE_DOWN) {
                 pixelLock.reset();
-                double target = arm.getCurrentPosition() + stepSize;
+                currentLockTarget = arm.getCurrentPosition() + stepSize;
 
-                if (target > armUpperLimit) {
-                    target = armUpperLimit;
-                } else if (target < armLowerLimit) {
-                    target = armLowerLimit;
+                if (forcedOffset != 0) {
+                    currentLockTarget += forcedOffset;
+                    forcedOffset = 0;
                 }
-                error = asyncMoveArm(target);
+
+                if (currentLockTarget > armUpperLimit) {
+                    currentLockTarget = armUpperLimit;
+                    reachedTop = true;
+                } else if (currentLockTarget < armLowerLimit) {
+                    currentLockTarget = armLowerLimit;
+                }
+                error = asyncMoveArm(currentLockTarget);
             } else if (armDemands == ARM_DEMANDS.HOLD) {
+                detected ++;
                 asyncMoveArm(arm.getCurrentPosition());
                 moveRightFinger(CLAW_RIGHT_CLOSED);
+                error = 0;
             }
 
             if (error > errorThreshold || timeoutClock.milliseconds() > timeout) {
                 currentState = RobotState.ERROR;
                 armDemands = ARM_DEMANDS.STUCK;
+
+                if (error > errorThreshold) {
+                    pixelLockErrors = PIXEL_LOCK_ERRORS.NOSE_STUCK;
+                    escapeReasoning = "Nose stuck!";
+
+                } else if (timeoutClock.milliseconds() > timeout && detected < 2) {
+                    pixelLockErrors = PIXEL_LOCK_ERRORS.NO_DETECTION;
+                    escapeReasoning = "No detection!";
+                    detected = 0;
+                    pixelErrorNum ++;
+                }
             }
 
             callsToColor += 1;
@@ -194,6 +242,9 @@ public class AutoUtil {
         telemetry.addData("Pixel Lock", pixelLock.milliseconds());
         telemetry.addData("Calls to Color", callsToColor);
 
+        telemetry.addData("Pixel Lock Errors", pixelLockErrors.toString());
+        telemetry.addData("Escape Reasoning", escapeReasoning);
+
         return pixelLock.milliseconds();
     }
 
@@ -205,6 +256,14 @@ public class AutoUtil {
 
         if (bottomDetects && !topDetects) {
             pixelLockOK = true;
+        }
+
+        if (!bottomDetects && !topDetects) {
+            currentLockTarget += 10;
+            forcedOffset = 10;
+        } else if (topDetects && bottomDetects) {
+            currentLockTarget -= 10;
+            forcedOffset = -10;
         }
 
         if (!pixelLockOK) {
@@ -298,7 +357,7 @@ public class AutoUtil {
         return error;
     }
 
-    public void pixelPickup(Integer pixelDepth) {
+    /*public void pixelPickup(Integer pixelDepth) {
         currentState = AutoUtil.RobotState.PIXEL_STACK;
         moveRightFinger(CLAW_RIGHT_OPEN);
         if (pixelDepth == 1) {
@@ -332,6 +391,7 @@ public class AutoUtil {
         moveRightFinger(CLAW_RIGHT_CLOSED);
         currentState = AutoUtil.RobotState.IDLE;
     }
+     */
 
     public void moveLeftFinger(double target) {
         ClawServoLeft.setPosition(target);

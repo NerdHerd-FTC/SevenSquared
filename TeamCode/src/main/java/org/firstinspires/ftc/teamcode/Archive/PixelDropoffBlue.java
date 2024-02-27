@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Archive;
 
 import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
@@ -23,18 +23,21 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.BlueCubeDetectionPipeline;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.vision.VisionPortal;
 
+@Disabled
 @Autonomous(name="Old Dropoff - Blue")
 public class PixelDropoffBlue extends LinearOpMode {
     public DcMotor arm, joint;
@@ -150,10 +153,6 @@ public class PixelDropoffBlue extends LinearOpMode {
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
             drive.followTrajectory(center);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
             moveLeftFinger(CLAW_LEFT_OPEN);
             runCycle.reset();
             while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
@@ -161,7 +160,7 @@ public class PixelDropoffBlue extends LinearOpMode {
             }
             moveArm(ARM_FORWARDS_LOW_SCORE - 100);
             runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
+            while (opModeIsActive() && runCycle.milliseconds() < 250) {
                 asyncMoveArm(ARM_FORWARDS_LOW_SCORE - 100);
             }
             moveArm(ARM_HOME);
@@ -172,10 +171,6 @@ public class PixelDropoffBlue extends LinearOpMode {
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectory(left1);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
             moveLeftFinger(CLAW_LEFT_OPEN);
             runCycle.reset();
             while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
@@ -196,10 +191,6 @@ public class PixelDropoffBlue extends LinearOpMode {
             drive.followTrajectory(right2);
             drive.followTrajectory(right3);
             moveArm(ARM_FORWARDS_LOW_SCORE);
-            runCycle.reset();
-            while (opModeIsActive() && runCycle.milliseconds() < 500 ) {
-                asyncMoveArm(ARM_FORWARDS_LOW_SCORE);
-            }
             moveLeftFinger(CLAW_LEFT_OPEN);
             runCycle.reset();
             while (opModeIsActive() && runCycle.milliseconds() < 500 ) {

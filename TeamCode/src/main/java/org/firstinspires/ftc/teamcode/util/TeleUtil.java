@@ -27,7 +27,16 @@ public class TeleUtil {
     public LinearOpMode opMode;
     public DcMotor motorFL, motorFR, motorBL, motorBR, arm, joint;
     public Servo ClawServoRight, ClawServoLeft;
-    public CRServo DroneServo;
+    public CRServo DroneServo, DroneCover;
+    private ElapsedTime DroneActive = new ElapsedTime();
+
+    private enum DroneCoverState {
+        closing,
+        open,
+        opening,
+        closed
+    }
+    private DroneCoverState droneState  = DroneCoverState.closed;
 
     public static double joint_error = 0;
     public static double arm_error = 0;
@@ -119,7 +128,7 @@ public class TeleUtil {
     private double driveMult = 1.0;
 
     // Constructor
-    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo) {
+    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo DroneCover) {
         this.opMode = opMode;
         this.motorFL = frontLeft;
         this.motorFR = frontRight;
@@ -130,7 +139,7 @@ public class TeleUtil {
         this.ClawServoRight = ClawServoRight;
         this.ClawServoLeft = ClawServoLeft;
         this.DroneServo = DroneServo;
-
+        this.DroneCover = DroneCover;
     }
 
     /*public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
@@ -401,10 +410,33 @@ public class TeleUtil {
 
     public void activateDroneLauncher(Gamepad gamepad, ElapsedTime matchTime) {
         double power = 0;
-        if(gamepad.dpad_up)  {
-            power = 1.0;
+
+        if (droneState == DroneCoverState.opening && DroneActive.milliseconds() > 1000) {
+            droneState = DroneCoverState.open;
+            DroneCover.setPower(0);
+        }
+
+        if (droneState == DroneCoverState.closing && DroneActive.milliseconds() > 1000) {
+            droneState = DroneCoverState.closed;
+            DroneCover.setPower(0);
+        }
+
+        if(gamepad.dpad_up )  {
+            if (droneState == DroneCoverState.open) {
+                power = 1.0;
+            } else if (droneState != DroneCoverState.opening) {
+                droneState = DroneCoverState.opening;
+                DroneActive.reset();
+            } else if (droneState == DroneCoverState.opening) {
+                DroneCover.setPower(1.0);
+            }
         } else if (gamepad.dpad_down) {
-            power = -1.0;
+            if (droneState != DroneCoverState.closing) {
+                droneState = DroneCoverState.closing;
+                DroneActive.reset();
+            } else if (droneState == DroneCoverState.closing) {
+                DroneCover.setPower(-1.0);
+            }
         }
 
         DroneServo.setPower(power);
@@ -464,7 +496,11 @@ public class TeleUtil {
             } else {
                 jointState = JointState.BACKWARDS_SCORING;
             }
-        }  else if (gamepad.left_trigger > 0.5) {
+        } else if (gamepad.x && gamepad.right_trigger > 0.75) {
+            joint.setPower(0);
+            joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            opMode.telemetry.addLine("Joint reset");
+        } else if (gamepad.left_trigger > 0.5) {
             double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_AIRPLANE);
             power = joint_out + joint_ff;
             joint_hold = JOINT_AIRPLANE;
@@ -473,7 +509,7 @@ public class TeleUtil {
             power = input + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
-        } else if (gamepad.dpad_up && dpadDebounce.milliseconds() > 500) {
+        } /* else if (gamepad.dpad_up && dpadDebounce.milliseconds() > 500) {
             dpadDebounce.reset();
             targetPixelLayer++;
 
@@ -503,7 +539,8 @@ public class TeleUtil {
             joint_hold = jointState.target;
 
             power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
-        } else if (gamepad.dpad_down && dpadDebounce.milliseconds() > 500) {
+        }
+        else if (gamepad.dpad_down && dpadDebounce.milliseconds() > 500) {
             dpadDebounce.reset();
             targetPixelLayer--;
 
@@ -533,7 +570,7 @@ public class TeleUtil {
             joint_hold = jointState.target;
 
             power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
-        } else if (joint.getCurrentPosition() > -10) {
+        }  */else if (joint.getCurrentPosition() > -10) {
             jointState = JointState.GROUNDING;
             power = 0.0;
             joint_hold = 0;
@@ -597,26 +634,17 @@ public class TeleUtil {
             } else {
                 armState = ArmState.BACKWARDS_SCORING;
             }
-        } else if (gamepad.x) {
-            // forwards score!
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_FORWARDS_SCORE);
-            power = arm_out + arm_ff;
-            arm_hold = ARM_FORWARDS_SCORE;
-            armState = ArmState.FORWARDS_SCORING;
-
-            double error = arm.getCurrentPosition() - ARM_FORWARDS_SCORE;
-            if (Math.abs(error) < 10) {
-                armState = ArmState.FORWARDS_REACHED;
-            } else {
-                armState = ArmState.FORWARDS_SCORING;
-            }
+        } else if (gamepad.x && gamepad.right_trigger > 0.75) {
+            arm.setPower(0);
+            arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            opMode.telemetry.addLine("Arm reset");
         } else if (gamepad.left_trigger > 0.5) {
             // airplane!
             double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_AIRPLANE);
             power = arm_out + arm_ff;
             arm_hold = ARM_FORWARDS_SCORE;
             armState = ArmState.PLANE_LAUNCHING;
-        } else if (Math.abs(gamepad.right_stick_y) > 0.1) {
+        } else if (Math.abs(gamepad.right_stick_y) > 0.05) {
             double distanceToZero = Math.abs(currentArmPosition);
             if (currentArmPosition < 0) {
                 distanceToZero = 0.0;
@@ -630,6 +658,11 @@ public class TeleUtil {
             }
 
             power = input * scalingFactor;
+
+            if (gamepad.right_trigger > 0.5)  {
+                power *= 0.3;
+            }
+
             arm_hold = currentArmPosition;
             armState = ArmState.DRIVER_CONTROL;
         } else {
