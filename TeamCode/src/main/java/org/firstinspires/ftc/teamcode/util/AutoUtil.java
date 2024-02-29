@@ -31,7 +31,7 @@ public class AutoUtil {
     private int callsToColor = 0;
     private int forcedOffset = 0;
 
-    public static int armUpperLimit = 1070;
+    public static int armUpperLimit = 1050;
     public static int armLowerLimit = 1020;
 
     public Integer bottomRed;

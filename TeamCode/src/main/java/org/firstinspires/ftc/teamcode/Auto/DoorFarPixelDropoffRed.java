@@ -50,8 +50,8 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
     public static double right_spike_x = -20.261;
     public static double right_spike_y = -30;
     
-    public static double left_pixel_stack_x = -48;
-    public static double left_pixel_stack_y = -5.95;
+    public static double left_pixel_stack_x = -47.5;
+    public static double left_pixel_stack_y = -1.95;
 
     public static double right_pixel_stack_x = -43;
     public static double right_pixel_stack_y = -29;
@@ -271,7 +271,7 @@ public class DoorFarPixelDropoffRed extends LinearOpMode {
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(left0.end())
-                .splineToLinearHeading(new Pose2d(-42, -22, Math.toRadians(180)), Math.toRadians(180))
+                .lineToLinearHeading(new Pose2d(-42, -22, Math.toRadians(180)))
                 .build();
 
         // moving to pixel stack

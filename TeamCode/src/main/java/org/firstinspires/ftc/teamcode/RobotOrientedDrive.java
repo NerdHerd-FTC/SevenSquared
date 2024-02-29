@@ -1,5 +1,10 @@
 // Code Created By Derrick, Owen, Shash
 package org.firstinspires.ftc.teamcode;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_CLOSED;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_RIGHT_OPEN;
+
 import android.graphics.Color;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -28,12 +33,6 @@ import org.firstinspires.ftc.teamcode.util.TeleUtil;
 @TeleOp(name = "Robot Drive")
 public class RobotOrientedDrive extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
-
-    public static double rightClosed=0.52;
-    public static double rightOpen = 0.25;
-
-    public static double leftOpen = 0.4;
-    public static double leftClosed =0.66;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -118,8 +117,8 @@ public class RobotOrientedDrive extends LinearOpMode {
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
             armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
-            teleUtil.setClawServoRight(gamepad2, rightClosed, rightOpen);
-            teleUtil.setClawServoLeft(gamepad2,leftClosed, leftOpen);
+            teleUtil.setClawServoRight(gamepad2, CLAW_RIGHT_CLOSED, CLAW_RIGHT_OPEN);
+            teleUtil.setClawServoLeft(gamepad2, CLAW_LEFT_OPEN, CLAW_LEFT_CLOSED);
 
             teleUtil.activateDroneLauncher(gamepad2, matchTime);
 
