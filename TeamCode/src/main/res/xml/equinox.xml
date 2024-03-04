@@ -1,41 +1,23 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<!--
-Copyright (c) 2021-Present HF Robotics (http://www.hfrobots.com)
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
--->
+
 <Robot type="FirstInspires-FTC">
     <!-- C920 camera on left -->
-    <Webcam name="leftCamera" serialNumber="7B2F4FD0" />
+    <!-- Webcam name="leftCamera" serialNumber="7B2F4FD0" -->
 
     <!-- Control Hub #1 -->
 
     <!-- Need to figure out serial number, parent module address -->
-    <LynxUsbDevice name="Control Hub" serialNumber="(embedded)" parentModuleAddress="173">
-        <LynxModule name="Main Hub" port="173">
-            <!-- Old Control Hubs Use this IMU -->
-            <!-- <LynxEmbeddedIMU name="imu" port="0" bus="0" /> -->
-
-            <!-- New Control Hubs use this IMU -->
-            <ControlHubImuBHI260AP name="imu"   port="0" bus="0" />
-
-            <goBilda5201SeriesMotor name="frontLeft"   port="0" /> <!--   -->
-            <goBilda5201SeriesMotor name="backLeft"    port="1" /> <!--  -->
-            <goBilda5201SeriesMotor name="frontRight"  port="2" /> <!-- -->
-            <goBilda5201SeriesMotor name="backRight"   port="3" /> <!-- -->
+    <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
+        <LynxModule name="Expansion Hub 2" port="2">
+            <goBILDA5202SeriesMotor name="joint" port="0" />
+            <goBILDA5202SeriesMotor name="arm" port="1" />
+        </LynxModule>
+        <LynxModule name="Control Hub" port="173">
+            <goBILDA5202SeriesMotor name="frontLeft" port="0" />
+            <goBILDA5202SeriesMotor name="backLeft" port="1" />
+            <goBILDA5202SeriesMotor name="frontRight" port="2" />
+            <goBILDA5202SeriesMotor name="backRight" port="3" />
+            <LynxEmbeddedIMU name="imu" port="0" bus="0" />
 
             <RevColorSensorV3 name="colorV3" port="0"/>
             <RevColorSensorV3 name="topColor" port="1"/>
@@ -46,13 +28,6 @@ SOFTWARE.
 
             <ContinuousRotationServo name="DS"         port="2" /> <!-- Green -->
             <ContinuousRotationServo name="DC"         port="3" /> <!-- Blue -->
-
-        </LynxModule>
-
-        <LynxModule name="Expansion Hub DQ2ATDI3" port="4">
-
-            <goBilda5201SeriesMotor name="joint"       port="0" /> <!--  -->
-            <goBilda5201SeriesMotor name="arm"       port="1" /> <!--  -->
 
         </LynxModule>
     </LynxUsbDevice>

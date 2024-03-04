@@ -124,7 +124,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         // Right motors should move forward
         rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightRear.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightRear.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
         List<Integer> lastTrackingEncPositions = new ArrayList<>();
