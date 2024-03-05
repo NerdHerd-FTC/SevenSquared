@@ -74,7 +74,7 @@ public class RobotOrientedDrive extends LinearOpMode {
 
         // Right motors should move forward
         motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
-        motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorBR.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Set drive motors to brake when power is set to 0
         motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
