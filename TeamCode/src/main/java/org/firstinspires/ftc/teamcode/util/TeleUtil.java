@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -18,6 +19,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Objects;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
@@ -28,7 +30,12 @@ public class TeleUtil {
     public DcMotor motorFL, motorFR, motorBL, motorBR, arm, joint;
     public Servo ClawServoRight, ClawServoLeft;
     public CRServo DroneServo, DroneCover;
+    public ColorSensor leftBottomColor, rightBottomColor;
     private ElapsedTime DroneActive = new ElapsedTime();
+    public static boolean autoPickup = true;
+
+    // Color Thresholds - yellow, green, purple
+
 
     private enum DroneCoverState {
         closing,
@@ -36,7 +43,8 @@ public class TeleUtil {
         opening,
         closed
     }
-    private DroneCoverState droneState  = DroneCoverState.closed;
+
+    private DroneCoverState droneState = DroneCoverState.closed;
 
     public static double joint_error = 0;
     public static double arm_error = 0;
@@ -87,6 +95,7 @@ public class TeleUtil {
         HOLDING(null);
 
         private Integer target;
+
         ArmState(Integer target) {
             this.target = target;
         }
@@ -113,6 +122,7 @@ public class TeleUtil {
         HOLDING(null);
 
         private Integer target;
+
         JointState(Integer target) {
             this.target = target;
         }
@@ -356,6 +366,34 @@ public class TeleUtil {
         opMode.telemetry.addData("Heading", heading);
     }
 
+    private boolean pixelInFront(ColorSensor sensor, String name) {
+        int red = sensor.red();
+        int green = sensor.green();
+        int blue = sensor.blue();
+
+        if (Objects.equals(name, "TOP")) {
+            topBlue = blue;
+            topRed = red;
+            topGreen = green;
+        } else if (Objects.equals(name, "BOTTOM")) {
+            bottomBlue = blue;
+            bottomRed = red;
+            bottomGreen = green;
+
+            if (Math.abs(whiteRedThresholdBottom - red) > 100) {
+                stepSize = 8;
+            } else if (Math.abs(whiteRedThresholdBottom - red) > 50) {
+                stepSize = 4;
+            } else if (Math.abs(whiteRedThresholdBottom - red) > 25) {
+                stepSize = 2;
+            } else {
+                stepSize = 1;
+            }
+        }
+
+        return red > threshold && green > threshold && blue > threshold;
+    }
+
     // SERVO METHODS
     public void setClawServoLeft(Gamepad gamepad, double closed_position, double open_position) {
         double position;
@@ -365,16 +403,17 @@ public class TeleUtil {
             position = open_position;
         }
 
-        if(gamepad.left_bumper&& CSL.seconds() > 0.5)  {
-            if (fl_closed){
+        if (gamepad.left_bumper && CSL.seconds() > 0.5) {
+            if (fl_closed) {
                 position = open_position;
                 fl_closed = false;
-            }
-            else {
+            } else {
                 position = closed_position;
                 fl_closed = true;
             }
             CSL.reset();
+        } else if (autoPickup) {
+            if (leftBottomColor  )
         }
 
         ClawServoLeft.setPosition(position);
@@ -393,12 +432,11 @@ public class TeleUtil {
             position = open_position;
         }
 
-        if(gamepad.right_bumper && CSR.seconds() > 0.5)  {
-            if (fr_closed){
+        if (gamepad.right_bumper && CSR.seconds() > 0.5) {
+            if (fr_closed) {
                 position = open_position;
                 fr_closed = false;
-            }
-            else {
+            } else {
                 position = closed_position;
                 fr_closed = true;
             }
@@ -421,7 +459,7 @@ public class TeleUtil {
             DroneCover.setPower(0);
         }
 
-        if(gamepad.dpad_up )  {
+        if (gamepad.dpad_up) {
             if (droneState == DroneCoverState.open) {
                 power = 1.0;
             } else if (droneState != DroneCoverState.opening) {
@@ -505,7 +543,7 @@ public class TeleUtil {
             power = joint_out + joint_ff;
             joint_hold = JOINT_AIRPLANE;
             jointState = JointState.PLANE_LAUNCHING;
-        }  else if (Math.abs(gamepad.left_stick_y) > 0.1) {
+        } else if (Math.abs(gamepad.left_stick_y) > 0.1) {
             power = input + joint_ff;
             joint_hold = joint.getCurrentPosition();
             jointState = JointState.DRIVER_CONTROL;
@@ -570,7 +608,7 @@ public class TeleUtil {
             joint_hold = jointState.target;
 
             power = jointPID.calculate(joint.getCurrentPosition(), joint_hold);
-        }  */else if (joint.getCurrentPosition() > -10) {
+        }  */ else if (joint.getCurrentPosition() > -10) {
             jointState = JointState.GROUNDING;
             power = 0.0;
             joint_hold = 0;
@@ -595,6 +633,7 @@ public class TeleUtil {
 
         return power;
     }
+
     public double setArmPower(Gamepad gamepad) {
         armPID.setPID(armP, armI, armD);
         double power = 0;
@@ -659,7 +698,7 @@ public class TeleUtil {
 
             power = input * scalingFactor;
 
-            if (gamepad.right_trigger > 0.5)  {
+            if (gamepad.right_trigger > 0.5) {
                 power *= 0.3;
             }
 
@@ -813,5 +852,4 @@ public class TeleUtil {
             }
         }
     }
-
 }
