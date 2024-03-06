@@ -216,9 +216,9 @@ public class TeleUtil {
      */
 
     public void robotOrientedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow) {
-        double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
+        double y_raw = gamepad.right_stick_x; // Remember, Y stick value is reversed
         double x_raw = gamepad.left_stick_x;
-        double rx_raw = gamepad.right_stick_x;
+        double rx_raw = -gamepad.left_stick_y;
         // notes on robot oriented drive controls : b= right, y = forward, x= left, a= back
         // = gamepad.b;
         // = gamepad.y;
@@ -261,8 +261,8 @@ public class TeleUtil {
         double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
         double frontLeftPower = (y + x + rx) / denominator;
         double backLeftPower = (y - x + rx) / denominator;
-        double frontRightPower = (y - x - rx) / denominator;
-        double backRightPower = (y + x - rx) / denominator;
+        double frontRightPower = (y + x - rx) / denominator;
+        double backRightPower = (y - x - rx) / denominator;
 
         motorFL.setPower(frontLeftPower);
         motorBL.setPower(backLeftPower);
@@ -273,6 +273,7 @@ public class TeleUtil {
         motorTelemetry(motorBL, "BL");
         motorTelemetry(motorFR, "FR");
         motorTelemetry(motorBR, "BR");
+        opMode.telemetry.addLine("HI!!!!");
     }
 
     public void dpadSupportedRobotDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow, Pose2d pose) {

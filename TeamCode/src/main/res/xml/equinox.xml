@@ -13,7 +13,7 @@
             <goBILDA5202SeriesMotor name="arm" port="1" />
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
-            <goBILDA5202SeriesMotor name="frontLeft" port="0" />
+            <goBILDA5202SeriesMotor name="frontLeft" port="0" />g
             <goBILDA5202SeriesMotor name="backLeft" port="1" />
             <goBILDA5202SeriesMotor name="frontRight" port="2" />
             <goBILDA5202SeriesMotor name="backRight" port="3" />
