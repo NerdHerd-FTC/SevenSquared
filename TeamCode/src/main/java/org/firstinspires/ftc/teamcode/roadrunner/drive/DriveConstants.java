@@ -57,7 +57,7 @@ public class DriveConstants {
      */
     public static double WHEEL_RADIUS = 1.8898; // in (from goBILDA: 96 mm)
     public static double GEAR_RATIO = 1.5; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 19.44; // in (from CAD: 0.4 m) - theoretical: 15.748 in.
+    public static double TRACK_WIDTH = 12; // in (from CAD: 0.4 m) - theoretical: 15.748 in.
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
