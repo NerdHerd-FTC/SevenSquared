@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.util;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -17,12 +16,12 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
 
+import android.graphics.Color;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Objects;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 
 @Config
 public class TeleUtil {
@@ -49,10 +48,8 @@ public class TeleUtil {
     public static double joint_error = 0;
     public static double arm_error = 0;
 
-    public static boolean debug = false;
+    public static boolean debug = true;
 
-    private boolean arm_macro = false;
-    private boolean joint_macro = false;
     private boolean fl_closed = true;
     private boolean fr_closed = true;
     private boolean turnSlow = false;
@@ -65,6 +62,8 @@ public class TeleUtil {
     private ElapsedTime FSC = new ElapsedTime();
     private ElapsedTime ARM_TIME_TO_HOLD = new ElapsedTime();
     private ElapsedTime dpadDebounce = new ElapsedTime();
+    private ElapsedTime leftFingerLastActive = new ElapsedTime();
+    private ElapsedTime rightFingerLastActive = new ElapsedTime();
 
     private double driveSlowMult = 0.25;
     private int targetPixelLayer = 1;
@@ -131,6 +130,30 @@ public class TeleUtil {
             return target;
         }
     }
+
+    private enum leftFingerAuto {
+        IDLE,
+        AWAITING_SIGNAL,
+        CLOSING
+    }
+
+    private enum rightFingerAuto {
+        IDLE,
+        AWAITING_SIGNAL,
+        CLOSING
+    }
+
+    private leftFingerAuto leftFingerAutoState = leftFingerAuto.IDLE;
+    private rightFingerAuto rightFingerAutoState = rightFingerAuto.IDLE;
+
+    // Pixel Lock Variables
+    private static ElapsedTime pixelLockLoops = new ElapsedTime();
+    public static int pixelLockRedThreshold = 1000;
+    public static int pixelLockGreenThreshold = 1000;
+    public static int pixelLockBlueThreshold = 1000;
+
+    public static int pixelLockDetectionRed = 185;
+
 
     private ArmState armState = ArmState.DRIVER_CONTROL;
     private JointState jointState = JointState.DRIVER_CONTROL;
@@ -357,41 +380,27 @@ public class TeleUtil {
         opMode.telemetry.addData(name + " Position", servo.getPosition());
     }
 
-    public void gyroTelemetry(double heading) {
-        opMode.telemetry.addLine("--- Gyro ---");
-        if (heading == Double.doubleToLongBits(-0.0)) {
-            opMode.telemetry.addLine("!!! Heading: -0.0 !!!");
-            opMode.telemetry.addLine("\n\n\n\n\n\n\n\n\n\n");
-        }
-        opMode.telemetry.addData("Heading", heading);
-    }
-
-    private boolean pixelInFront(ColorSensor sensor, String name) {
+    private boolean pixelInFront(ColorSensor sensor) {
         int red = sensor.red();
         int green = sensor.green();
         int blue = sensor.blue();
 
-        if (Objects.equals(name, "TOP")) {
-            topBlue = blue;
-            topRed = red;
-            topGreen = green;
-        } else if (Objects.equals(name, "BOTTOM")) {
-            bottomBlue = blue;
-            bottomRed = red;
-            bottomGreen = green;
-
-            if (Math.abs(whiteRedThresholdBottom - red) > 100) {
-                stepSize = 8;
-            } else if (Math.abs(whiteRedThresholdBottom - red) > 50) {
-                stepSize = 4;
-            } else if (Math.abs(whiteRedThresholdBottom - red) > 25) {
-                stepSize = 2;
-            } else {
-                stepSize = 1;
-            }
+        // Detect white
+        if (red > pixelLockRedThreshold) {
+            return true;
+        } else {
+            return false;
         }
+    }
 
-        return red > threshold && green > threshold && blue > threshold;
+    private boolean pixelLocked(ColorSensor sensor) {
+        int red = sensor.red();
+
+        if (red > pixelLockDetectionRed) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // SERVO METHODS
@@ -412,8 +421,19 @@ public class TeleUtil {
                 fl_closed = true;
             }
             CSL.reset();
-        } else if (autoPickup) {
-            if (leftBottomColor  )
+            leftFingerAutoState = leftFingerAuto.IDLE;
+        } else if (autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 20) {
+            leftFingerAutoState = leftFingerAuto.AWAITING_SIGNAL;
+            if (pixelInFront(leftBottomColor)) {
+                if (!fl_closed) {
+                    position = closed_position;
+                    fl_closed = true;
+                    leftFingerLastActive.reset();
+                }
+                leftFingerAutoState = leftFingerAuto.CLOSING;
+            }
+        } else {
+            leftFingerAutoState = leftFingerAuto.IDLE;
         }
 
         ClawServoLeft.setPosition(position);
@@ -479,21 +499,6 @@ public class TeleUtil {
 
         DroneServo.setPower(power);
     }
-    /*
-    public void setWristServoPower(Gamepad gamepad){
-        double current_position = WristServo.getPosition();
-        if(gamepad.dpad_up) {
-            WristServo.setPosition(current_position + 0.05);
-        }
-        else if(gamepad.dpad_down){
-            WristServo.setPosition(current_position - 0.05);
-        }
-
-        if (gamepad.b) {
-            WristServo.setPosition(WRIST_GROUND);
-        }
-    }
-     */
 
     // ARM AND JOINT MOTOR METHODS
     public double setJointPower(Gamepad gamepad) {
@@ -757,85 +762,87 @@ public class TeleUtil {
 
     // TELEMETRY METHODS
     public void checkGamepadParameters(Gamepad gamepad, String position) {
-        opMode.telemetry.addLine("--- " + position + " ---");
+        if (debug) {
+            opMode.telemetry.addLine("--- " + position + " ---");
 
-        if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
-            opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
-            opMode.telemetry.addData("Left Stick Y", gamepad.left_stick_y);
-        }
+            if (gamepad.left_stick_x != 0 || gamepad.left_stick_y != 0) {
+                opMode.telemetry.addData("Left Stick X", gamepad.left_stick_x);
+                opMode.telemetry.addData("Left Stick Y", gamepad.left_stick_y);
+            }
 
-        if (gamepad.right_stick_x != 0 || gamepad.right_stick_y != 0) {
-            opMode.telemetry.addData("Right Stick X", gamepad.right_stick_x);
-            opMode.telemetry.addData("Right Stick Y", gamepad.right_stick_y);
+            if (gamepad.right_stick_x != 0 || gamepad.right_stick_y != 0) {
+                opMode.telemetry.addData("Right Stick X", gamepad.right_stick_x);
+                opMode.telemetry.addData("Right Stick Y", gamepad.right_stick_y);
 
-        }
+            }
 
-        /*
-        if (touchSensorPressed || joint.getCurrentPosition() - 10 > 0 || arm.getCurrentPosition() - 10 > 0){
-            opMode.telemetry.addData("touchSensorPressed", touchSensorPressed);
-            DcMotor.RunMode JstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
-            joint.setMode(JstopAndResetEncoder);
-            DcMotor.RunMode AstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
-            arm.setMode(AstopAndResetEncoder);
-        }
-         */
+            /*
+            if (touchSensorPressed || joint.getCurrentPosition() - 10 > 0 || arm.getCurrentPosition() - 10 > 0){
+                opMode.telemetry.addData("touchSensorPressed", touchSensorPressed);
+                DcMotor.RunMode JstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+                joint.setMode(JstopAndResetEncoder);
+                DcMotor.RunMode AstopAndResetEncoder = DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+                arm.setMode(AstopAndResetEncoder);
+            }
+             */
 
-        if (gamepad.left_trigger != 0) {
-            opMode.telemetry.addData("Left Trigger", gamepad.left_trigger);
-        }
+            if (gamepad.left_trigger != 0) {
+                opMode.telemetry.addData("Left Trigger", gamepad.left_trigger);
+            }
 
-        if (gamepad.right_trigger != 0) {
-            opMode.telemetry.addData("Right Trigger", gamepad.right_trigger);
-        }
-        if (gamepad.left_stick_button) {
-            opMode.telemetry.addLine("LeftStick Button Pressed");
-        }
-        if (gamepad.right_stick_button) {
-            opMode.telemetry.addLine("RightStick Button Pressed");
-        }
+            if (gamepad.right_trigger != 0) {
+                opMode.telemetry.addData("Right Trigger", gamepad.right_trigger);
+            }
+            if (gamepad.left_stick_button) {
+                opMode.telemetry.addLine("LeftStick Button Pressed");
+            }
+            if (gamepad.right_stick_button) {
+                opMode.telemetry.addLine("RightStick Button Pressed");
+            }
 
-        if (gamepad.dpad_up) {
-            opMode.telemetry.addLine("DPad Up Pressed");
-        }
-        if (gamepad.dpad_down) {
-            opMode.telemetry.addLine("DPad Down Pressed");
-        }
-        if (gamepad.dpad_left) {
-            opMode.telemetry.addLine("DPad Left Pressed");
-        }
-        if (gamepad.dpad_right) {
-            opMode.telemetry.addLine("DPad Right Pressed");
-        }
+            if (gamepad.dpad_up) {
+                opMode.telemetry.addLine("DPad Up Pressed");
+            }
+            if (gamepad.dpad_down) {
+                opMode.telemetry.addLine("DPad Down Pressed");
+            }
+            if (gamepad.dpad_left) {
+                opMode.telemetry.addLine("DPad Left Pressed");
+            }
+            if (gamepad.dpad_right) {
+                opMode.telemetry.addLine("DPad Right Pressed");
+            }
 
-        if (gamepad.a) {
-            opMode.telemetry.addLine("A pressed");
-        }
-        if (gamepad.b) {
-            opMode.telemetry.addLine("B pressed");
-        }
-        if (gamepad.x) {
-            opMode.telemetry.addLine("X pressed");
-        }
-        if (gamepad.y) {
-            opMode.telemetry.addLine("Y pressed");
-        }
+            if (gamepad.a) {
+                opMode.telemetry.addLine("A pressed");
+            }
+            if (gamepad.b) {
+                opMode.telemetry.addLine("B pressed");
+            }
+            if (gamepad.x) {
+                opMode.telemetry.addLine("X pressed");
+            }
+            if (gamepad.y) {
+                opMode.telemetry.addLine("Y pressed");
+            }
 
-        if (gamepad.left_bumper) {
-            opMode.telemetry.addLine("Left bumper clicked");
-        }
-        if (gamepad.right_bumper) {
-            opMode.telemetry.addLine("Right bumper clicked");
-        }
+            if (gamepad.left_bumper) {
+                opMode.telemetry.addLine("Left bumper clicked");
+            }
+            if (gamepad.right_bumper) {
+                opMode.telemetry.addLine("Right bumper clicked");
+            }
 
-        opMode.telemetry.addLine("\n");
-        opMode.telemetry.addData("Joint Hold", joint_hold);
-        opMode.telemetry.addData("Joint Current", joint.getCurrentPosition());
-        opMode.telemetry.addData("Joint Power", joint.getPower());
+            opMode.telemetry.addLine("\n");
+            opMode.telemetry.addData("Joint Hold", joint_hold);
+            opMode.telemetry.addData("Joint Current", joint.getCurrentPosition());
+            opMode.telemetry.addData("Joint Power", joint.getPower());
 
-        opMode.telemetry.addLine("\n");
-        opMode.telemetry.addData("Arm Hold", arm_hold);
-        opMode.telemetry.addData("Arm Position", arm.getCurrentPosition());
-        opMode.telemetry.addData("Arm Power", arm.getPower());
+            opMode.telemetry.addLine("\n");
+            opMode.telemetry.addData("Arm Hold", arm_hold);
+            opMode.telemetry.addData("Arm Position", arm.getCurrentPosition());
+            opMode.telemetry.addData("Arm Power", arm.getPower());
+        }
     }
 
     public void logGamepad(Telemetry telemetry, Gamepad gamepad, String position) {
