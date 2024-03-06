@@ -60,8 +60,8 @@ public class RobotOrientedDrive extends LinearOpMode {
         motorBL.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Right motors should move forward
-        motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
-        motorBR.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorFR.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Set drive motors to brake when power is set to 0
         motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -142,6 +142,8 @@ public class RobotOrientedDrive extends LinearOpMode {
                 getColors(floorColor, "floor");
 
             }
+
+            teleUtil.checkGamepadParameters(gamepad1, "gamepad1");
             telemetry.update();
         }
     }

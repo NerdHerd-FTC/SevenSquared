@@ -273,7 +273,6 @@ public class TeleUtil {
         motorTelemetry(motorBL, "BL");
         motorTelemetry(motorFR, "FR");
         motorTelemetry(motorBR, "BR");
-        opMode.telemetry.addLine("HI!!!!");
     }
 
     public void dpadSupportedRobotDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow, Pose2d pose) {
