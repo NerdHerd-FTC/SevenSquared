@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Archive;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -12,6 +12,7 @@ import java.util.List;
 
 @Config
 @TeleOp(name = "DC Testing")
+@Disabled
 public class DCTest extends LinearOpMode {
 
     enum DroneCoverState {

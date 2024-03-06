@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -22,6 +23,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 
 @Config
 public class TeleUtil {
@@ -32,6 +34,7 @@ public class TeleUtil {
     public ColorSensor leftBottomColor, rightBottomColor;
     private ElapsedTime DroneActive = new ElapsedTime();
     public static boolean autoPickup = true;
+    SampleMecanumDrive drive;
 
     // Color Thresholds - yellow, green, purple
 
@@ -173,6 +176,9 @@ public class TeleUtil {
         this.ClawServoLeft = ClawServoLeft;
         this.DroneServo = DroneServo;
         this.DroneCover = DroneCover;
+        this.drive = new SampleMecanumDrive(opMode.hardwareMap);
+        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        drive.setPoseEstimate(PoseStorage.currentPose);
     }
 
     /*public void fieldOrientedDrive(SampleMecanumDrive drive, Gamepad gamepad, boolean exponential_drive, boolean slowdown) {
@@ -269,16 +275,22 @@ public class TeleUtil {
         motorFR.setPower(frontRightPower);
         motorBR.setPower(backRightPower);
 
-        motorTelemetry(motorFL, "FL");
-        motorTelemetry(motorBL, "BL");
-        motorTelemetry(motorFR, "FR");
-        motorTelemetry(motorBR, "BR");
+        if (debug) {
+            motorTelemetry(motorFL, "FL");
+            motorTelemetry(motorBL, "BL");
+            motorTelemetry(motorFR, "FR");
+            motorTelemetry(motorBR, "BR");
+        }
     }
 
     public void dpadSupportedRobotDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow, Pose2d pose) {
+        // Read pose
+        Pose2d poseEstimate = drive.getPoseEstimate();
+        double botHeading = poseEstimate.getHeading();
+
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
-        double x_raw = gamepad.left_stick_x;
-        double rx_raw = gamepad.right_stick_x;
+        double x_raw = -gamepad.left_stick_x;
+        double rx_raw = -gamepad.right_stick_x;
 
         // Toggle move slow
         if (gamepad.a && FSC.milliseconds() > 500) {
@@ -304,44 +316,26 @@ public class TeleUtil {
         double x = exponential_drive ? Math.signum(x_raw) * Math.pow(Math.abs(x_raw), exponent) : x_raw;
         double rx = exponential_drive ? Math.signum(rx_raw) * Math.pow(Math.abs(rx_raw), exponent) : rx_raw;
 
-        if (moveSlow) {
-            y *= 0.25;
-            x *= 0.25;
-            rx *= 0.25;
-        }
-
         // Strafe with dpad
         if (gamepad.dpad_right) {
-            // Strafe right
-            double botHeading = pose.getHeading();
-
             // Rotate the movement direction counter to the bot's rotation
             x = -1 * Math.cos(-botHeading);
             y = -1 * Math.sin(-botHeading);
 
             x = x * 1.1;  // Counteract imperfect strafing
         } else if (gamepad.dpad_left) {
-            // Strafe left
-            double botHeading = pose.getHeading();
-
             // Rotate the movement direction counter to the bot's rotation
             x = Math.cos(-botHeading);
             y = Math.sin(-botHeading);
 
             x = x * 1.1;  // Counteract imperfect strafing
         } else if (gamepad.dpad_up) {
-            // Strafe forward
-            double botHeading = pose.getHeading();
-
             // Rotate the movement direction counter to the bot's rotation
             x = Math.sin(botHeading);
             y = Math.cos(botHeading);
 
             y = y * 1.1;  // Counteract imperfect strafing
         } else if (gamepad.dpad_down) {
-            // Strafe backward
-            double botHeading = pose.getHeading();
-
             // Rotate the movement direction counter to the bot's rotation
             x = -1 * Math.sin(botHeading);
             y = -1 * Math.cos(botHeading);
@@ -349,24 +343,95 @@ public class TeleUtil {
             y = y * 1.1;  // Counteract imperfect strafing
         }
 
-        // Denominator is the largest motor power (absolute value) or 1
-        // This ensures all the powers maintain the same ratio,
-        // but only if at least one is out of the range [-1, 1]
-        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
-        double frontLeftPower = (y + x + rx) / denominator;
-        double backLeftPower = (y - x + rx) / denominator;
-        double frontRightPower = (y - x - rx) / denominator;
-        double backRightPower = (y + x - rx) / denominator;
+        if (moveSlow) {
+            y *= 0.25;
+            x *= 0.25;
+            rx *= 0.25;
+        }
 
-        motorFL.setPower(frontLeftPower);
-        motorBL.setPower(backLeftPower);
-        motorFR.setPower(frontRightPower);
-        motorBR.setPower(backRightPower);
+        drive.setWeightedDrivePower(
+                new Pose2d(
+                        x,
+                        y,
+                        rx
+                )
+        );
 
-        motorTelemetry(motorFL, "FL");
-        motorTelemetry(motorBL, "BL");
-        motorTelemetry(motorFR, "FR");
-        motorTelemetry(motorBR, "BR");
+        drive.update();
+
+        if (debug) {
+            motorTelemetry(motorFL, "FL");
+            motorTelemetry(motorBL, "BL");
+            motorTelemetry(motorFR, "FR");
+            motorTelemetry(motorBR, "BR");
+        }
+    }
+
+    public void newDpadSupportedDrive(Gamepad gamepad, boolean exponential_drive, boolean slowdown, boolean turnSlow, Pose2d pose) {
+        // Read pose
+        Pose2d poseEstimate = drive.getPoseEstimate();
+        double botHeading = poseEstimate.getHeading();
+
+        // Joystick inputs
+        double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
+        double x_raw = -gamepad.left_stick_x;
+        double rx_raw = -gamepad.right_stick_x;
+
+        // Initial movement values from joystick input, apply deadband if necessary
+        double forward = Math.abs(y_raw) > DEAD_BAND ? y_raw : 0.0;
+        double strafe = Math.abs(x_raw) > DEAD_BAND ? x_raw : 0.0;
+        double rx = Math.abs(rx_raw) > DEAD_BAND ? rx_raw : 0.0;
+
+        // Override with dpad input if any dpad button is pressed
+        boolean dpadActive = gamepad.dpad_up || gamepad.dpad_down || gamepad.dpad_left || gamepad.dpad_right;
+        if (dpadActive) {
+            if (gamepad.dpad_up) {
+                forward = 1.0;
+            } else if (gamepad.dpad_down) {
+                forward = -1.0;
+            }
+
+            if (gamepad.dpad_left) {
+                strafe = -1.0;
+            } else if (gamepad.dpad_right) {
+                strafe = 1.0;
+            }
+        }
+
+        // Rotate movement vector by robot's heading for dpad control, keeping joystick control as is
+        if (dpadActive) {
+            double tempForward = forward * Math.cos(botHeading) - strafe * Math.sin(botHeading);
+            double tempStrafe = forward * Math.sin(botHeading) + strafe * Math.cos(botHeading);
+
+            forward = tempForward;
+            strafe = tempStrafe;
+        }
+
+        // Apply exponential scaling if desired
+        if (exponential_drive) {
+            forward = Math.signum(forward) * Math.pow(Math.abs(forward), 2.0);
+            strafe = Math.signum(strafe) * Math.pow(Math.abs(strafe), 2.0);
+            rx = Math.signum(rx) * Math.pow(Math.abs(rx), 2.0);
+        }
+
+        // Apply movement slow mode if activated
+        if (moveSlow) {
+            forward *= driveSlowMult;
+            strafe *= driveSlowMult;
+            rx *= driveSlowMult;
+        }
+
+        // Now apply the forward, strafe, and rx values to drive the robot
+        drive.setWeightedDrivePower(new Pose2d(strafe, forward, rx));
+        drive.update();
+
+        // Debugging telemetry, if enabled
+        if (debug) {
+            motorTelemetry(motorFL, "FL");
+            motorTelemetry(motorBL, "BL");
+            motorTelemetry(motorFR, "FR");
+            motorTelemetry(motorBR, "BR");
+        }
     }
 
     public void motorTelemetry(DcMotor motor, String name) {

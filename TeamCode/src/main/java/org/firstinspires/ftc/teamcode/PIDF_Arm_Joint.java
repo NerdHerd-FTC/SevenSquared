@@ -30,6 +30,7 @@ import org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 
 @Config
 @TeleOp
+@Disabled
 public class PIDF_Arm_Joint extends LinearOpMode {
     private PIDController jointPID;
     private PIDController armPID;

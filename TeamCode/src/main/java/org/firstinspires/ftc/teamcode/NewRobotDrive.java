@@ -66,7 +66,7 @@ public class NewRobotDrive extends LinearOpMode {
         motorBL.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Right motors should move forward
-        motorFR.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorFR.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Get servos
