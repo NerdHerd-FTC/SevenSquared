@@ -100,9 +100,9 @@ public class NewRobotDrive extends LinearOpMode {
             Pose2d myPose = drive.getPoseEstimate();
 
             // Drive
-            teleUtil.dpadSupportedRobotDrive(gamepad1, true, false, false, myPose);
+            teleUtil.newDpadSupportedDrive(gamepad1, true, false, false, myPose);
 
-            // Articulation
+            // Articulation`
             jointMotor.setPower(teleUtil.setJointPower(gamepad2));
             armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
