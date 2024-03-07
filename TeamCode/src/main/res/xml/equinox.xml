@@ -5,7 +5,7 @@
     <!-- Webcam name="leftCamera" serialNumber="7B2F4FD0" -->
 
     <!-- Control Hub #1 -->
-
+a
     <!-- Need to figure out serial number, parent module address -->
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Expansion Hub 2" port="2">
@@ -19,9 +19,10 @@
             <goBILDA5202SeriesMotor name="backRight" port="3" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
 
-            <RevColorSensorV3 name="colorV3" port="0"/>
-            <RevColorSensorV3 name="topColor" port="1"/>
+            <RevColorSensorV3 name="topColor" port="0"/>
+            <RevColorSensorV3 name="colorV3" port="1"/>
             <RevColorSensorV3 name="bottomColor" port="2"/>
+            <RevColorSensorV3 name="rightBottomColor" port="3"/>
 
             <Servo name="CSR"   port="0" />  <!--  -->
             <Servo name="CSL"   port="1" />  <!--  -->
