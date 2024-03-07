@@ -79,6 +79,8 @@ public class TeleUtil {
 
     private double lastArmPosition = 0;
 
+    public static double armSetPoint = 0;
+    public static double jointSetPoint = 0;
 
     // drive slow
     // pid arm - kill power
@@ -88,8 +90,6 @@ public class TeleUtil {
         DRIVER_CONTROL(null),
         HOMING(ARM_HOME),
         GROUNDING(ARM_GROUND),
-        BACKWARDS_SCORING(ARM_BACKWARDS_SCORE - 1),
-        BACKWARDS_REACHED(ARM_BACKWARDS_SCORE),
         FORWARDS_SCORING(ARM_FORWARDS_SCORE - 1),
         FORWARDS_REACHED(ARM_FORWARDS_SCORE),
         PLANE_LAUNCHING(ARM_AIRPLANE),
@@ -164,7 +164,7 @@ public class TeleUtil {
     private double driveMult = 1.0;
 
     // Constructor
-    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo DroneCover) {
+    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo DroneCover, ColorSensor bottomLeft) {
         this.opMode = opMode;
         this.motorFL = frontLeft;
         this.motorFR = frontRight;
@@ -177,6 +177,7 @@ public class TeleUtil {
         this.DroneServo = DroneServo;
         this.DroneCover = DroneCover;
         this.drive = new SampleMecanumDrive(opMode.hardwareMap);
+        this.leftBottomColor = bottomLeft;
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         drive.setPoseEstimate(PoseStorage.currentPose);
     }
@@ -289,7 +290,7 @@ public class TeleUtil {
         double botHeading = poseEstimate.getHeading();
 
         double y_raw = -gamepad.left_stick_y; // Remember, Y stick value is reversed
-        double x_raw = -gamepad.left_stick_x;
+        double x_raw = gamepad.left_stick_x;
         double rx_raw = -gamepad.right_stick_x;
 
         // Toggle move slow
@@ -351,8 +352,8 @@ public class TeleUtil {
 
         drive.setWeightedDrivePower(
                 new Pose2d(
-                        x,
                         y,
+                        x,
                         rx
                 )
         );
@@ -451,7 +452,7 @@ public class TeleUtil {
         int blue = sensor.blue();
 
         // Detect white
-        if (red > pixelLockRedThreshold) {
+        if (red > 100 || green > 190 || blue > 160) {
             return true;
         } else {
             return false;
@@ -487,7 +488,7 @@ public class TeleUtil {
             }
             CSL.reset();
             leftFingerAutoState = leftFingerAuto.IDLE;
-        } else if (autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 20) {
+        } else if (leftFingerLastActive.milliseconds() > 500 && !fl_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
             leftFingerAutoState = leftFingerAuto.AWAITING_SIGNAL;
             if (pixelInFront(leftBottomColor)) {
                 if (!fl_closed) {
@@ -731,18 +732,7 @@ public class TeleUtil {
             arm_hold = 0;
             armState = ArmState.GROUNDING;
         } else if (gamepad.y) {
-            // backwards score!
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_BACKWARDS_SCORE);
-            power = arm_out + arm_ff;
-            arm_hold = ARM_BACKWARDS_SCORE;
-            armState = ArmState.BACKWARDS_SCORING;
 
-            double error = arm.getCurrentPosition() - ARM_BACKWARDS_SCORE;
-            if (Math.abs(error) < 10) {
-                armState = ArmState.BACKWARDS_REACHED;
-            } else {
-                armState = ArmState.BACKWARDS_SCORING;
-            }
         } else if (gamepad.x && gamepad.right_trigger > 0.75) {
             arm.setPower(0);
             arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

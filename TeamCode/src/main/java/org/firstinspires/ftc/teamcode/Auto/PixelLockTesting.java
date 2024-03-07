@@ -11,29 +11,19 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointI;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.jointP;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.joint_ticks_per_degree;
 
-import android.graphics.Color;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.AutoUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.TeleUtil;
@@ -44,7 +34,7 @@ import java.util.Objects;
 @TeleOp(name = "Pixel Lock!")
 public class PixelLockTesting extends LinearOpMode {
     private ElapsedTime matchTime = new ElapsedTime();
-    public ColorSensor topColorSensor, bottomColorSensor;
+    public ColorSensor topColorSensor, rightBottomColorSensor, leftBottomColorSensor;
 
     private ElapsedTime callGap = new ElapsedTime();
     private int callsToColor = 0;
@@ -130,10 +120,11 @@ public class PixelLockTesting extends LinearOpMode {
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         topColorSensor = hardwareMap.get(ColorSensor.class, "topColor");
-        bottomColorSensor = hardwareMap.get(ColorSensor.class, "bottomColor");
+        rightBottomColorSensor = hardwareMap.get(ColorSensor.class, "bottomColor");
+        leftBottomColorSensor = hardwareMap.get(ColorSensor.class, "rightBottomColor");
 
         // TeleUtil instance
-        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover);
+        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover, leftBottomColorSensor);
 
         waitForStart();
 
@@ -179,7 +170,7 @@ public class PixelLockTesting extends LinearOpMode {
             callGap.reset();
             // Check if top and bottom sensors detect white
             boolean topDetectsWhite = isWhite(topColorSensor, whiteRedThresholdTop, "TOP");
-            boolean bottomDetectsWhite = isWhite(bottomColorSensor, whiteRedThresholdBottom, "BOTTOM");
+            boolean bottomDetectsWhite = isWhite(rightBottomColorSensor, whiteRedThresholdBottom, "BOTTOM");
             if (topDetectsWhite && bottomDetectsWhite) {
                 // If both sensors detect white
                 armDemands = AutoUtil.ARM_DEMANDS.MOVE_UP;

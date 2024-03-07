@@ -80,15 +80,11 @@ public class RobotOrientedDrive extends LinearOpMode {
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
         DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        ColorSensor topColor = hardwareMap.get(ColorSensor.class, "topColor");
-        ColorSensor bottomColor = hardwareMap.get(ColorSensor.class, "bottomColor");
-        ColorSensor floorColor = hardwareMap.get(ColorSensor.class, "colorV3");
-
-        topColor.enableLed(false);
-        bottomColor.enableLed(false);
+        ColorSensor bottomLeftColor = hardwareMap.get(ColorSensor.class, "bottomColor");
+        ColorSensor bottomRightColor = hardwareMap.get(ColorSensor.class, "rightBottomColor");
 
         // TeleUtil instance
-        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover);
+        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover, bottomLeftColor);
 
         waitForStart();
 
@@ -98,11 +94,11 @@ public class RobotOrientedDrive extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Drive
-            teleUtil.robotOrientedDrive(gamepad1, true, false, false);
+            //teleUtil.robotOrientedDrive(gamepad1, true, false, false);
 
             // Articulation
-            jointMotor.setPower(teleUtil.setJointPower(gamepad2));
-            armMotor.setPower(teleUtil.setArmPower(gamepad2));
+            //jointMotor.setPower(teleUtil.setJointPower(gamepad2));
+            //armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
             teleUtil.setClawServoRight(gamepad2, CLAW_RIGHT_CLOSED, CLAW_RIGHT_OPEN);
             teleUtil.setClawServoLeft(gamepad2, CLAW_LEFT_OPEN, CLAW_LEFT_CLOSED);
@@ -137,9 +133,8 @@ public class RobotOrientedDrive extends LinearOpMode {
             }
 
             if (gamepad2.dpad_right) {
-                getColors(topColor, "top");
-                getColors(bottomColor, "bottom");
-                getColors(floorColor, "floor");
+                getColors(bottomRightColor, "bottom right");
+                getColors(bottomLeftColor, "bottom left");
 
             }
 
