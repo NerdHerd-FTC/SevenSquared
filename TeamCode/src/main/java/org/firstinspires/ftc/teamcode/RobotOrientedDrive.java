@@ -94,11 +94,11 @@ public class RobotOrientedDrive extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Drive
-            //teleUtil.robotOrientedDrive(gamepad1, true, false, false);
+            teleUtil.robotOrientedDrive(gamepad1, true, false, false);
 
             // Articulation
-            //jointMotor.setPower(teleUtil.setJointPower(gamepad2));
-            //armMotor.setPower(teleUtil.setArmPower(gamepad2));
+            jointMotor.setPower(teleUtil.setJointPower(gamepad2));
+            armMotor.setPower(teleUtil.setArmPower(gamepad2));
 
             teleUtil.setClawServoRight(gamepad2, CLAW_RIGHT_CLOSED, CLAW_RIGHT_OPEN);
             teleUtil.setClawServoLeft(gamepad2, CLAW_LEFT_OPEN, CLAW_LEFT_CLOSED);

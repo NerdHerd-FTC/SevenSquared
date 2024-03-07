@@ -451,12 +451,16 @@ public class TeleUtil {
         int green = sensor.green();
         int blue = sensor.blue();
 
+        return false;
         // Detect white
+        /*
         if (red > 100 || green > 190 || blue > 160) {
             return true;
         } else {
             return false;
         }
+
+         */
     }
 
     private boolean pixelLocked(ColorSensor sensor) {
@@ -488,7 +492,7 @@ public class TeleUtil {
             }
             CSL.reset();
             leftFingerAutoState = leftFingerAuto.IDLE;
-        } else if (leftFingerLastActive.milliseconds() > 500 && !fl_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
+        } else if (CSL.seconds() > 1 && leftFingerLastActive.milliseconds() > 500 && !fl_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
             leftFingerAutoState = leftFingerAuto.AWAITING_SIGNAL;
             if (pixelInFront(leftBottomColor)) {
                 if (!fl_closed) {
