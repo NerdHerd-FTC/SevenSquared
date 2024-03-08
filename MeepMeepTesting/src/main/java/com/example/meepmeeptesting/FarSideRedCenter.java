@@ -15,18 +15,14 @@ public class FarSideRedCenter {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-34, -61, Math.toRadians(90)))
-                                .forward(42.5)
+                        drive.trajectorySequenceBuilder(new Pose2d(-34, 61, Math.toRadians(270)))
+                                .forward(43)
                                 .back(33)
-                                .turn(Math.toRadians(90))
-                                .lineToConstantHeading(new Vector2d(-34, -31))
-                                .lineToConstantHeading(new Vector2d(-47.5, -28))
-                                .lineToConstantHeading(new Vector2d(-55, -29.95))
-                                .strafeRight(36)
-                                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
-                                .splineToConstantHeading(new Vector2d(67, -25.5), Math.toRadians(0))
-                                .strafeTo(new Vector2d(64, 0))
-                                .turn(Math.toRadians(180))
+                                .splineToLinearHeading(new Pose2d(-46, 11, Math.toRadians(180)), Math.toRadians(0))
+                                .waitSeconds(1)
+                                .lineToSplineHeading(new Pose2d(20, 10, Math.toRadians(0)))
+                                .splineToConstantHeading(new Vector2d(53, 37), Math.toRadians(0))
+
                                 .build()
                 );
 

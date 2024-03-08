@@ -19,6 +19,18 @@ public class SlowRedFarRight {
                                 .splineTo(new Vector2d(-20, -35), Math.toRadians(0))
                                 .back(15)
                                 .lineToSplineHeading(new Pose2d(-48.5, -32, Math.toRadians(180)))
+<<<<<<< Updated upstream
+=======
+                                .splineToLinearHeading(new Pose2d(-46, -11, Math.toRadians(180)), Math.toRadians(0))
+                                .waitSeconds(1)
+                                .lineToSplineHeading(new Pose2d(20, -10, Math.toRadians(0)))
+                                //.back(60)
+                                // .splineToConstantHeading(new Vector2d(27, -16), Math.toRadians(90))
+                                .splineToConstantHeading(new Vector2d(53, -37), Math.toRadians(0))
+
+
+
+>>>>>>> Stashed changes
                                 .build()
                 );
 

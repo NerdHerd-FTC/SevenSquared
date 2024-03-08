@@ -15,6 +15,7 @@ public class RedLeft50rr {
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(12, -63, Math.toRadians(90)))
+
                                 .splineToLinearHeading(new Pose2d(2.5, -30, Math.toRadians(135)), Math.toRadians(135)) // Move ba
                                 .back(10)
                                 .splineToSplineHeading(new Pose2d(57, -27, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
