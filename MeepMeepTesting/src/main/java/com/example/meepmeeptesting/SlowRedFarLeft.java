@@ -18,10 +18,17 @@ public class SlowRedFarLeft {
                                 .splineTo(new Vector2d(-52, -30), Math.toRadians(90))
                                 .back(14)
                                 .strafeRight(15)
-                                .lineToConstantHeading(new Vector2d(-34, -31))
-                                .splineToSplineHeading(new Pose2d(70, -31.5,  Math.toRadians(0)), Math.toRadians(0))
-                                .strafeTo(new Vector2d(56, -16))
-                                .turn(Math.toRadians(180))
+                                .splineToLinearHeading(new Pose2d(-46, -11, Math.toRadians(180)), Math.toRadians(0))
+                                .waitSeconds(1)
+                                .lineToSplineHeading(new Pose2d(20, -10, Math.toRadians(0)))
+                                //.back(60)
+                                // .splineToConstantHeading(new Vector2d(27, -16), Math.toRadians(90))
+                                .splineToConstantHeading(new Vector2d(53, -37), Math.toRadians(0))
+
+
+
+
+
 
 
                                 .build()
