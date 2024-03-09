@@ -15,17 +15,15 @@ public class FarSideBlueLeft {
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(-30, 63, Math.toRadians(270)))
-                                .splineToLinearHeading(new Pose2d(-20.261, 30, Math.toRadians(315)), Math.toRadians(315))
-                                .strafeTo(new Vector2d(-38, 48))
-                                .turn(Math.toRadians(225))
-                                //.splineToLinearHeading(new Pose2d(-34, -52, Math.toRadians(180)), Math.toRadians(180))
-                                .lineToConstantHeading(new Vector2d(-38, 29.95))
-                                .lineToConstantHeading(new Vector2d(-55, 29.95))
-                                .strafeLeft(36)
-                                .lineToSplineHeading(new Pose2d(30, 6, Math.toRadians(0)))
-                                .splineToConstantHeading(new Vector2d(67, 40), Math.toRadians(0)) // TUNE THIS ENDPOINT
-                                .strafeTo(new Vector2d(64, 64))
-                                .turn(Math.toRadians(180))
+                                .splineTo(new Vector2d(-47, 34), Math.toRadians(180))
+                                .back(14)
+                                .strafeLeft(15)
+                                .splineToLinearHeading(new Pose2d(-46, 11, Math.toRadians(180)), Math.toRadians(0))
+                                .waitSeconds(1)
+                                .lineToSplineHeading(new Pose2d(20, 10, Math.toRadians(0)))
+
+                                .splineToConstantHeading(new Vector2d(53, 37), Math.toRadians(0))
+
                                 .build()
 
                 );
