@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_AUTO_PIXEL_DROP;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_FORWARDS_LOW_SCORE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.ARM_HOME;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_CLOSED;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.CLAW_LEFT_OPEN;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ESCAPE_HOMING;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.ESCAPE_ZIPTIE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.JOINT_AVOID_CUBE;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armD;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.armF;
@@ -47,12 +50,26 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
     BlueCubeDetectionPipeline blueCubeDetectionPipeline = new BlueCubeDetectionPipeline(telemetry);
 
+    private enum escapeZiptie {
+        ESCAPING,
+        WAIT,
+        HOMING,
+        RESETTING,
+        WAIT2,
+        RESTART,
+        DONE
+    }
+
+    escapeZiptie escapeZiptieCurrentState = escapeZiptie.ESCAPING;
+
     private enum centerState {
         CENTER_PUSH,
+        CENTER_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
         MOVE_TO_CORNER,
+        TURN,
         DONE
     }
 
@@ -62,6 +79,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         RELEASE,
         ARM_TO_HOME,
         MOVE_TO_CORNER,
+        TURN,
         DONE
     }
 
@@ -73,6 +91,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         RELEASE,
         ARM_TO_HOME,
         MOVE_TO_CORNER,
+        TURN,
         DONE
     }
 
@@ -102,16 +121,19 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory center = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, 30), Math.toRadians(270))
+        Trajectory centerPush = drive.trajectoryBuilder(startPose)
+                .forward(33.5)
+                .build();
+
+        Trajectory center = drive.trajectoryBuilder(centerPush.end())
                 .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
-                .splineTo(new Vector2d(50.5, 26.5), Math.toRadians(0))
+                .splineTo(new Vector2d(45.55748457301436, 36.53054245151751), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(20, 30), Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(23, 48), Math.toRadians(270))
-                .splineToSplineHeading(new Pose2d(51, 36, Math.toRadians(0)), Math.toRadians(0))
+                .splineTo(new Vector2d(27, 30), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(23, 27.53054245151751), Math.toRadians(270))
+                .splineToSplineHeading(new Pose2d(46.5, 42.53054245151751, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
@@ -123,19 +145,19 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .splineToSplineHeading(new Pose2d(50.5, 17), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(46, 27.53054245151751), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeLeft(28)
+                .strafeLeft(25)
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left1.end())
-                .splineToConstantHeading(new Vector2d(50, 60), Math.toRadians(0))
+                .strafeLeft(19)
                 .build();
 
         Trajectory cornerRight = drive.trajectoryBuilder(right3.end())
-                .lineToConstantHeading(new Vector2d(42, 5))
+                .strafeLeft(34)
                 .build();
 
         TrajectorySequence cornerRightRotate = drive.trajectorySequenceBuilder(cornerRight.end())
@@ -184,7 +206,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         BlueCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         if (decision == BlueCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectoryAsync(center);
+            drive.followTrajectoryAsync(centerPush);
         } else if (decision == BlueCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectoryAsync(left1);
         } else if (decision == BlueCubeDetectionPipeline.Detection.RIGHT) {
@@ -199,9 +221,23 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                     case CENTER_PUSH:
                         drive.update();
 
+                        escapeZiptie();
+
                         asyncMoveJoint(JOINT_AVOID_CUBE);
 
                         if (!drive.isBusy()) {
+                            drive.followTrajectoryAsync(center);
+                            centerCurrentState = centerState.CENTER_BACKDROP;
+                        }
+                        break;
+                    case CENTER_BACKDROP:
+                        drive.update();
+
+                        escapeZiptie();
+
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy() && escapeZiptieCurrentState == escapeZiptie.DONE) {
                             asyncMoveJoint(0);
                             centerCurrentState = centerState.ARM_TO_SCORE;
                         }
@@ -209,7 +245,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                     case ARM_TO_SCORE:
                         asyncMoveJoint(0);
 
-                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
+                        double error = asyncMoveArm(ARM_AUTO_PIXEL_DROP);
 
                         if (Math.abs(error) < 10) {
                             killJoint();
@@ -223,7 +259,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
-                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
+                        asyncMoveArm(ARM_AUTO_PIXEL_DROP);
                         moveLeftFinger(CLAW_LEFT_OPEN);
                         if (waitForClaw.milliseconds() > 1000) {
                             moveArm(ARM_HOME);
@@ -235,6 +271,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         error = asyncMoveArm(ARM_HOME);
 
                         if (Math.abs(error) < 10) {
+                            killArm();
                             drive.followTrajectory(cornerCenter);
                             centerCurrentState = centerState.MOVE_TO_CORNER;
                             killJoint();
@@ -242,8 +279,6 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         break;
 
                     case MOVE_TO_CORNER:
-                        asyncMoveArm(ARM_HOME);
-
                         drive.update();
                         if (!drive.isBusy()) {
                             centerCurrentState = centerState.DONE;
@@ -258,6 +293,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                     case LEFT_PUSH:
                         drive.update();
                         asyncMoveJoint(JOINT_AVOID_CUBE);
+                        escapeZiptie();
                         if (!drive.isBusy()) {
                             asyncMoveJoint(0);
                             leftCurrentState = leftState.ARM_TO_SCORE;
@@ -265,7 +301,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         break;
                     case ARM_TO_SCORE:
                         asyncMoveJoint(0);
-                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
+                        double error = asyncMoveArm(ARM_AUTO_PIXEL_DROP);
                         if (Math.abs(error) < 10) {
                             killJoint();
                             if (waitForArm.milliseconds() > 1000) {
@@ -278,7 +314,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
-                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
+                        asyncMoveArm(ARM_AUTO_PIXEL_DROP);
                         moveLeftFinger(CLAW_LEFT_OPEN);
                         if (waitForClaw.milliseconds() > 1000) {
                             moveArm(ARM_HOME);
@@ -309,6 +345,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                 switch (rightCurrentState) {
                     case RIGHT_PUSH:
                         drive.update();
+                        escapeZiptie();
 
                         asyncMoveJoint(JOINT_AVOID_CUBE);
                         if (!drive.isBusy()) {
@@ -319,6 +356,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                     case RIGHT_BACKUP:
                         drive.update();
 
+                        escapeZiptie();
                         asyncMoveJoint(JOINT_AVOID_CUBE);
                         if (!drive.isBusy()) {
                             asyncMoveJoint(0);
@@ -328,6 +366,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         break;
                     case RIGHT_BACKDROP:
                         drive.update();
+                        escapeZiptie();
 
                         asyncMoveJoint(0);
                         if (!drive.isBusy()) {
@@ -336,7 +375,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         }
                         break;
                     case ARM_TO_SCORE:
-                        double error = asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
+                        double error = asyncMoveArm(ARM_AUTO_PIXEL_DROP);
                         if (Math.abs(error) < 10) {
                             killJoint();
                             if (waitForArm.milliseconds() > 1000) {
@@ -349,7 +388,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         }
                         break;
                     case RELEASE:
-                        asyncMoveArm(ARM_FORWARDS_LOW_SCORE + 70);
+                        asyncMoveArm(ARM_AUTO_PIXEL_DROP);
                         moveLeftFinger(CLAW_LEFT_OPEN);
                         if (waitForClaw.milliseconds() > 1000) {
                             moveArm(ARM_HOME);
@@ -374,8 +413,8 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                         break;
                 }
             }
-
-
+            telemetry.addData("Ziptie State", escapeZiptieCurrentState.toString());
+            telemetry.update();
         }
     }
 
@@ -467,6 +506,51 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
         //opMode.telemetry.addData("Joint Error", error);
 
         return error;
+    }
+
+    public void escapeZiptie(){
+        double error = -1;
+        switch (escapeZiptieCurrentState) {
+            case ESCAPING:
+                error = Math.abs(asyncMoveArm(ESCAPE_ZIPTIE));
+                if (error < 10) {
+                    escapeZiptieCurrentState = escapeZiptie.WAIT;
+                    waitForArm.reset();
+                }
+                break;
+            case WAIT:
+                error = asyncMoveArm(ESCAPE_ZIPTIE);
+                if (waitForArm.milliseconds() > 1000) {
+                    escapeZiptieCurrentState = escapeZiptie.HOMING;
+                }
+                break;
+            case HOMING:
+                error = Math.abs(asyncMoveArm(ESCAPE_HOMING));
+                if (error < 10) {
+                    killArm();
+                    escapeZiptieCurrentState = escapeZiptie.RESETTING;
+                    waitForArm.reset();
+                }
+                break;
+            case RESETTING:
+                killArm();
+                if (waitForArm.milliseconds() > 500) {
+                    arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    escapeZiptieCurrentState = escapeZiptie.WAIT2;
+                    waitForArm.reset();
+                }
+                break;
+            case WAIT2:
+                if (waitForArm.milliseconds() > 1000) {
+                    escapeZiptieCurrentState = escapeZiptie.RESTART;
+                }
+                break;
+            case RESTART:
+                arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                escapeZiptieCurrentState = escapeZiptie.DONE;
+                break;
+        }
+        telemetry.addData("Ziptie Arm Error", error);
     }
 
 }

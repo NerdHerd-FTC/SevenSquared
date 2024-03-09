@@ -28,6 +28,9 @@ public class RobotConstants {
     public static Integer ARM_AIRPLANE = 2160;
     public static Integer ARM_DROP_1 = 800;
     public static Integer ARM_DROP_2 = 780;
+    public static Integer ESCAPE_ZIPTIE = 200;
+    public static Integer ESCAPE_HOMING = -150;
+    public static Integer ARM_AUTO_PIXEL_DROP = 890;
 
 
     // for auto mainly

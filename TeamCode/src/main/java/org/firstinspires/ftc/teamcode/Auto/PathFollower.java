@@ -38,6 +38,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 public class PathFollower extends LinearOpMode {
     private enum steps {
         one,
+        two,
         done
     }
 
@@ -47,14 +48,16 @@ public class PathFollower extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // We want to start the bot at x: 10, y: -8, heading: 270 degrees
-        Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
+        Pose2d startPose = new Pose2d(12, 62, Math.toRadians(270));
 
         drive.setPoseEstimate(startPose);
-
         Trajectory stepOne = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(12, -27), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12, -52), Math.toRadians(90))
-                .splineTo(new Vector2d(57, -30), Math.toRadians(0))
+                .forward(35.56)
+                .build();
+
+        Trajectory stepTwo = drive.trajectoryBuilder(stepOne.end())
+                .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
+                .splineTo(new Vector2d(45.55748457301436, 36.53054245151751), Math.toRadians(0))
                 .build();
 
         steps step = steps.one;
@@ -65,6 +68,13 @@ public class PathFollower extends LinearOpMode {
         while (opModeIsActive() && step != steps.done) {
             switch (step) {
                 case one:
+                    drive.update();
+
+                    if (!drive.isBusy()) {
+                        drive.followTrajectoryAsync(stepTwo);
+                        step = steps.two;
+                    }
+                case two:
                     drive.update();
 
                     if (!drive.isBusy()) {

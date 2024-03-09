@@ -15,9 +15,9 @@ public class BlueCenter50rr {
                 .setConstraints(52.48291908330528, 52.48291908330528, 3.114857287413855, Math.toRadians(190.94804165608335), 19)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(new Pose2d(12, 62, Math.toRadians(270)))
-                                .splineTo(new Vector2d(12, 22), Math.toRadians(270))
-                                .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
-                                .splineTo(new Vector2d(57, 36), Math.toRadians(0))
+                                .splineTo(new Vector2d(13.012066422679581, 26.440165956473), Math.toRadians(270))
+                        .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
+                        .splineTo(new Vector2d(45.55748457301436, 36.53054245151751), Math.toRadians(0))
                                 .strafeLeft(20) // separate trajectory
                                 .build()
                 );

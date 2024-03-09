@@ -15,6 +15,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.*;
 import android.graphics.Color;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Auto.NEWPixelDropoffRed;
 
 import java.util.Objects;
 
@@ -59,6 +60,16 @@ public class AutoUtil {
     public static int currentLockTarget = armUpperLimit;
 
     private int stepSize = 5;
+
+    private enum escapeZiptie {
+        ESCAPING,
+        HOMING,
+        RESETTING,
+        DONE
+    }
+
+    escapeZiptie escapeZiptieCurrentState = escapeZiptie.ESCAPING;
+
 
     // 1) back up in case side of claw is stuck
     // 2) strafe left in case front of claw is stuck
@@ -428,5 +439,25 @@ public class AutoUtil {
 
     public void killJoint() {
         joint.setPower(0);
+    }
+
+    public void escapeZiptie(){
+        switch (escapeZiptieCurrentState) {
+            case ESCAPING:
+                if (Math.abs(asyncMoveArm(ESCAPE_ZIPTIE)) < 10) {
+                    escapeZiptieCurrentState = escapeZiptie.HOMING;
+                }
+                break;
+            case HOMING:
+                if (Math.abs(asyncMoveArm(ESCAPE_HOMING)) < 10) {
+                    killArm();
+                    arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    escapeZiptieCurrentState = escapeZiptie.RESETTING;
+                }
+                break;
+            case RESETTING:
+                arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                break;
+        }
     }
 }
