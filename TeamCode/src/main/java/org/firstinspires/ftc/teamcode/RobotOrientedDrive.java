@@ -84,7 +84,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         ColorSensor bottomRightColor = hardwareMap.get(ColorSensor.class, "rightBottomColor");
 
         // TeleUtil instance
-        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover, bottomLeftColor);
+        TeleUtil teleUtil = new TeleUtil(this, motorFL, motorFR, motorBL, motorBR, armMotor, jointMotor, ClawServoLeft, ClawServoRight, DroneServo, DroneCover, bottomLeftColor, bottomRightColor);
 
         waitForStart();
 

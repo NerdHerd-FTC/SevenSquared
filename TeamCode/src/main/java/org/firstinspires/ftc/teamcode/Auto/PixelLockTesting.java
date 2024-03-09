@@ -30,6 +30,7 @@ import org.firstinspires.ftc.teamcode.util.TeleUtil;
 
 import java.util.Objects;
 
+/*
 @Config
 @TeleOp(name = "Pixel Lock!")
 public class PixelLockTesting extends LinearOpMode {
@@ -239,3 +240,4 @@ public class PixelLockTesting extends LinearOpMode {
         ClawServoRight.setPosition(target);
     }
 }
+ */

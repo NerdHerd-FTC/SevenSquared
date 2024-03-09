@@ -157,7 +157,7 @@ public class TeleUtil {
     private double driveMult = 1.0;
 
     // Constructor
-    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo DroneCover, ColorSensor bottomLeft) {
+    public TeleUtil(LinearOpMode opMode, DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, DcMotor arm, DcMotor joint, Servo ClawServoLeft, Servo ClawServoRight, CRServo DroneServo, CRServo DroneCover, ColorSensor bottomLeft, ColorSensor bottomRight) {
         this.opMode = opMode;
         this.motorFL = frontLeft;
         this.motorFR = frontRight;
@@ -171,6 +171,7 @@ public class TeleUtil {
         this.DroneCover = DroneCover;
         this.drive = new SampleMecanumDrive(opMode.hardwareMap);
         this.leftBottomColor = bottomLeft;
+        this.rightBottomColor = bottomRight;
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         drive.setPoseEstimate(PoseStorage.currentPose);
     }
@@ -444,16 +445,12 @@ public class TeleUtil {
         int green = sensor.green();
         int blue = sensor.blue();
 
-        return false;
         // Detect white
-        /*
         if (red > 100 || green > 190 || blue > 160) {
             return true;
         } else {
             return false;
         }
-
-         */
     }
 
     private boolean pixelLocked(ColorSensor sensor) {
@@ -485,7 +482,7 @@ public class TeleUtil {
             }
             CSL.reset();
             leftFingerAutoState = leftFingerAuto.IDLE;
-        } /*else if (CSL.seconds() > 1 && leftFingerLastActive.milliseconds() > 500 && !fl_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
+        } else if (CSL.seconds() > 1 && leftFingerLastActive.milliseconds() > 500 && !fl_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
             leftFingerAutoState = leftFingerAuto.AWAITING_SIGNAL;
             if (pixelInFront(leftBottomColor)) {
                 if (!fl_closed) {
@@ -498,7 +495,6 @@ public class TeleUtil {
         } else {
             leftFingerAutoState = leftFingerAuto.IDLE;
         }
-        */
 
         ClawServoLeft.setPosition(position);
     }
@@ -525,6 +521,18 @@ public class TeleUtil {
                 fr_closed = true;
             }
             CSR.reset();
+        } else if (CSR.seconds() > 1 && rightFingerLastActive.milliseconds() > 500 && !fr_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
+            rightFingerAutoState = rightFingerAuto.AWAITING_SIGNAL;
+            if (pixelInFront(rightBottomColor)) {
+                if (!fr_closed) {
+                    position = closed_position;
+                    fr_closed = true;
+                    rightFingerLastActive.reset();
+                }
+                rightFingerAutoState = rightFingerAuto.CLOSING;
+            }
+        } else {
+            rightFingerAutoState = rightFingerAuto.IDLE;
         }
 
         ClawServoRight.setPosition(position);
@@ -592,17 +600,6 @@ public class TeleUtil {
             power = joint_out + joint_ff;
             joint_hold = 0;
             jointState = JointState.GROUNDING;
-        } else if (gamepad.y) {
-            double joint_out = jointPID.calculate(joint.getCurrentPosition(), JOINT_BACKWARDS_SCORE);
-            power = joint_out + joint_ff;
-            joint_hold = JOINT_BACKWARDS_SCORE;
-
-            joint_error = joint.getCurrentPosition() - JOINT_BACKWARDS_SCORE;
-            if (Math.abs(joint_error) < 10) {
-                jointState = JointState.BACKWARDS_REACHED;
-            } else {
-                jointState = JointState.BACKWARDS_SCORING;
-            }
         } else if (gamepad.x && gamepad.right_trigger > 0.75) {
             joint.setPower(0);
             joint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -677,7 +674,7 @@ public class TeleUtil {
             arm_hold = 0;
             armState = ArmState.HOMING;
         } else if (gamepad.right_trigger > 0.5) {
-            double arm_out = armPID.calculate(arm.getCurrentPosition(), ARM_AIRPLANE);
+            double arm_out = armPID.calculate(arm.getCurrentPosition(), armSetPoint);
             power = arm_out + arm_ff;
             armState = ArmState.FORWARDS_SCORING;
         } else if (gamepad.left_trigger > 0.5) {
