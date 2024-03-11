@@ -56,6 +56,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
     private enum centerState {
         CENTER_PUSH,
+        CENTER_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
@@ -75,6 +76,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
     private enum rightState {
         RIGHT_PUSH,
+        RIGHT_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
@@ -119,14 +121,14 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         // probably should be ~61 but keep this for consistency with other paths
         Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
 
-        Vector2d centerEnd = new Vector2d(53, -31.5);
-        Pose2d leftEnd = new Pose2d(53, -25, Math.toRadians(0));
-        Pose2d rightEnd = new Pose2d(53, -40, Math.toRadians(0));
+        Vector2d centerEnd = new Vector2d(47.34674817564364, -44);
+        Pose2d leftEnd = new Pose2d(47.34674817564364, -27, Math.toRadians(0));
+        Pose2d rightEnd = new Pose2d(47.34674817564364, -46.5, Math.toRadians(0));
 
         drive.setPoseEstimate(startPose);
 
         Trajectory centerPush = drive.trajectoryBuilder(startPose)
-                .forward(36)
+                .forward(32.5)
                 .build();
 
         Trajectory center = drive.trajectoryBuilder(centerPush.end())
@@ -134,34 +136,38 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                 .splineTo(centerEnd, Math.toRadians(0))
                 .build();
 
+
         // Push to spike
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineToLinearHeading(new Pose2d(3, -30, Math.toRadians(135)), Math.toRadians(135)) // Move ba
+                .splineToLinearHeading(new Pose2d(-0.494716869243643, -36.64621510772137, Math.toRadians(135)), Math.toRadians(135)) // Move ba
                 .build();
 
         // Bring to backdrop
         Trajectory left2 = drive.trajectoryBuilder(left1.end())
                 .back(10)
-                .splineToSplineHeading(new Pose2d(54, -24, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
+                .splineToSplineHeading(new Pose2d(45.34674817564364, -25.60071046879035, Math.toRadians(0)), Math.toRadians(0)) // Move backward to (49, -36)
                 .build();
 
+
         Trajectory right1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(27.739, -38), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(22, -55), Math.toRadians(90))
+                .splineTo(new Vector2d(21.25654293847381, -31.326722778115457), Math.toRadians(90))
+                .build();
+
+        Trajectory right2 = drive.trajectoryBuilder(right1.end())
+                .back(24)
                 .splineToSplineHeading(rightEnd, Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
-                .strafeRight(28)
+                .strafeTo(new Vector2d(56,-50))
                 .build();
 
         Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
-                // new Pose2d(57, -30, Math.toRadians(0));
-                .strafeRight(37)
+                .strafeRight(34)
                 .build();
 
-        Trajectory cornerRight = drive.trajectoryBuilder(right1.end())
-                .strafeRight(20)
+        Trajectory cornerRight = drive.trajectoryBuilder(right2.end())
+                .strafeRight(19)
                 .build();
 
         // VisionPortal
@@ -179,7 +185,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
 
         moveLeftFinger(CLAW_LEFT_CLOSED);
 
-        while (opModeInInit()) {
+        while (opModeInInit() && opModeIsActive()) {
             if (gamepad2.left_bumper) {
                 moveLeftFinger(CLAW_LEFT_OPEN);
             } else if (gamepad2.right_bumper) {
@@ -187,18 +193,20 @@ public class NEWPixelDropoffRed extends LinearOpMode {
             }
         }
 
+        waitForStart();
+
+        moveLeftFinger(CLAW_LEFT_CLOSED);
+
         leftState leftCurrentState = leftState.LEFT_PUSH;
         rightState rightCurrentState = rightState.RIGHT_PUSH;
         centerState centerCurrentState = centerState.CENTER_PUSH;
-
-        moveLeftFinger(CLAW_LEFT_CLOSED);
 
         RedCubeDetectionPipeline.Detection decision = getDecisionFromEOCV();
 
         visionPortal.setProcessorEnabled(redCubeDetectionPipeline, false);
 
         if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
-            drive.followTrajectoryAsync(center);
+            drive.followTrajectoryAsync(centerPush);
         } else if (decision == RedCubeDetectionPipeline.Detection.LEFT) {
             drive.followTrajectoryAsync(left1);
         } else if (decision == RedCubeDetectionPipeline.Detection.RIGHT) {
@@ -206,6 +214,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
         }
 
         // exits after completing center_push - debug
+
         while (opModeIsActive() && (leftCurrentState != leftState.DONE && rightCurrentState != rightState.DONE && centerCurrentState != centerState.DONE)) {
             if (decision == RedCubeDetectionPipeline.Detection.CENTER) {
                 telemetry.addData("Center State", centerCurrentState);
@@ -224,8 +233,20 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         escapeZiptie();
 
                         if (!drive.isBusy()) {
-                            centerCurrentState = centerState.ARM_TO_SCORE;
+                            drive.followTrajectoryAsync(center);
+                            centerCurrentState = centerState.CENTER_BACKDROP;
+                        }
+                        break;
+                    case CENTER_BACKDROP:
+                        drive.update();
+
+                        escapeZiptie();
+
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+
+                        if (!drive.isBusy()) {
                             asyncMoveJoint(0);
+                            centerCurrentState = centerState.ARM_TO_SCORE;
                         }
                         break;
                     case ARM_TO_SCORE:
@@ -340,6 +361,17 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         escapeZiptie();
 
                         if (!drive.isBusy()) {
+                            drive.followTrajectoryAsync(right2);
+                            rightCurrentState =  rightState.RIGHT_BACKDROP;
+                        }
+                        break;
+                    case RIGHT_BACKDROP:
+                        drive.update();
+
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+                        escapeZiptie();
+
+                        if (!drive.isBusy()) {
                             asyncMoveJoint(0);
                             rightCurrentState =  rightState.ARM_TO_SCORE;
                         }
@@ -382,6 +414,7 @@ public class NEWPixelDropoffRed extends LinearOpMode {
                         }
                         break;
                 }
+
             }
         }
     }

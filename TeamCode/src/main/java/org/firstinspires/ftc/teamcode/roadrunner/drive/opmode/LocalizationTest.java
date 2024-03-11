@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive;
 @Config
 @TeleOp(group = "drive")
 public class LocalizationTest extends LinearOpMode {
-    public static Pose2d startPose = new Pose2d(12, 62, Math.toRadians(270)); //blue
+    public static Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90)); //blue
     // red new Pose2d(12, -63, Math.toRadians(90));
 
     @Override

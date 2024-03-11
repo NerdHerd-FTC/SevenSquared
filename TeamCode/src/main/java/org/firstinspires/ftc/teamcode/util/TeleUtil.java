@@ -33,6 +33,7 @@ public class TeleUtil {
     public CRServo DroneServo, DroneCover;
     public ColorSensor leftBottomColor, rightBottomColor;
     private ElapsedTime DroneActive = new ElapsedTime();
+    private ElapsedTime g2XDebounce = new ElapsedTime();
     public static boolean autoPickup = true;
     SampleMecanumDrive drive;
 
@@ -70,6 +71,7 @@ public class TeleUtil {
 
     private double driveSlowMult = 0.25;
     private int targetPixelLayer = 1;
+    private boolean armSlowdown = false;
 
     private PIDController armPID = new PIDController(armP, armI, armD);
     private PIDController jointPID = new PIDController(jointP, jointI, jointD);
@@ -481,19 +483,6 @@ public class TeleUtil {
                 fl_closed = true;
             }
             CSL.reset();
-            leftFingerAutoState = leftFingerAuto.IDLE;
-        } else if (CSL.seconds() > 1 && leftFingerLastActive.milliseconds() > 500 && !fl_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
-            leftFingerAutoState = leftFingerAuto.AWAITING_SIGNAL;
-            if (pixelInFront(leftBottomColor)) {
-                if (!fl_closed) {
-                    position = closed_position;
-                    fl_closed = true;
-                    leftFingerLastActive.reset();
-                }
-                leftFingerAutoState = leftFingerAuto.CLOSING;
-            }
-        } else {
-            leftFingerAutoState = leftFingerAuto.IDLE;
         }
 
         ClawServoLeft.setPosition(position);
@@ -521,18 +510,6 @@ public class TeleUtil {
                 fr_closed = true;
             }
             CSR.reset();
-        } else if (CSR.seconds() > 1 && rightFingerLastActive.milliseconds() > 500 && !fr_closed && autoPickup && Math.abs(ARM_GROUND - arm.getCurrentPosition()) <= 50) {
-            rightFingerAutoState = rightFingerAuto.AWAITING_SIGNAL;
-            if (pixelInFront(rightBottomColor)) {
-                if (!fr_closed) {
-                    position = closed_position;
-                    fr_closed = true;
-                    rightFingerLastActive.reset();
-                }
-                rightFingerAutoState = rightFingerAuto.CLOSING;
-            }
-        } else {
-            rightFingerAutoState = rightFingerAuto.IDLE;
         }
 
         ClawServoRight.setPosition(position);
@@ -551,7 +528,7 @@ public class TeleUtil {
             DroneCover.setPower(0);
         }
 
-        if (gamepad.dpad_up && matchTime.seconds() > 90) {
+        if (gamepad.dpad_up ) {
             if (droneState == DroneCoverState.open) {
                 power = 1.0;
             } else if (droneState != DroneCoverState.opening) {
@@ -698,8 +675,8 @@ public class TeleUtil {
 
             power = input * scalingFactor;
 
-            if (gamepad.right_trigger > 0.5) {
-                power *= 0.3;
+            if (armSlowdown) {
+                power *= 0.25;
             }
 
             arm_hold = currentArmPosition;
@@ -708,7 +685,10 @@ public class TeleUtil {
             arm.setPower(0);
             arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             opMode.telemetry.addLine("Arm reset");
-        } else {
+        } else if (gamepad.x && g2XDebounce.milliseconds() > 750) {
+            armSlowdown = !armSlowdown;
+            g2XDebounce.reset();
+        }else {
             if (gamepad.y) {
                 armSetPoint = arm.getCurrentPosition();
             }

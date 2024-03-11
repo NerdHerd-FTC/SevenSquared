@@ -78,7 +78,7 @@ public class RobotOrientedDrive extends LinearOpMode {
         // Reverse if opposite directions are seen
         ClawServoRight.setDirection(Servo.Direction.FORWARD);
         ClawServoLeft.setDirection(Servo.Direction.REVERSE);
-        DroneServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        DroneServo.setDirection(DcMotorSimple.Direction.FORWARD);
 
         ColorSensor bottomLeftColor = hardwareMap.get(ColorSensor.class, "bottomColor");
         ColorSensor bottomRightColor = hardwareMap.get(ColorSensor.class, "rightBottomColor");

@@ -75,6 +75,7 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
     private enum leftState {
         LEFT_PUSH,
+        LEFT_BACKDROP,
         ARM_TO_SCORE,
         RELEASE,
         ARM_TO_HOME,
@@ -127,13 +128,16 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
         Trajectory center = drive.trajectoryBuilder(centerPush.end())
                 .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(270))
-                .splineTo(new Vector2d(45.55748457301436, 36.53054245151751), Math.toRadians(0))
+                .splineTo(new Vector2d(47, 36.53054245151751), Math.toRadians(0))
                 .build();
 
         Trajectory left1 = drive.trajectoryBuilder(startPose)
-                .splineTo(new Vector2d(27, 30), Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(23, 27.53054245151751), Math.toRadians(270))
-                .splineToSplineHeading(new Pose2d(46.5, 42.53054245151751, Math.toRadians(0)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(25.5, 30), Math.toRadians(270))
+                .build();
+
+        Trajectory left2 = drive.trajectoryBuilder(left1.end())
+                .back(26)
+                .splineToSplineHeading(new Pose2d(47, 42.53054245151751, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(startPose)
@@ -145,14 +149,14 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
                 .build();
 
         Trajectory right3 = drive.trajectoryBuilder(right2.end())
-                .splineToSplineHeading(new Pose2d(46, 27.53054245151751), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(47, 27.53054245151751), Math.toRadians(0))
                 .build();
 
         Trajectory cornerCenter = drive.trajectoryBuilder(center.end())
                 .strafeLeft(25)
                 .build();
 
-        Trajectory cornerLeft = drive.trajectoryBuilder(left1.end())
+        Trajectory cornerLeft = drive.trajectoryBuilder(left2.end())
                 .strafeLeft(19)
                 .build();
 
@@ -291,6 +295,15 @@ public class NEWPixelDropoffBlue extends LinearOpMode {
 
                 switch (leftCurrentState) {
                     case LEFT_PUSH:
+                        drive.update();
+                        asyncMoveJoint(JOINT_AVOID_CUBE);
+                        escapeZiptie();
+                        if (!drive.isBusy()) {
+                            drive.followTrajectoryAsync(left2);
+                            leftCurrentState = leftState.LEFT_BACKDROP;
+                        }
+                        break;
+                    case LEFT_BACKDROP:
                         drive.update();
                         asyncMoveJoint(JOINT_AVOID_CUBE);
                         escapeZiptie();
